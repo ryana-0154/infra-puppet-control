@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe 'profile::base' do
   on_supported_os.each do |os, os_facts|
-    context "on #{os}" do
+    context "when on #{os}" do
       let(:facts) { os_facts }
 
       context 'with default parameters' do
