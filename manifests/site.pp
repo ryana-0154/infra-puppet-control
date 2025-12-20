@@ -2,6 +2,11 @@
 # This file is the main entry point for Puppet and should contain
 # node definitions or include statements for classification
 
+# VPS nodes
+node 'vps.ra-home.co.uk' {
+  include role::vps
+}
+
 # Default node - applies to all nodes not explicitly matched
 node default {
   # Include the role class based on the node's role fact
