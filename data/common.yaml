@@ -7,3 +7,21 @@ ntp::servers:
 
 profile::base::manage_ntp: true
 profile::base::manage_firewall: false
+
+# Logrotate settings
+profile::logrotate::manage_logrotate: true
+profile::logrotate::rotate_period: 'weekly'
+profile::logrotate::rotate_count: 4
+profile::logrotate::compress: true
+profile::logrotate::delaycompress: true
+
+# Example custom logrotate rules (commented out)
+# profile::logrotate::rules:
+#   apache2:
+#     path: '/var/log/apache2/*.log'
+#     rotate: 14
+#     compress: true
+#     missingok: true
+#     notifempty: true
+#     sharedscripts: true
+#     postrotate: 'systemctl reload apache2 > /dev/null'
