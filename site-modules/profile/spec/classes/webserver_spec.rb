@@ -11,7 +11,7 @@ describe 'profile::webserver' do
         it { is_expected.to compile.with_all_deps }
 
         it do
-          expect(subject).to contain_file('/var/www/html').with(
+          is_expected.to contain_file('/var/www/html').with(
             ensure: 'directory',
             owner: 'root',
             group: 'root',
@@ -26,7 +26,7 @@ describe 'profile::webserver' do
         it { is_expected.to compile.with_all_deps }
 
         it do
-          expect(subject).to contain_file('/srv/www').with(
+          is_expected.to contain_file('/srv/www').with(
             ensure: 'directory'
           )
         end

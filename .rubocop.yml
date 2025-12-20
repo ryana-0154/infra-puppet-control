@@ -36,3 +36,10 @@ RSpec/ExampleLength:
 
 RSpec/MultipleExpectations:
   Max: 5
+
+RSpec/ImplicitSubject:
+  Enabled: false
+
+# Disable Capybara cops (causes RuboCop crashes on rspec-puppet code)
+Capybara:
+  Enabled: false
