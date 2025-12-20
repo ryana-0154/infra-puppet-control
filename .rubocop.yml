@@ -5,6 +5,7 @@ require:
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.0
+  SuggestExtensions: false
   Exclude:
     - 'modules/**/*'
     - 'vendor/**/*'
@@ -40,6 +41,16 @@ RSpec/MultipleExpectations:
 RSpec/ImplicitSubject:
   Enabled: false
 
-# Disable Capybara cops (causes RuboCop crashes on rspec-puppet code)
+# Disable cops that don't apply to Puppet/rspec-puppet testing
+# These are loaded by rubocop-rspec but cause crashes or warnings
 Capybara:
+  Enabled: false
+
+Capybara/RSpec/PredicateMatcher:
+  Enabled: false
+
+FactoryBot:
+  Enabled: false
+
+RSpecRails:
   Enabled: false

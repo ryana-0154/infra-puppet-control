@@ -51,7 +51,8 @@ run_check() {
 }
 
 # Change to repo root
-cd "$(dirname "$0")/.."
+SCRIPT_DIR="${BASH_SOURCE[0]%/*}"
+cd "$SCRIPT_DIR/.."
 REPO_ROOT=$(pwd)
 
 print_header "Puppet Control Repo - Local CI Runner"
@@ -80,21 +81,8 @@ run_check "Puppet Lint" "bundle exec rake lint" || true
 # Puppet Syntax
 run_check "Puppet Syntax" "bundle exec rake syntax" || true
 
-# RuboCop - special handling for internal cop errors
-echo -e "\n${YELLOW}Running: RuboCop${NC}"
-echo "Command: bundle exec rubocop"
-echo "---"
-# Run rubocop, suppress stderr warnings, save output
-bundle exec rubocop 2>/dev/null > /tmp/rubocop_output.txt || true
-cat /tmp/rubocop_output.txt
-# Check if output contains "no offenses detected"
-if [[ $(cat /tmp/rubocop_output.txt) == *"no offenses detected"* ]]; then
-    print_success "RuboCop passed"
-else
-    print_failure "RuboCop failed"
-    FAILED_CHECKS+=("RuboCop")
-fi
-rm -f /tmp/rubocop_output.txt
+# RuboCop - use --fail-level convention to ignore internal cop errors
+run_check "RuboCop" "bundle exec rubocop --fail-level convention 2>/dev/null" || true
 
 # ERB Template Validation
 run_check "ERB Template Validation" "bundle exec rake validate_templates" || true
