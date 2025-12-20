@@ -5,6 +5,11 @@
 # - Invalid class parameters
 # - Resource type errors
 # - Catalog compilation failures
+#
+# Requirements:
+# - puppet gem installed (gem install puppet)
+# - hiera-eyaml gem installed (gem install hiera-eyaml)
+# - r10k gem installed (bundle exec r10k or gem install r10k)
 
 set -e
 

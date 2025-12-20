@@ -104,6 +104,9 @@ jobs:
       - name: Install Puppet
         run: gem install puppet -v '~> 8.0'
 
+      - name: Install hiera-eyaml
+        run: gem install hiera-eyaml
+
       - name: Simulate deployment
         run: ./scripts/simulate-deployment.sh
 
