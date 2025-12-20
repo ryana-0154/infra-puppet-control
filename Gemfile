@@ -19,6 +19,7 @@ gem 'rubocop-rspec', '~> 2.0'
 
 # Security
 gem 'bundler-audit', '~> 0.9'
+gem 'thor', '>= 1.4.0'
 
 # Module management
 gem 'r10k', '~> 4.0'
