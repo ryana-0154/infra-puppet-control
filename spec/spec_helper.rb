@@ -28,7 +28,8 @@ RSpec.configure do |c|
     architecture: 'x86_64',
     operatingsystem: 'Rocky',
     operatingsystemrelease: '8.9',
-    osfamily: 'RedHat'
+    osfamily: 'RedHat',
+    path: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
   }
   c.hiera_config = File.expand_path(File.join(__FILE__, '..', 'fixtures', 'hiera.yaml'))
 end

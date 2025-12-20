@@ -64,11 +64,13 @@ fi
 
 echo "hiera-eyaml: installed"
 
-# Check if r10k is available (either via bundle or global)
-if command -v r10k &> /dev/null; then
-    echo "r10k: available (global)"
-elif command -v bundle &> /dev/null && bundle exec r10k --version &> /dev/null 2>&1; then
+# Check if r10k is available (prefer bundler over global)
+if command -v bundle &> /dev/null && bundle exec r10k help &> /dev/null 2>&1; then
     echo "r10k: available (via bundler)"
+    R10K_AVAILABLE="bundler"
+elif command -v r10k &> /dev/null; then
+    echo "r10k: available (global)"
+    R10K_AVAILABLE="global"
 else
     print_failure "r10k not found"
     echo "Install with: gem install r10k"
@@ -80,14 +82,11 @@ fi
 print_header "Step 1: Deploy Modules"
 print_info "Deploying modules from Puppetfile..."
 
-# Try to use r10k via bundle first, fall back to global
-if command -v bundle &> /dev/null && bundle exec r10k --version &> /dev/null 2>&1; then
+# Use the r10k command based on what was detected
+if [ "$R10K_AVAILABLE" = "bundler" ]; then
     R10K_CMD="bundle exec r10k"
-elif command -v r10k &> /dev/null; then
-    R10K_CMD="r10k"
 else
-    print_failure "r10k not available"
-    exit 1
+    R10K_CMD="r10k"
 fi
 
 if ! $R10K_CMD puppetfile install --verbose; then
