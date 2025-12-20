@@ -15,7 +15,8 @@ PuppetLint.configuration.ignore_paths = [
 PuppetSyntax.exclude_paths = [
   'modules/**/*',
   'vendor/**/*',
-  'spec/fixtures/**/*'
+  'spec/fixtures/**/*',
+  'data/examples/**/*'
 ]
 
 # Puppet-lint configuration

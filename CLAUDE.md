@@ -92,6 +92,50 @@ end
 
 Test files mirror manifest paths: `site-modules/profile/manifests/base.pp` → `site-modules/profile/spec/classes/base_spec.rb`
 
+## Encrypted Data (eyaml)
+
+This repository uses [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) for encrypting sensitive data like passwords, API keys, and certificates.
+
+### Setup
+
+1. **Generate keys** (first-time setup):
+   ```bash
+   ./scripts/generate-eyaml-keys.sh
+   ```
+
+2. **Commit public key** (needed for encryption):
+   ```bash
+   git add keys/public_key.pkcs7.pem
+   git commit -m "Add eyaml public key"
+   ```
+
+3. **Securely store private key** (never commit this):
+   - Add to password manager or vault
+   - Deploy to Puppet servers at `/etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem`
+
+### Encrypting Values
+
+```bash
+# Encrypt a password
+eyaml encrypt -s 'my_secret_password'
+
+# Output for use in Hiera files
+profile::database::password: >
+  ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+```
+
+### Editing Encrypted Files
+
+```bash
+# Edit with automatic decrypt/encrypt
+eyaml edit data/common.yaml
+
+# Decrypt to view
+eyaml decrypt -f data/common.yaml
+```
+
+See `keys/README.md` for detailed documentation.
+
 ## CI Requirements
 
 All PRs require passing:
