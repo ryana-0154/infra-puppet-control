@@ -1,0 +1,6 @@
+---
+# Node-specific configuration for vps.ra-home.co.uk
+
+# Monitoring configuration
+profile::monitoring::manage_monitoring: true
+profile::monitoring::monitoring_dir: '/opt/monitoring'
