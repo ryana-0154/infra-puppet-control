@@ -15,7 +15,8 @@ PuppetLint.configuration.ignore_paths = [
 PuppetSyntax.exclude_paths = [
   'modules/**/*',
   'vendor/**/*',
-  'spec/fixtures/**/*'
+  'spec/fixtures/**/*',
+  'data/examples/**/*'
 ]
 
 # Puppet-lint configuration
@@ -27,11 +28,16 @@ PuppetLint.configuration.fail_on_warnings = true
 
 RuboCop::RakeTask.new
 
+desc 'Check test coverage for all manifests'
+task :check_coverage do
+  sh 'ruby scripts/check-test-coverage.rb'
+end
+
 desc 'Run all linting tasks'
 task lint_all: %i[lint rubocop syntax]
 
 desc 'Run all tests'
-task test: %i[lint_all spec]
+task test: %i[lint_all check_coverage spec]
 
 desc 'Validate manifests, templates, and ruby files'
 task validate: %i[syntax validate_templates]

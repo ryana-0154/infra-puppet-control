@@ -1,0 +1,46 @@
+---
+# Example Hiera data file showing eyaml encryption usage
+#
+# To encrypt a value:
+#   eyaml encrypt -s 'your_secret_value'
+#
+# To edit this file with automatic encryption/decryption:
+#   eyaml edit data/examples/eyaml-example.yaml
+
+# Plain text values work normally
+example::plain_value: "this is not encrypted"
+
+# Single-line encrypted value
+# To encrypt: eyaml encrypt -s 'my_database_password'
+example::database::password: >
+  ENC[PKCS7,Y22exl+OvjDe+drmik2XEeD3VQtl1uZJXFFF2NnrMXDWx0csyqLB/2NOWefv
+  NBTZfOlPvMlAesyr4bUY4I5XeVbVk8XgAqIE+xEoHmjdCAqFZeB5qwYq2j3hI
+  rqGV9+vj4GvoV8xnC0b1EXAMPLE_ENCRYPTED_DATA_HERE=]
+
+# Multi-line encrypted value (recommended format)
+example::ssl::private_key: >
+  ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw
+  DQYJKoZIhvcNAQEBBQAEggEAbXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  EXAMPLE_ENCRYPTED_DATA_TRUNCATED_FOR_BREVITY=]
+
+# Mixed encrypted and plain values
+example::app::settings:
+  hostname: "app.example.com"  # Plain text
+  api_key: ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWY...]  # Encrypted
+  debug: true  # Plain text
+
+# Array with encrypted values
+example::credentials:
+  - username: "admin"
+    password: ENC[PKCS7,...]
+  - username: "user"
+    password: ENC[PKCS7,...]
+
+# IMPORTANT NOTES:
+# 1. Only encrypt sensitive data (passwords, keys, tokens)
+# 2. Keep non-sensitive data in plain text for easier review
+# 3. Use 'eyaml edit' to avoid manual editing of encrypted blocks
+# 4. Encrypted blocks must be on a single line or use '>' for multi-line
+# 5. Never commit the private key (keys/private_key.pkcs7.pem)

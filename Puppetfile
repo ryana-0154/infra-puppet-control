@@ -13,6 +13,9 @@ mod 'puppetlabs-ntp', :latest
 mod 'puppetlabs-accounts', :latest
 mod 'puppetlabs-inifile', :latest
 
+# System management
+mod 'puppet-logrotate', :latest
+
 # Git-based modules (examples)
 # mod 'custom_module',
 #   :git => 'https://github.com/org/custom_module.git',

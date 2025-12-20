@@ -87,6 +87,9 @@ run_check "RuboCop" "bundle exec rubocop --fail-level convention 2>/dev/null" ||
 # ERB Template Validation
 run_check "ERB Template Validation" "bundle exec rake validate_templates" || true
 
+# Test Coverage Check
+run_check "Test Coverage Check" "bundle exec rake check_coverage" || true
+
 print_header "Puppetfile Validation"
 
 run_check "R10k Puppetfile Check" "bundle exec r10k puppetfile check" || true
