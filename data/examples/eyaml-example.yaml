@@ -12,9 +12,10 @@ example::plain_value: "this is not encrypted"
 
 # Single-line encrypted value
 # To encrypt: eyaml encrypt -s 'my_database_password'
-example::database::password: ENC[PKCS7,Y22exl+OvjDe+drmik2XEeD3VQtl1uZJXFFF2NnrMXDWx0csyqLB/2NOWefv
-NBTZfOlPvMlAesyr4bUY4I5XeVbVk8XgAqIE+xEoHmjdCAqFZeB5qwYq2j3hI
-rqGV9+vj4GvoV8xnC0b1EXAMPLE_ENCRYPTED_DATA_HERE=]
+example::database::password: >
+  ENC[PKCS7,Y22exl+OvjDe+drmik2XEeD3VQtl1uZJXFFF2NnrMXDWx0csyqLB/2NOWefv
+  NBTZfOlPvMlAesyr4bUY4I5XeVbVk8XgAqIE+xEoHmjdCAqFZeB5qwYq2j3hI
+  rqGV9+vj4GvoV8xnC0b1EXAMPLE_ENCRYPTED_DATA_HERE=]
 
 # Multi-line encrypted value (recommended format)
 example::ssl::private_key: >
