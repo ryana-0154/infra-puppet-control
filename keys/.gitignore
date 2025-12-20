@@ -1,0 +1,6 @@
+# Exclude private keys from version control
+private_key.pkcs7.pem
+
+# Public keys can be committed (needed for encryption)
+!public_key.pkcs7.pem
+!.gitignore

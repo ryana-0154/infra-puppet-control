@@ -21,6 +21,9 @@ gem 'rubocop-rspec', '~> 2.0'
 gem 'bundler-audit', '~> 0.9'
 gem 'thor', '>= 1.4.0'
 
+# Encryption
+gem 'hiera-eyaml', '~> 3.4'
+
 # Module management
 gem 'librarian-puppet', '~> 5.0'
 gem 'r10k', '~> 4.0'
