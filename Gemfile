@@ -17,6 +17,9 @@ gem 'puppet-syntax', '~> 4.0'
 gem 'rubocop', '~> 1.60'
 gem 'rubocop-rspec', '~> 2.0'
 
+# Security
+gem 'bundler-audit', '~> 0.9'
+
 # Module management
 gem 'r10k', '~> 4.0'
 gem 'librarian-puppet', '~> 5.0'

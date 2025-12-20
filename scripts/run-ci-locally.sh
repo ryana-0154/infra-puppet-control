@@ -67,8 +67,8 @@ if ! command -v bundle &> /dev/null; then
 fi
 
 # Check if dependencies are installed
-if [ ! -f "Gemfile.lock" ] || [ ! -d "vendor" ] && [ ! -d ".bundle" ]; then
-    print_warning "Dependencies may not be installed. Running bundle install..."
+if [ ! -f "Gemfile.lock" ]; then
+    print_warning "Gemfile.lock not found. Running bundle install..."
     bundle install
 fi
 
@@ -102,14 +102,11 @@ run_check "RSpec Unit Tests" "bundle exec rake spec" || true
 
 print_header "Security Scan"
 
-# Check if bundler-audit is available
-if gem list bundler-audit -i &> /dev/null || bundle exec gem list bundler-audit -i &> /dev/null 2>&1; then
-    run_check "Bundler Audit" "bundle exec bundle-audit check --update" || true
-else
-    print_warning "bundler-audit not installed. Installing..."
-    gem install bundler-audit
-    run_check "Bundler Audit" "bundle-audit check --update" || true
-fi
+run_check "Bundler Audit" "bundle exec bundler-audit check --update" || true
+
+print_header "Acceptance Tests"
+
+print_warning "Acceptance tests are currently a placeholder in CI - skipping locally"
 
 print_header "Results Summary"
 
