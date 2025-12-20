@@ -1,0 +1,75 @@
+{
+  "name": "profile",
+  "version": "0.1.0",
+  "author": "Infrastructure Team",
+  "summary": "Technology-specific configuration profiles",
+  "license": "Apache-2.0",
+  "source": "",
+  "dependencies": [
+    {
+      "name": "puppetlabs/stdlib",
+      "version_requirement": ">= 4.13.0 < 10.0.0"
+    },
+    {
+      "name": "puppetlabs/concat",
+      "version_requirement": ">= 4.0.0 < 10.0.0"
+    },
+    {
+      "name": "puppetlabs/firewall",
+      "version_requirement": ">= 2.0.0 < 9.0.0"
+    },
+    {
+      "name": "puppetlabs/ntp",
+      "version_requirement": ">= 7.0.0 < 12.0.0"
+    },
+    {
+      "name": "puppet/logrotate",
+      "version_requirement": ">= 6.0.0 < 10.0.0"
+    }
+  ],
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "RedHat",
+      "operatingsystemrelease": [
+        "7",
+        "8",
+        "9"
+      ]
+    },
+    {
+      "operatingsystem": "Rocky",
+      "operatingsystemrelease": [
+        "8",
+        "9"
+      ]
+    },
+    {
+      "operatingsystem": "AlmaLinux",
+      "operatingsystemrelease": [
+        "8",
+        "9"
+      ]
+    },
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "10",
+        "11",
+        "12"
+      ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "20.04",
+        "22.04"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "name": "puppet",
+      "version_requirement": ">= 7.0.0 < 9.0.0"
+    }
+  ]
+}
