@@ -12,3 +12,5 @@ fixtures:
       repo: "puppetlabs/firewall"
     ntp:
       repo: "puppetlabs/ntp"
+    logrotate:
+      repo: "puppet/logrotate"
