@@ -49,10 +49,13 @@ class profile::logrotate (
       ensure => present,
       config => {
         'rotate'        => $rotate_count,
-        $rotate_period  => true,  # daily, weekly, or monthly
+        'rotate_every'  => $rotate_period,  # daily, weekly, or monthly
         'compress'      => $compress,
         'delaycompress' => $delaycompress,
-        'create'        => "${create_mode} ${create_owner} ${create_group}",
+        'create'        => true,
+        'create_mode'   => $create_mode,
+        'create_owner'  => $create_owner,
+        'create_group'  => $create_group,
         'dateext'       => true,
         'dateformat'    => '-%Y%m%d',
       },

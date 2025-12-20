@@ -104,6 +104,16 @@ fi
 
 run_check "RSpec Unit Tests" "bundle exec rake spec" || true
 
+print_header "Deployment Simulation"
+
+# Check if puppet is installed
+if command -v puppet &> /dev/null; then
+    run_check "Deployment Simulation" "./scripts/simulate-deployment.sh" || true
+else
+    print_warning "Puppet not installed - skipping deployment simulation"
+    print_warning "Install with: gem install puppet"
+fi
+
 print_header "Security Scan"
 
 run_check "Bundler Audit" "bundle exec bundler-audit check --update" || true
