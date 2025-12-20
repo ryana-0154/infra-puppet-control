@@ -96,7 +96,6 @@ EOF
     if puppet apply --noop \
         --modulepath=modules:site-modules \
         --hiera_config=hiera.yaml \
-        --manifestdir=manifests \
         "$TEST_DIR/test.pp" > "$TEST_DIR/output.log" 2>&1; then
         print_success "${profile_class} - catalog compiled successfully"
         PASSED_PROFILES+=("$profile_class")
@@ -134,7 +133,6 @@ EOF
     if puppet apply --noop \
         --modulepath=modules:site-modules \
         --hiera_config=hiera.yaml \
-        --manifestdir=manifests \
         "$TEST_DIR/test.pp" > "$TEST_DIR/output.log" 2>&1; then
         print_success "${role_class} - catalog compiled successfully"
         PASSED_PROFILES+=("$role_class")
