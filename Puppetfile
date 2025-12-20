@@ -15,6 +15,7 @@ mod 'puppetlabs-inifile', :latest
 
 # System management
 mod 'puppet-logrotate', :latest
+mod 'camptocamp-systemd', :latest
 
 # Git-based modules (examples)
 # mod 'custom_module',

@@ -12,8 +12,9 @@
 #   include profile::base
 #
 class profile::base (
-  Boolean $manage_ntp      = lookup('profile::base::manage_ntp', Boolean, 'first', true),
-  Boolean $manage_firewall = lookup('profile::base::manage_firewall', Boolean, 'first', true),
+  Boolean $manage_ntp      = lookup('manage_ntp', Boolean, 'first', true),
+  Boolean $manage_firewall = lookup('manage_firewall', Boolean, 'first', true),
+  Boolean $manage_logrotate = lookup('manage_logrotate', Boolean, 'first', true),
 ) {
   # NTP configuration
   if $manage_ntp {
@@ -23,6 +24,10 @@ class profile::base (
   # Firewall configuration
   if $manage_firewall {
     include firewall
+  }
+
+  if $manage_logrotate {
+    include logrotate
   }
 
   # Basic package management

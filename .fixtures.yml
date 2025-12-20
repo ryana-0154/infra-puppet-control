@@ -14,3 +14,5 @@ fixtures:
       repo: "puppetlabs/ntp"
     logrotate:
       repo: "puppet/logrotate"
+    systemd:
+      repo: "camptocamp/systemd"
