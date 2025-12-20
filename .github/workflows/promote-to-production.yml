@@ -81,7 +81,9 @@ jobs:
             --base production \
             --head main \
             --title "Promote main to production" \
-            --body-file pr_body.md
+            --body-file pr_body.md \
+            --label "deployment" \
+            --label "auto-promotion"
 
       - name: Update existing PR
         if: steps.check-pr.outputs.exists == 'true'
