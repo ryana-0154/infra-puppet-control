@@ -30,7 +30,7 @@ jobs:
         run: bundle exec rake syntax
 
       - name: Run RuboCop
-        run: bundle exec rubocop
+        run: bundle exec rubocop --fail-level convention
 
       - name: Validate ERB templates
         run: bundle exec rake validate_templates

@@ -52,6 +52,9 @@ bundle exec rake validate_templates
 
 # Run pre-commit on all files
 pre-commit run --all-files
+
+# Run all CI checks locally (mirrors GitHub Actions)
+./scripts/run-ci-locally.sh
 ```
 
 ## Architecture
