@@ -1,0 +1,61 @@
+---
+# Pre-commit hooks configuration
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        exclude: ^(data/|hieradata/)
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: puppet-lint
+        name: Puppet Lint
+        entry: bundle exec puppet-lint
+        language: system
+        files: \.pp$
+        exclude: ^(modules/|vendor/|spec/fixtures/)
+
+      - id: puppet-syntax
+        name: Puppet Syntax Check
+        entry: bundle exec rake syntax:manifests
+        language: system
+        files: \.pp$
+        pass_filenames: false
+
+      - id: erb-syntax
+        name: ERB Syntax Check
+        entry: bundle exec rake validate_templates
+        language: system
+        files: \.erb$
+        pass_filenames: false
+
+      - id: yaml-syntax
+        name: YAML Syntax Check
+        entry: bundle exec rake syntax:hiera
+        language: system
+        files: \.ya?ml$
+        pass_filenames: false
+        exclude: ^\.pre-commit-config\.yaml$
+
+      - id: rubocop
+        name: RuboCop
+        entry: bundle exec rubocop
+        language: system
+        files: \.(rb|rake)$
+        exclude: ^(modules/|vendor/|spec/fixtures/)
+
+      - id: r10k-puppetfile
+        name: R10k Puppetfile Check
+        entry: bundle exec r10k puppetfile check
+        language: system
+        files: ^Puppetfile$
+        pass_filenames: false

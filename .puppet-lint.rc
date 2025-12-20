@@ -1,0 +1,8 @@
+--no-80chars-check
+--no-140chars-check
+--no-class_inherits_from_params_class-check
+--no-documentation-check
+--fail-on-warnings
+--with-context
+--relative
+--log-format="%{path}:%{line}:%{column}: %{kind}: %{message} (%{check})"

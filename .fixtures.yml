@@ -1,0 +1,14 @@
+---
+fixtures:
+  symlinks:
+    profile: "site-modules/profile"
+    role: "site-modules/role"
+  forge_modules:
+    stdlib:
+      repo: "puppetlabs/stdlib"
+    concat:
+      repo: "puppetlabs/concat"
+    firewall:
+      repo: "puppetlabs/firewall"
+    ntp:
+      repo: "puppetlabs/ntp"

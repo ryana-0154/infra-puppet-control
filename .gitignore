@@ -1,0 +1,38 @@
+# Bundler
+.bundle/
+vendor/
+Gemfile.lock
+
+# r10k deployed modules
+modules/
+
+# Test fixtures
+spec/fixtures/manifests/
+spec/fixtures/modules/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Puppet
+*.pem
+*.key
+*.crt
+
+# Coverage
+coverage/
+
+# Logs
+*.log
+log/
+
+# Temporary files
+tmp/
+.tmp/

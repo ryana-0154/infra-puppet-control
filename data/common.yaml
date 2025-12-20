@@ -1,0 +1,13 @@
+---
+# Common Hiera data - applies to all nodes
+# Add default values here that can be overridden by more specific hierarchy levels
+
+# Example settings
+ntp::servers:
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+  - 2.pool.ntp.org
+
+# Profile settings
+profile::base::manage_ntp: true
+profile::base::manage_firewall: true
