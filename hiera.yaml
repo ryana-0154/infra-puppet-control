@@ -9,7 +9,7 @@ hierarchy:
   # Encrypted data (eyaml)
   - name: "Encrypted per-node data"
     lookup_key: eyaml_lookup_key
-    path: "nodes/%{::trusted.certname}.yaml"
+    path: "nodes/%{facts.networking.fqdn}.yaml"
     options:
       pkcs7_private_key: /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem
       pkcs7_public_key: /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
@@ -36,7 +36,7 @@ hierarchy:
       pkcs7_public_key: /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
 
   - name: "Per-node data"
-    path: "nodes/%{::trusted.certname}.yaml"
+    path: "nodes/%{facts.networking.fqdn}.yaml"
 
   - name: "Per-OS family data"
     path: "os/%{facts.os.family}.yaml"
