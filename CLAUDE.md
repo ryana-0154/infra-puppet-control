@@ -81,3 +81,27 @@ All PRs require passing:
 - RuboCop style checks
 - rspec-puppet unit tests (Puppet 7 and 8)
 - bundler-audit security scan
+
+## Deployment Workflow
+
+This repository uses a two-branch deployment strategy:
+
+1. **main** - Integration/testing branch
+   - Feature branches are merged here via PR
+   - CI runs on all commits
+   - Used for testing changes before production
+
+2. **production** - Deployment branch
+   - Deployed to Puppet servers via r10k
+   - Auto-promotion workflow creates PRs from main → production
+   - Manual review and approval required before deployment
+
+### Auto-Promotion Process
+
+When a PR is merged to `main`:
+1. GitHub Actions automatically creates (or updates) a PR from `main` to `production`
+2. The PR includes a deployment checklist and commit summary
+3. Team reviews and approves the production PR
+4. Once merged, r10k deploys changes to Puppet servers
+
+This ensures all changes are reviewed twice: once for code quality, once for production readiness.
