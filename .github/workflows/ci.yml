@@ -35,6 +35,9 @@ jobs:
       - name: Validate ERB templates
         run: bundle exec rake validate_templates
 
+      - name: Check test coverage
+        run: bundle exec rake check_coverage
+
   puppetfile:
     name: Puppetfile Validation
     runs-on: ubuntu-latest

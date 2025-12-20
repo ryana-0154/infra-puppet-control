@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     # Only run if this is a merge (not a direct push)
     if: github.event.head_commit.message != 'Initial commit'
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout code

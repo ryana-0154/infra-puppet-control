@@ -48,7 +48,7 @@ repos:
 
       - id: rubocop
         name: RuboCop
-        entry: bundle exec rubocop
+        entry: bundle exec rubocop --fail-level convention
         language: system
         files: \.(rb|rake)$
         exclude: ^(modules/|vendor/|spec/fixtures/)

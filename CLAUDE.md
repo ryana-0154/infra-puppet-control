@@ -47,6 +47,9 @@ bundle exec r10k puppetfile install
 # Validate ERB templates
 bundle exec rake validate_templates
 
+# Check test coverage (ensure all manifests have tests)
+bundle exec rake check_coverage
+
 # Install pre-commit hooks
 ./scripts/install-hooks.sh
 
@@ -92,13 +95,67 @@ end
 
 Test files mirror manifest paths: `site-modules/profile/manifests/base.pp` → `site-modules/profile/spec/classes/base_spec.rb`
 
+## Encrypted Data (eyaml)
+
+This repository uses [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml) for encrypting sensitive data like passwords, API keys, and certificates.
+
+### Setup
+
+1. **Generate keys** (first-time setup):
+   ```bash
+   ./scripts/generate-eyaml-keys.sh
+   ```
+
+2. **Commit public key** (needed for encryption):
+   ```bash
+   git add keys/public_key.pkcs7.pem
+   git commit -m "Add eyaml public key"
+   ```
+
+3. **Securely store private key** (never commit this):
+   - Add to password manager or vault
+   - Deploy to Puppet servers at `/etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem`
+
+### Encrypting Values
+
+```bash
+# Encrypt a password
+eyaml encrypt -s 'my_secret_password'
+
+# Output for use in Hiera files
+profile::database::password: >
+  ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+```
+
+### Editing Encrypted Files
+
+```bash
+# Edit with automatic decrypt/encrypt
+eyaml edit data/common.yaml
+
+# Decrypt to view
+eyaml decrypt -f data/common.yaml
+```
+
+See `keys/README.md` for detailed documentation.
+
 ## CI Requirements
 
 All PRs require passing:
 - Puppet lint and syntax checks
 - RuboCop style checks
+- Test coverage check (all manifests must have corresponding spec tests)
 - rspec-puppet unit tests (Puppet 7 and 8)
 - bundler-audit security scan
+
+### Test Coverage Policy
+
+Every Puppet manifest in `site-modules/profile/manifests/` and `site-modules/role/manifests/` must have a corresponding spec test file (except `init.pp` placeholder files). The test file path mirrors the manifest path:
+
+- `site-modules/profile/manifests/foo.pp` → `site-modules/profile/spec/classes/foo_spec.rb`
+- `site-modules/profile/manifests/foo/bar.pp` → `site-modules/profile/spec/classes/foo/bar_spec.rb`
+
+This ensures all code changes are accompanied by appropriate test coverage.
 
 ## Deployment Workflow
 
