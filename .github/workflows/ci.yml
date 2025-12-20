@@ -107,6 +107,9 @@ jobs:
       - name: Install hiera-eyaml
         run: gem install hiera-eyaml
 
+      - name: Install r10k
+        run: gem install r10k
+
       - name: Simulate deployment
         run: ./scripts/simulate-deployment.sh
 
