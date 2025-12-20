@@ -47,6 +47,9 @@ bundle exec r10k puppetfile install
 # Validate ERB templates
 bundle exec rake validate_templates
 
+# Check test coverage (ensure all manifests have tests)
+bundle exec rake check_coverage
+
 # Install pre-commit hooks
 ./scripts/install-hooks.sh
 
@@ -141,8 +144,18 @@ See `keys/README.md` for detailed documentation.
 All PRs require passing:
 - Puppet lint and syntax checks
 - RuboCop style checks
+- Test coverage check (all manifests must have corresponding spec tests)
 - rspec-puppet unit tests (Puppet 7 and 8)
 - bundler-audit security scan
+
+### Test Coverage Policy
+
+Every Puppet manifest in `site-modules/profile/manifests/` and `site-modules/role/manifests/` must have a corresponding spec test file (except `init.pp` placeholder files). The test file path mirrors the manifest path:
+
+- `site-modules/profile/manifests/foo.pp` → `site-modules/profile/spec/classes/foo_spec.rb`
+- `site-modules/profile/manifests/foo/bar.pp` → `site-modules/profile/spec/classes/foo/bar_spec.rb`
+
+This ensures all code changes are accompanied by appropriate test coverage.
 
 ## Deployment Workflow
 
