@@ -94,6 +94,7 @@ EOF
 
     # Try to compile the catalog
     if puppet apply --noop \
+        --certname=test.example.com \
         --modulepath=modules:site-modules \
         --hiera_config=hiera.yaml \
         "$TEST_DIR/test.pp" > "$TEST_DIR/output.log" 2>&1; then
@@ -131,6 +132,7 @@ node 'test.example.com' {
 EOF
 
     if puppet apply --noop \
+        --certname=test.example.com \
         --modulepath=modules:site-modules \
         --hiera_config=hiera.yaml \
         "$TEST_DIR/test.pp" > "$TEST_DIR/output.log" 2>&1; then
