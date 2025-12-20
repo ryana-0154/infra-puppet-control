@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Setup
+
+First-time setup (installs Ruby gems and configures bundler):
+
+```bash
+./scripts/install-prereqs.sh
+```
+
+This script will:
+- Check for Ruby installation
+- Install bundler if needed
+- Configure PATH for gem executables
+- Set bundler to install locally (vendor/bundle)
+- Install all gem dependencies
+
 ## Commands
 
 ```bash
