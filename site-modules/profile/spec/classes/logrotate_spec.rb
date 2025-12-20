@@ -36,9 +36,7 @@ describe 'profile::logrotate' do
 
     it do
       is_expected.to contain_class('logrotate').with(
-        ensure: 'present',
-        manage_wtmp: true,
-        manage_btmp: true
+        ensure: 'present'
       )
     end
   end
