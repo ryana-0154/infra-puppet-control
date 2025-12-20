@@ -15,4 +15,4 @@ fixtures:
     logrotate:
       repo: "puppet/logrotate"
     systemd:
-      repo: "camptocamp/systemd"
+      repo: "puppet/systemd"

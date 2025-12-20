@@ -46,18 +46,19 @@ class profile::logrotate (
   if $manage_logrotate {
     # Manage the logrotate package and base configuration
     class { 'logrotate':
-      ensure      => present,
-      config      => {
+      ensure => present,
+      config => {
         'rotate'        => $rotate_count,
-        $rotate_period  => true,  # daily, weekly, or monthly
+        'rotate_every'  => $rotate_period,  # daily, weekly, or monthly
         'compress'      => $compress,
         'delaycompress' => $delaycompress,
-        'create'        => "${create_mode} ${create_owner} ${create_group}",
+        'create'        => true,
+        'create_mode'   => $create_mode,
+        'create_owner'  => $create_owner,
+        'create_group'  => $create_group,
         'dateext'       => true,
         'dateformat'    => '-%Y%m%d',
       },
-      manage_wtmp => true,
-      manage_btmp => true,
     }
 
     # Create custom logrotate rules from Hiera
