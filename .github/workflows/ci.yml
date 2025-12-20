@@ -70,14 +70,19 @@ jobs:
         with:
           ruby-version: '3.2'
           bundler-cache: true
+          cache-version: "puppet-${{ matrix.puppet }}"
         env:
           PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
       - name: Install test fixtures
         run: bundle exec rake spec_prep
+        env:
+          PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
       - name: Run unit tests
         run: bundle exec rake spec
+        env:
+          PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
   acceptance-tests:
     name: Acceptance Tests
