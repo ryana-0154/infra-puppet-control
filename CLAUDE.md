@@ -50,6 +50,9 @@ bundle exec rake validate_templates
 # Check test coverage (ensure all manifests have tests)
 bundle exec rake check_coverage
 
+# Simulate deployment (compile catalogs to catch missing dependencies)
+./scripts/simulate-deployment.sh
+
 # Install pre-commit hooks
 ./scripts/install-hooks.sh
 
@@ -146,6 +149,7 @@ All PRs require passing:
 - RuboCop style checks
 - Test coverage check (all manifests must have corresponding spec tests)
 - rspec-puppet unit tests (Puppet 7 and 8)
+- Deployment simulation (catalog compilation test)
 - bundler-audit security scan
 
 ### Test Coverage Policy
@@ -156,6 +160,22 @@ Every Puppet manifest in `site-modules/profile/manifests/` and `site-modules/rol
 - `site-modules/profile/manifests/foo/bar.pp` → `site-modules/profile/spec/classes/foo/bar_spec.rb`
 
 This ensures all code changes are accompanied by appropriate test coverage.
+
+### Deployment Simulation
+
+The deployment simulation step (`./scripts/simulate-deployment.sh`) catches issues that unit tests might miss by:
+
+1. **Deploying all modules** from the Puppetfile using r10k
+2. **Compiling real catalogs** for each profile and role using `puppet apply --noop`
+3. **Detecting missing dependencies** (e.g., missing modules in Puppetfile)
+4. **Catching invalid parameters** that might work in tests but fail in production
+5. **Verifying resource types exist** before deployment
+
+This step simulates what would happen during an actual r10k deployment and prevents:
+- `Resource type not found` errors
+- Missing module dependencies
+- Invalid class parameters
+- Catalog compilation failures
 
 ## Deployment Workflow
 

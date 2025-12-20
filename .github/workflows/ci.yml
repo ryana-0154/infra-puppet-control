@@ -87,6 +87,26 @@ jobs:
         env:
           PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
+  deployment-simulation:
+    name: Deployment Simulation
+    runs-on: ubuntu-latest
+    needs: [lint, puppetfile]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install Puppet
+        run: gem install puppet -v '~> 8.0'
+
+      - name: Simulate deployment
+        run: ./scripts/simulate-deployment.sh
+
   acceptance-tests:
     name: Acceptance Tests
     runs-on: ubuntu-latest
@@ -128,7 +148,7 @@ jobs:
   all-checks-pass:
     name: All Checks Pass
     runs-on: ubuntu-latest
-    needs: [lint, puppetfile, unit-tests, security-scan]
+    needs: [lint, puppetfile, unit-tests, deployment-simulation, security-scan]
     if: always()
     steps:
       - name: Check all jobs passed
@@ -136,6 +156,7 @@ jobs:
           if [[ "${{ needs.lint.result }}" != "success" ]] || \
              [[ "${{ needs.puppetfile.result }}" != "success" ]] || \
              [[ "${{ needs.unit-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.deployment-simulation.result }}" != "success" ]] || \
              [[ "${{ needs.security-scan.result }}" != "success" ]]; then
             echo "One or more required jobs failed"
             exit 1
