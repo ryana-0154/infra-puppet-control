@@ -4,20 +4,20 @@ require 'spec_helper'
 
 describe 'profile::webserver' do
   on_supported_os.each do |os, os_facts|
-    context "on #{os}" do
+    context "when on #{os}" do
       let(:facts) { os_facts }
 
       context 'with default parameters' do
         it { is_expected.to compile.with_all_deps }
 
-        it {
+        it do
           is_expected.to contain_file('/var/www/html').with(
             ensure: 'directory',
             owner: 'root',
             group: 'root',
-            mode: '0755',
+            mode: '0755'
           )
-        }
+        end
       end
 
       context 'with custom document_root' do
@@ -25,11 +25,11 @@ describe 'profile::webserver' do
 
         it { is_expected.to compile.with_all_deps }
 
-        it {
+        it do
           is_expected.to contain_file('/srv/www').with(
-            ensure: 'directory',
+            ensure: 'directory'
           )
-        }
+        end
       end
     end
   end

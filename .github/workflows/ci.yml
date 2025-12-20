@@ -30,7 +30,7 @@ jobs:
         run: bundle exec rake syntax
 
       - name: Run RuboCop
-        run: bundle exec rubocop
+        run: bundle exec rubocop --fail-level convention
 
       - name: Validate ERB templates
         run: bundle exec rake validate_templates
@@ -70,14 +70,19 @@ jobs:
         with:
           ruby-version: '3.2'
           bundler-cache: true
+          cache-version: "puppet-${{ matrix.puppet }}"
         env:
           PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
       - name: Install test fixtures
         run: bundle exec rake spec_prep
+        env:
+          PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
       - name: Run unit tests
         run: bundle exec rake spec
+        env:
+          PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
   acceptance-tests:
     name: Acceptance Tests

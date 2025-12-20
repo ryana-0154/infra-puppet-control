@@ -9,13 +9,13 @@ require 'rubocop/rake_task'
 PuppetLint.configuration.ignore_paths = [
   'modules/**/*',
   'vendor/**/*',
-  'spec/fixtures/**/*',
+  'spec/fixtures/**/*'
 ]
 
 PuppetSyntax.exclude_paths = [
   'modules/**/*',
   'vendor/**/*',
-  'spec/fixtures/**/*',
+  'spec/fixtures/**/*'
 ]
 
 # Puppet-lint configuration

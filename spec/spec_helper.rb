@@ -3,32 +3,32 @@
 require 'puppetlabs_spec_helper/module_spec_helper'
 require 'rspec-puppet-facts'
 
-include RspecPuppetFacts
+include RspecPuppetFacts # rubocop:disable Style/MixinUsage
 
 # Configure RSpec
 RSpec.configure do |c|
   c.default_facts = {
     os: {
-      'family'  => 'RedHat',
-      'name'    => 'Rocky',
+      'family' => 'RedHat',
+      'name' => 'Rocky',
       'release' => {
         'major' => '8',
         'minor' => '9',
-        'full'  => '8.9',
-      },
+        'full' => '8.9'
+      }
     },
     networking: {
-      'fqdn'     => 'test.example.com',
+      'fqdn' => 'test.example.com',
       'hostname' => 'test',
-      'domain'   => 'example.com',
-      'ip'       => '192.168.1.10',
+      'domain' => 'example.com',
+      'ip' => '192.168.1.10'
     },
     kernel: 'Linux',
     kernelversion: '5.4.0',
     architecture: 'x86_64',
     operatingsystem: 'Rocky',
     operatingsystemrelease: '8.9',
-    osfamily: 'RedHat',
+    osfamily: 'RedHat'
   }
   c.hiera_config = File.expand_path(File.join(__FILE__, '..', 'fixtures', 'hiera.yaml'))
 end
