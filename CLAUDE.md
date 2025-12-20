@@ -51,6 +51,7 @@ bundle exec rake validate_templates
 bundle exec rake check_coverage
 
 # Simulate deployment (compile catalogs to catch missing dependencies)
+# Requires: gem install puppet hiera-eyaml
 ./scripts/simulate-deployment.sh
 
 # Install pre-commit hooks

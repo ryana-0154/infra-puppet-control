@@ -45,13 +45,34 @@ REPO_ROOT=$(pwd)
 
 print_header "Deployment Simulation"
 echo "Repository: $REPO_ROOT"
-echo "Puppet version: $(puppet --version 2>/dev/null || echo 'not found')"
 
 # Check if puppet is installed
 if ! command -v puppet &> /dev/null; then
     print_failure "Puppet not found. Install with: gem install puppet"
     exit 1
 fi
+
+echo "Puppet version: $(puppet --version)"
+
+# Check if hiera-eyaml is installed
+if ! gem list -i hiera-eyaml &> /dev/null; then
+    print_failure "hiera-eyaml gem not found"
+    echo "This is required for Hiera lookups during catalog compilation."
+    echo "Install with: gem install hiera-eyaml"
+    exit 1
+fi
+
+echo "hiera-eyaml: installed"
+
+# Check if r10k is available (either via bundle or global)
+if ! command -v r10k &> /dev/null && ! bundle exec r10k --version &> /dev/null 2>&1; then
+    print_failure "r10k not found"
+    echo "Install with: gem install r10k"
+    echo "Or use via bundler: bundle install"
+    exit 1
+fi
+
+echo "r10k: available"
 
 # Deploy modules
 print_header "Step 1: Deploy Modules"
