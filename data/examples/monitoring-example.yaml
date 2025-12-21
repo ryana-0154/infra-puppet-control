@@ -1,0 +1,58 @@
+---
+# Example configuration for monitoring profile
+# Copy relevant sections to your node or common.yaml
+
+# Basic monitoring configuration
+profile::monitoring::manage_monitoring: true
+profile::monitoring::monitoring_dir: '/opt/monitoring'
+
+# Network configuration
+profile::monitoring::monitoring_ip: '10.10.10.1'
+
+# Service ports
+profile::monitoring::prometheus_port: 9090
+profile::monitoring::grafana_port: 3000
+profile::monitoring::blackbox_port: 9115
+profile::monitoring::pihole_exporter_port: 9617
+
+# Enable/disable services
+profile::monitoring::enable_prometheus: true
+profile::monitoring::enable_grafana: true
+profile::monitoring::enable_loki: true
+profile::monitoring::enable_promtail: true
+profile::monitoring::enable_pihole_exporter: false  # Disable if no PiHole
+profile::monitoring::enable_blackbox: true
+profile::monitoring::enable_node_exporter: true
+profile::monitoring::enable_wg_portal: false  # Disable if no WireGuard
+
+# Image versions
+profile::monitoring::prometheus_image: 'prom/prometheus:v2.45.0'
+profile::monitoring::grafana_image: 'grafana/grafana:10.0.0'
+profile::monitoring::loki_image: 'grafana/loki:3.1.1'
+profile::monitoring::promtail_image: 'grafana/promtail:3.1.1'
+
+# PiHole configuration (if enabled)
+profile::monitoring::pihole_hostname: '10.10.10.1'
+profile::monitoring::pihole_port: 80
+profile::monitoring::pihole_protocol: 'http'
+profile::monitoring::pihole_interval: '30s'
+
+# Secrets - ENCRYPT THESE WITH EYAML!
+# To encrypt:
+# eyaml encrypt -s 'your-grafana-password'
+# eyaml encrypt -s 'your-pihole-password'
+# eyaml encrypt -s 'your-pihole-api-token'
+#
+# Then use the encrypted values:
+# profile::monitoring::grafana_admin_password: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+#
+# profile::monitoring::pihole_password: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+#
+# profile::monitoring::pihole_api_token: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+
+# For testing only (DO NOT USE IN PRODUCTION):
+# profile::monitoring::grafana_admin_password: 'changeme'
+# profile::monitoring::pihole_password: 'changeme'

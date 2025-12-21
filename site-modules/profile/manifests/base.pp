@@ -7,14 +7,16 @@
 #   Whether to manage NTP configuration
 # @param manage_firewall
 #   Whether to manage firewall configuration
+# @param manage_logrotate
+#   Whether to manage logrotate configuration
 #
 # @example
 #   include profile::base
 #
 class profile::base (
-  Boolean $manage_ntp      = lookup('manage_ntp', Boolean, 'first', true),
-  Boolean $manage_firewall = lookup('manage_firewall', Boolean, 'first', true),
-  Boolean $manage_logrotate = lookup('manage_logrotate', Boolean, 'first', true),
+  Boolean $manage_ntp      = true,
+  Boolean $manage_firewall = true,
+  Boolean $manage_logrotate = true,
 ) {
   # NTP configuration
   if $manage_ntp {
