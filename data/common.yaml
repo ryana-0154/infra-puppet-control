@@ -10,8 +10,7 @@ profile::base::manage_ntp: false
 profile::base::manage_firewall: true
 profile::base::manage_logrotate: true
 
-# Firewall settings
-profile::firewall::manage_firewall: true
+# Firewall settings (managed via profile::base::manage_firewall)
 profile::firewall::purge_unmanaged: true
 profile::firewall::ssh_port: 22
 profile::firewall::allow_ping: true

@@ -28,8 +28,7 @@ profile::firewall::ssh_source:
 profile::firewall::ssh_port: ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEADK1MNVCcoO7uMEuEJ929Z99H5a7Uk33oq6oJeGHY7wPqPIXiTWc8+9OYycZJ8o9jwO7rgByPgVa9hPLqyJy14iZsqD6yrdQg7oMu6/TdRR7Drijzwj3gCisD1MM5KqirKkjRQDoYwDIktQZsyFWGapEHT8GH9Z+NjtPRc+JnSPDYzZw5U6xetabpr2hzeWQxK9CFO3j5nISuBS7HCEI7RavHyqGBfYg2o0XYjSEhK/o7IZEasNTPezH8j11iUuwNBoVNKdv2MtP+VD9xLvjVPIEk1pKNIIlYI38szUWwEsPf/w4zrRcDgo5mI5HmLktO+/77ZUqQobccLWi3fAjypTA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCDQGleTWNzrKusDA8unOEsgBBMTOSgimO1W9INOd+tiuED]
 profile::firewall::allow_ping: false
 
-# Firewall management
-profile::firewall::manage_firewall: true
+# Firewall management (controlled by profile::base::manage_firewall in common.yaml)
 
 # WireGuard VPN configuration
 profile::firewall::wireguard_port: 51820

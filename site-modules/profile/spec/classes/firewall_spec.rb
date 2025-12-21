@@ -86,11 +86,8 @@ describe 'profile::firewall' do
           is_expected.not_to contain_firewall('030 allow monitoring port 9115 from anywhere')
         end
 
-        it 'has final drop rule' do
-          is_expected.to contain_firewall('999 drop all other input').with(
-            proto: 'all',
-            jump: 'drop'
-          )
+        it 'does not have explicit final drop rule (relies on policy)' do
+          is_expected.not_to contain_firewall('999 drop all other input')
         end
       end
 
@@ -184,6 +181,103 @@ describe 'profile::firewall' do
             port: 443,
             proto: 'tcp',
             jump: 'accept'
+          )
+        end
+      end
+
+      context 'with WireGuard configuration' do
+        let(:params) do
+          {
+            'wireguard_port' => 51_820,
+            'wireguard_network' => '10.10.10.0/24',
+            'wireguard_interface' => 'wg0'
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+
+        it 'allows WireGuard UDP traffic' do
+          is_expected.to contain_firewall('040 allow wireguard').with(
+            dport: 51_820,
+            proto: 'udp',
+            jump: 'accept'
+          )
+        end
+
+        it 'allows monitoring from WireGuard network' do
+          is_expected.to contain_firewall('050 allow monitoring port 9090 from wireguard').with(
+            dport: 9090,
+            proto: 'tcp',
+            source: '10.10.10.0/24',
+            iniface: 'wg0',
+            jump: 'accept'
+          )
+        end
+
+        it 'allows DNS from WireGuard with interface restriction' do
+          is_expected.to contain_firewall('051 allow dns from wireguard').with(
+            dport: 53,
+            proto: 'udp',
+            source: '10.10.10.0/24',
+            iniface: 'wg0',
+            jump: 'accept'
+          )
+        end
+
+        it 'allows HTTP from WireGuard with interface restriction' do
+          is_expected.to contain_firewall('052 allow http from wireguard').with(
+            dport: 80,
+            proto: 'tcp',
+            source: '10.10.10.0/24',
+            iniface: 'wg0',
+            jump: 'accept'
+          )
+        end
+
+        it 'allows WireGuard routing when enabled' do
+          is_expected.to contain_firewall('060 allow wireguard routing').with(
+            chain: 'FORWARD',
+            iniface: 'wg0',
+            outiface: 'wg0',
+            jump: 'accept'
+          )
+        end
+      end
+
+      context 'with custom firewall rules' do
+        let(:params) do
+          {
+            'custom_rules' => {
+              'web_server' => {
+                'port' => 8080,
+                'proto' => 'tcp',
+                'jump' => 'accept'
+              },
+              'api_service' => {
+                'dport' => 9000,
+                'proto' => 'tcp',
+                'source' => '192.168.1.0/24'
+              }
+            }
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+
+        it 'creates first custom rule with port mapping' do
+          is_expected.to contain_firewall('100 custom rule web_server').with(
+            dport: 8080, # port mapped to dport
+            proto: 'tcp',
+            jump: 'accept'
+          )
+        end
+
+        it 'creates second custom rule with unique priority' do
+          is_expected.to contain_firewall('101 custom rule api_service').with(
+            dport: 9000,
+            proto: 'tcp',
+            source: '192.168.1.0/24',
+            jump: 'accept' # default
           )
         end
       end

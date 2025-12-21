@@ -43,11 +43,11 @@
 # @example Allow additional ports via Hiera
 #   profile::firewall::custom_rules:
 #     web_http:
-#       port: 80
+#       port: 80        # Automatically mapped to dport
 #       proto: tcp
 #       jump: accept
 #     web_https:
-#       port: 443
+#       dport: 443      # Direct parameter (preferred)
 #       proto: tcp
 #       jump: accept
 #
@@ -57,7 +57,7 @@ class profile::firewall (
   Enum['accept', 'drop']  $default_input_policy    = 'drop',
   Enum['accept', 'drop']  $default_output_policy   = 'accept',
   Enum['accept', 'drop']  $default_forward_policy  = 'drop',
-  Integer[1,65535]        $ssh_port                = 22,
+  Variant[Integer[1,65535], String] $ssh_port      = 22,
   Array[String[1]]        $ssh_source              = ['0.0.0.0/0'],
   Boolean                 $allow_ping              = true,
   Array[Integer[1,65535]] $monitoring_ports        = [9090, 9100, 9115],
@@ -175,39 +175,44 @@ class profile::firewall (
 
       # Allow common services from WireGuard network
       firewall { '051 allow dns from wireguard':
-        dport  => 53,
-        proto  => 'udp',
-        source => $wireguard_network,
-        jump   => 'accept',
+        dport   => 53,
+        proto   => 'udp',
+        source  => $wireguard_network,
+        iniface => $wireguard_interface,
+        jump    => 'accept',
       }
 
       firewall { '052 allow http from wireguard':
-        dport  => 80,
-        proto  => 'tcp',
-        source => $wireguard_network,
-        jump   => 'accept',
+        dport   => 80,
+        proto   => 'tcp',
+        source  => $wireguard_network,
+        iniface => $wireguard_interface,
+        jump    => 'accept',
       }
 
       firewall { '053 allow https from wireguard':
-        dport  => 443,
-        proto  => 'tcp',
-        source => $wireguard_network,
-        jump   => 'accept',
+        dport   => 443,
+        proto   => 'tcp',
+        source  => $wireguard_network,
+        iniface => $wireguard_interface,
+        jump    => 'accept',
       }
 
       # Allow WG Portal and Puppet from WireGuard network
       firewall { '054 allow wg-portal from wireguard':
-        dport  => 8888,
-        proto  => 'tcp',
-        source => $wireguard_network,
-        jump   => 'accept',
+        dport   => 8888,
+        proto   => 'tcp',
+        source  => $wireguard_network,
+        iniface => $wireguard_interface,
+        jump    => 'accept',
       }
 
       firewall { '055 allow puppet from wireguard':
-        dport  => 8140,
-        proto  => 'tcp',
-        source => $wireguard_network,
-        jump   => 'accept',
+        dport   => 8140,
+        proto   => 'tcp',
+        source  => $wireguard_network,
+        iniface => $wireguard_interface,
+        jump    => 'accept',
       }
 
       # Allow additional monitoring services from WireGuard
@@ -262,8 +267,22 @@ class profile::firewall (
         'proto' => 'tcp',
         'jump'  => 'accept',
       }
-      $merged_config = $rule_defaults + $rule_config
-      firewall { "100 custom rule ${rule_name}":
+
+      # Map 'port' parameter to 'dport' for firewall compatibility
+      $mapped_config = $rule_config.reduce({}) |Hash $acc, Array $kv| {
+        $key = $kv[0]
+        $value = $kv[1]
+        $mapped_key = $key ? {
+          'port' => 'dport',
+          default => $key,
+        }
+        $acc + { $mapped_key => $value }
+      }
+
+      $merged_config = $rule_defaults + $mapped_config
+      $rule_priority = 100 + $custom_rules.keys.index($rule_name)
+
+      firewall { "${rule_priority} custom rule ${rule_name}":
         * => $merged_config,
       }
     }
@@ -276,10 +295,6 @@ class profile::firewall (
     #   log_prefix => '[IPTABLES DROPPED INPUT]: ',
     # }
 
-    # Final drop rule (handled by default policy, but explicit for clarity)
-    firewall { '999 drop all other input':
-      proto => 'all',
-      jump  => 'drop',
-    }
+    # Final drop rule removed - rely on default policy instead to avoid conflicts
   }
 }
