@@ -25,7 +25,7 @@ class profile::base (
 
   # Firewall configuration
   if $manage_firewall {
-    include firewall
+    include profile::firewall
   }
 
   if $manage_logrotate {

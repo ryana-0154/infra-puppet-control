@@ -21,3 +21,27 @@ profile::monitoring::prometheus_image: 'prom/prometheus:v2.45.0'
 profile::monitoring::promtail_image: 'grafana/promtail:3.1.1'
 profile::monitoring::blackbox_image: 'prom/blackbox-exporter:v0.24.0'
 profile::monitoring::node_exporter_image: 'quay.io/prometheus/node-exporter:v1.6.0'
+
+# Firewall configuration for VPS
+profile::firewall::ssh_source:
+  - '0.0.0.0/0'  # Allow SSH from anywhere (consider restricting to your IP ranges)
+
+# Firewall management
+profile::firewall::manage_firewall: true
+
+# WireGuard VPN configuration
+profile::firewall::wireguard_port: 51820
+profile::firewall::wireguard_network: '10.10.10.0/24'
+profile::firewall::wireguard_interface: 'wg0'
+profile::firewall::allow_wireguard_routing: true
+
+# Custom firewall rules for web services (if needed)
+# profile::firewall::custom_rules:
+#   web_http:
+#     port: 80
+#     proto: tcp
+#     jump: accept
+#   web_https:
+#     port: 443
+#     proto: tcp
+#     jump: accept
