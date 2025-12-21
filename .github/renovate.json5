@@ -1,0 +1,39 @@
+// Alternative Renovate configuration for GitHub-specific settings
+// This file provides GitHub App specific overrides
+// The main configuration is in /renovate.json
+
+{
+  // GitHub-specific settings
+  "platform": "github",
+  "repositories": ["ryana-0154/infra-puppet-control"],
+
+  // Inherit main config
+  "extends": ["local>ryana-0154/infra-puppet-control"],
+
+  // GitHub App specific overrides
+  "gitAuthor": "Renovate Bot <noreply@renovatebot.com>",
+  "platformCommit": "enabled",
+
+  // GitHub-specific PR settings
+  "prBodyTemplate": [
+    "This PR contains the following updates:",
+    "",
+    "{{{table}}}",
+    "",
+    "---",
+    "",
+    "### Configuration",
+    "",
+    "📅 **Schedule**: {{{schedule}}}",
+    "🚦 **Automerge**: {{{automerge}}}",
+    "♻ **Rebasing**: {{{rebaseStalePrs}}}",
+    "👥 **Assignees**: {{{assignees}}}",
+    "",
+    "{{{notes}}}",
+    "{{{changelogs}}}"
+  ],
+
+  // GitHub status checks
+  "requiredStatusChecks": null,
+  "separateMinorPatch": false
+}
