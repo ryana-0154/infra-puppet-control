@@ -3,7 +3,7 @@
 
 # Monitoring configuration
 profile::monitoring::manage_monitoring: true
-profile::monitoring::monitoring_dir: '/opt/monitoring'
+profile::monitoring::monitoring_dir: '/opt/monitoring_test'
 profile::monitoring::monitoring_ip: '0.0.0.0'  # Listen on all interfaces for VPS
 
 # Enable only lightweight services on VPS
