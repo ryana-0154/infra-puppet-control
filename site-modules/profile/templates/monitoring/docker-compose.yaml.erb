@@ -70,16 +70,21 @@ services:
     environment:
       - PIHOLE_HOSTNAME=<%= @pihole_hostname %>
 <%- if @pihole_password -%>
-      - PIHOLE_PASSWORD=<%= @pihole_password %>
+      - PIHOLE_PASSWORD_FILE=/run/secrets/pihole_password
 <%- end -%>
       - PIHOLE_PORT=<%= @pihole_port %>
       - PIHOLE_PROTOCOL=<%= @pihole_protocol %>
       - INTERVAL=<%= @pihole_interval %>
       - PORT=<%= @pihole_exporter_port %>
       - ADDRESS=<%= @monitoring_ip %>
-<%- if @pihole_api_token -%>
+<%- if @pihole_password || @pihole_api_token -%>
     secrets:
+<%- if @pihole_password -%>
+      - pihole_password
+<%- end -%>
+<%- if @pihole_api_token -%>
       - pihole_api_token
+<%- end -%>
 <%- end -%>
 <%- end -%>
 
@@ -89,8 +94,6 @@ services:
     <<: *host
     container_name: blackbox-exporter
     command: ["--config.file=/etc/blackbox_exporter/config.yml"]
-    ports:
-      - "<%= @blackbox_port %>:<%= @blackbox_port %>"
     volumes:
       - ./blackbox.yaml:/etc/blackbox_exporter/config.yml:ro
 <%- end -%>
@@ -139,11 +142,15 @@ volumes:
   loki-data:
 <%- end -%>
 
-<%- if @grafana_admin_password || @pihole_api_token -%>
+<%- if @grafana_admin_password || @pihole_password || @pihole_api_token -%>
 secrets:
 <%- if @grafana_admin_password -%>
   grafana_admin_password:
     file: ./secrets/grafana_admin_password
+<%- end -%>
+<%- if @pihole_password -%>
+  pihole_password:
+    file: ./secrets/pihole_password
 <%- end -%>
 <%- if @pihole_api_token -%>
   pihole_api_token:

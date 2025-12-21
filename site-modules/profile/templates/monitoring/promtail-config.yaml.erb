@@ -1,0 +1,43 @@
+# Promtail configuration
+# Managed by Puppet - do not edit manually
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+<%- if @enable_loki -%>
+  - url: http://<%= @monitoring_ip %>:3100/loki/api/v1/push
+<%- else -%>
+  # Loki disabled - configure external Loki endpoint
+  # - url: http://external-loki:3100/loki/api/v1/push
+<%- end -%>
+
+scrape_configs:
+- job_name: system
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: varlogs
+      __path__: /var/log/*log
+
+- job_name: docker
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: docker
+      __path__: /var/lib/docker/containers/*/*log
+
+- job_name: systemd-journal
+  journal:
+    max_age: 12h
+    labels:
+      job: systemd-journal
+  relabel_configs:
+    - source_labels: ['__journal__systemd_unit']
+      target_label: 'unit'

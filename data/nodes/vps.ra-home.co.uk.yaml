@@ -8,13 +8,13 @@ profile::monitoring::monitoring_ip: '0.0.0.0'  # Listen on all interfaces for VP
 
 # Enable only lightweight services on VPS
 profile::monitoring::enable_prometheus: true
-profile::monitoring::enable_grafana: true      # Too resource intensive
-profile::monitoring::enable_loki: true         # Too resource intensive
+profile::monitoring::enable_grafana: false      # Too resource intensive
+profile::monitoring::enable_loki: false         # Too resource intensive
 profile::monitoring::enable_promtail: true
-profile::monitoring::enable_pihole_exporter: true
+profile::monitoring::enable_pihole_exporter: false
 profile::monitoring::enable_blackbox: true
 profile::monitoring::enable_node_exporter: true
-profile::monitoring::enable_wg_portal: true
+profile::monitoring::enable_wg_portal: false
 
 # Use specific versions for stability
 profile::monitoring::prometheus_image: 'prom/prometheus:v2.45.0'

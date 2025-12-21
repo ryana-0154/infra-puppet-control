@@ -1,0 +1,51 @@
+# Prometheus configuration
+# Managed by Puppet - do not edit manually
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['<%= @monitoring_ip %>:<%= @prometheus_port %>']
+
+<%- if @enable_node_exporter -%>
+  - job_name: 'node'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['<%= @monitoring_ip %>:9100']
+<%- end -%>
+
+<%- if @enable_blackbox -%>
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]  # Look for a HTTP 200 response.
+    static_configs:
+      - targets:
+        - http://prometheus.io    # Target to probe with http.
+        - https://prometheus.io   # Target to probe with https.
+        - http://example.com:8080 # Target to probe with http on port 8080.
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: <%= @monitoring_ip %>:9115  # The blackbox exporter's real hostname:port.
+<%- end -%>
+
+<%- if @enable_pihole_exporter -%>
+  - job_name: 'pihole'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['<%= @monitoring_ip %>:<%= @pihole_exporter_port %>']
+<%- end -%>
