@@ -137,10 +137,56 @@ class profile::monitoring (
       group   => $monitoring_dir_group,
       mode    => '0644',
       owner   => $monitoring_dir_owner,
+      require => File[$monitoring_dir],
+    }
+
+    # Create configuration files for services
+    if $enable_prometheus {
+      file { "${monitoring_dir}/prometheus.yaml":
+        ensure  => file,
+        content => template('profile/monitoring/prometheus.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File[$monitoring_dir],
+      }
+    }
+
+    if $enable_loki {
+      file { "${monitoring_dir}/loki-config.yaml":
+        ensure  => file,
+        content => template('profile/monitoring/loki-config.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File[$monitoring_dir],
+      }
+    }
+
+    if $enable_promtail {
+      file { "${monitoring_dir}/promtail-config.yaml":
+        ensure  => file,
+        content => template('profile/monitoring/promtail-config.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File[$monitoring_dir],
+      }
+    }
+
+    if $enable_blackbox {
+      file { "${monitoring_dir}/blackbox.yaml":
+        ensure  => file,
+        content => template('profile/monitoring/blackbox.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File[$monitoring_dir],
+      }
     }
 
     # Create secrets directory if any secrets are defined
-    if $grafana_admin_password or $pihole_api_token {
+    if $grafana_admin_password or $pihole_password or $pihole_api_token {
       file { "${monitoring_dir}/secrets":
         ensure => directory,
         group  => $monitoring_dir_group,
@@ -152,6 +198,17 @@ class profile::monitoring (
         file { "${monitoring_dir}/secrets/grafana_admin_password":
           ensure  => file,
           content => $grafana_admin_password,
+          group   => $monitoring_dir_group,
+          mode    => '0600',
+          owner   => $monitoring_dir_owner,
+          require => File["${monitoring_dir}/secrets"],
+        }
+      }
+
+      if $pihole_password {
+        file { "${monitoring_dir}/secrets/pihole_password":
+          ensure  => file,
+          content => $pihole_password,
           group   => $monitoring_dir_group,
           mode    => '0600',
           owner   => $monitoring_dir_owner,
