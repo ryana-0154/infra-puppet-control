@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  otel-collector:
+    image: <%= $otel_collector_image %>
+    container_name: otel-collector
+    restart: unless-stopped
+
+    command:
+      - "--config=/etc/otelcol-contrib/otel-collector-config.yaml"
+
+    volumes:
+      - <%= $otel_dir %>/config/otel-collector-config.yaml:/etc/otelcol-contrib/otel-collector-config.yaml:ro
+
+    ports:
+      # gRPC receiver
+      - "<%= $grpc_port %>:<%= $grpc_port %>"
+      # HTTP receiver
+      - "<%= $http_port %>:<%= $http_port %>"
+      # Prometheus metrics export
+      - "<%= $prometheus_port %>:<%= $prometheus_port %>"
+      # Health check
+      - "<%= $health_port %>:<%= $health_port %>"
+      # pprof profiling
+      - "<%= $pprof_port %>:<%= $pprof_port %>"
+
+    environment:
+      - GOMEMLIMIT=512MiB
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:<%= $health_port %>"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    networks:
+      - otel
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  otel:
+    driver: bridge

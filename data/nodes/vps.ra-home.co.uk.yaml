@@ -4,3 +4,61 @@
 # Monitoring configuration
 profile::monitoring::manage_monitoring: true
 profile::monitoring::monitoring_dir: '/opt/monitoring'
+profile::monitoring::monitoring_ip: '0.0.0.0'  # Listen on all interfaces for VPS
+
+# Enable only lightweight services on VPS
+profile::monitoring::enable_prometheus: true
+profile::monitoring::enable_grafana: false      # Too resource intensive
+profile::monitoring::enable_loki: false         # Too resource intensive
+profile::monitoring::enable_promtail: true
+profile::monitoring::enable_pihole_exporter: false
+profile::monitoring::enable_blackbox: true
+profile::monitoring::enable_node_exporter: true
+profile::monitoring::enable_wg_portal: false
+
+# Use specific versions for stability
+profile::monitoring::prometheus_image: 'prom/prometheus:v2.45.0'
+profile::monitoring::promtail_image: 'grafana/promtail:3.1.1'
+profile::monitoring::blackbox_image: 'prom/blackbox-exporter:v0.24.0'
+profile::monitoring::node_exporter_image: 'quay.io/prometheus/node-exporter:v1.6.0'
+
+# OpenTelemetry Collector for Claude Code monitoring
+manage_otel_collector: true
+profile::otel_collector::manage_otel_collector: true
+profile::otel_collector::otel_dir: '/opt/otel'
+profile::otel_collector::otel_grpc_port: 4317
+profile::otel_collector::otel_http_port: 4318
+profile::otel_collector::otel_prometheus_port: 8889
+profile::otel_collector::enable_grafana_dashboards: true
+profile::otel_collector::otel_collector_image: 'otel/opentelemetry-collector-contrib:0.91.0'
+
+# Firewall configuration for VPS
+profile::firewall::ssh_source:
+  - '0.0.0.0/0'  # Allow SSH from anywhere (consider restricting to your IP ranges)
+
+# Firewall management
+profile::firewall::manage_firewall: true
+
+# WireGuard VPN configuration
+profile::firewall::wireguard_port: 51820
+profile::firewall::wireguard_network: '10.10.10.0/24'
+profile::firewall::wireguard_interface: 'wg0'
+profile::firewall::allow_wireguard_routing: true
+
+# OTEL Collector firewall rules (WireGuard access only)
+profile::firewall::custom_rules:
+  otel_grpc:
+    port: 4317
+    proto: tcp
+    source: '10.10.10.0/24'
+    jump: accept
+  otel_http:
+    port: 4318
+    proto: tcp
+    source: '10.10.10.0/24'
+    jump: accept
+  otel_prometheus:
+    port: 8889
+    proto: tcp
+    source: '10.10.10.0/24'
+    jump: accept
