@@ -1,0 +1,108 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Europe/London",
+  "schedule": ["before 6am on Monday"],
+  "labels": ["dependencies"],
+  "assignees": ["@ryana-0154"],
+  "reviewers": ["@ryana-0154"],
+  "prConcurrentLimit": 3,
+  "prHourlyLimit": 2,
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newValue}}",
+  "branchPrefix": "renovate/",
+  "enabledManagers": [
+    "regex",
+    "puppet",
+    "bundler"
+  ],
+  "packageRules": [
+    {
+      "groupName": "Docker images in monitoring profile",
+      "matchManagers": ["regex"],
+      "matchFileNames": ["site-modules/profile/manifests/monitoring.pp"],
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "groupName": "Puppet modules",
+      "matchManagers": ["puppet"],
+      "schedule": ["before 6am on Monday"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "groupName": "Ruby dependencies",
+      "matchManagers": ["bundler"],
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "groupName": "Security updates",
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["patch"],
+      "labels": ["security", "dependencies"],
+      "schedule": ["at any time"],
+      "prPriority": 10
+    }
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["site-modules/profile/manifests/monitoring\\.pp$"],
+      "matchStrings": [
+        "\\$prometheus_image\\s*=\\s*'(?<depName>prom\\/prometheus):(?<currentValue>[^']+)'",
+        "\\$grafana_image\\s*=\\s*'(?<depName>grafana\\/grafana):(?<currentValue>[^']+)'",
+        "\\$loki_image\\s*=\\s*'(?<depName>grafana\\/loki):(?<currentValue>[^']+)'",
+        "\\$promtail_image\\s*=\\s*'(?<depName>grafana\\/promtail):(?<currentValue>[^']+)'",
+        "\\$pihole_exporter_image\\s*=\\s*'(?<depName>ekofr\\/pihole-exporter):(?<currentValue>[^']+)'",
+        "\\$blackbox_image\\s*=\\s*'(?<depName>prom\\/blackbox-exporter):(?<currentValue>[^']+)'",
+        "\\$node_exporter_image\\s*=\\s*'(?<depName>quay\\.io\\/prometheus\\/node-exporter):(?<currentValue>[^']+)'",
+        "\\$wg_portal_image\\s*=\\s*'(?<depName>wgportal\\/wg-portal):(?<currentValue>[^']+)'"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": ["site-modules/profile/templates/monitoring/docker-compose\\.yaml\\.erb$"],
+      "matchStrings": [
+        "image:\\s*(?<depName>[^:]+):(?<currentValue>.+?)\\s*$"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": ["data/.+\\.yaml$"],
+      "matchStrings": [
+        "profile::monitoring::prometheus_image:\\s*'(?<depName>prom\\/prometheus):(?<currentValue>[^']+)'",
+        "profile::monitoring::grafana_image:\\s*'(?<depName>grafana\\/grafana):(?<currentValue>[^']+)'",
+        "profile::monitoring::loki_image:\\s*'(?<depName>grafana\\/loki):(?<currentValue>[^']+)'",
+        "profile::monitoring::promtail_image:\\s*'(?<depName>grafana\\/promtail):(?<currentValue>[^']+)'",
+        "profile::monitoring::pihole_exporter_image:\\s*'(?<depName>ekofr\\/pihole-exporter):(?<currentValue>[^']+)'",
+        "profile::monitoring::blackbox_image:\\s*'(?<depName>prom\\/blackbox-exporter):(?<currentValue>[^']+)'",
+        "profile::monitoring::node_exporter_image:\\s*'(?<depName>quay\\.io\\/prometheus\\/node-exporter):(?<currentValue>[^']+)'",
+        "profile::monitoring::wg_portal_image:\\s*'(?<depName>wgportal\\/wg-portal):(?<currentValue>[^']+)'"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "puppet": {
+    "fileMatch": ["Puppetfile$"],
+    "rangeStrategy": "replace"
+  },
+  "bundler": {
+    "fileMatch": ["Gemfile$", "Gemfile\\.lock$"]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "labels": ["security", "vulnerability"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "separateMinorPatch": false,
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "prBodyTemplate": "{{{header}}}{{{table}}}{{{notes}}}{{{changelogs}}}",
+  "prTitle": "{{commitMessagePrefix}} {{commitMessageAction}} {{commitMessageTopic}} {{commitMessageExtra}}",
+  "automerge": false,
+  "platformAutomerge": false
+}

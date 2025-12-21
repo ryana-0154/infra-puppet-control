@@ -101,3 +101,15 @@ GitHub Actions runs on all pull requests and pushes to main:
 - RuboCop style checking
 - Unit tests with rspec-puppet (Puppet 7 and 8)
 - Security scanning with bundler-audit
+
+## Dependency Management
+
+This repository uses [Renovate Bot](https://renovatebot.com/) to automatically keep dependencies up to date:
+
+- **Docker images** in monitoring stack (Prometheus, Grafana, etc.)
+- **Puppet modules** from Puppet Forge
+- **Ruby gems** in Gemfile
+
+Renovate creates PRs every Monday morning with grouped updates. Security updates are created immediately when detected.
+
+See [docs/renovate.md](docs/renovate.md) for full documentation.
