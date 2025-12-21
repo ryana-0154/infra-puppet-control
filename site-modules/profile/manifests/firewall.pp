@@ -100,6 +100,11 @@ class profile::firewall (
       policy => $default_forward_policy,
     }
 
+    # NAT chain for masquerading
+    firewallchain { 'POSTROUTING:nat:IPv4':
+      ensure => present,
+    }
+
     # Essential rules for system operation
     # Allow loopback traffic
     firewall { '001 accept all to lo interface':
@@ -162,19 +167,43 @@ class profile::firewall (
     }
 
     if $wireguard_network and $wireguard_interface {
-      # Allow monitoring services from WireGuard network
+      # Allow monitoring services from WireGuard network (to 10.10.10.1)
       $monitoring_ports.each |Integer $port| {
         firewall { "050 allow monitoring port ${port} from wireguard":
-          dport   => $port,
-          proto   => 'tcp',
-          source  => $wireguard_network,
-          iniface => $wireguard_interface,
-          jump    => 'accept',
+          dport       => $port,
+          proto       => 'tcp',
+          destination => '10.10.10.1',
+          iniface     => $wireguard_interface,
+          jump        => 'accept',
         }
       }
 
-      # Allow common services from WireGuard network
-      firewall { '051 allow dns from wireguard':
+      # Allow outbound DNS queries (essential for Unbound to resolve external DNS)
+      firewall { '045 allow outbound dns udp':
+        chain => 'OUTPUT',
+        dport => 53,
+        proto => 'udp',
+        jump  => 'accept',
+      }
+
+      firewall { '046 allow outbound dns tcp':
+        chain => 'OUTPUT',
+        dport => 53,
+        proto => 'tcp',
+        jump  => 'accept',
+      }
+
+      # Allow local communication between PiHole and Unbound
+      firewall { '047 allow pihole to unbound':
+        dport       => 5353,
+        proto       => 'udp',
+        source      => '127.0.0.1',
+        destination => '127.0.0.1',
+        jump        => 'accept',
+      }
+
+      # Allow DNS service from WireGuard network (for PiHole/local DNS)
+      firewall { '051 allow dns udp from wireguard':
         dport   => 53,
         proto   => 'udp',
         source  => $wireguard_network,
@@ -182,7 +211,25 @@ class profile::firewall (
         jump    => 'accept',
       }
 
-      firewall { '052 allow http from wireguard':
+      # Allow DNS TCP from WireGuard network (Windows often uses TCP DNS)
+      firewall { '052 allow dns tcp from wireguard':
+        dport   => 53,
+        proto   => 'tcp',
+        source  => $wireguard_network,
+        iniface => $wireguard_interface,
+        jump    => 'accept',
+      }
+
+      # Allow Unbound DNS (PiHole backend) from WireGuard network
+      firewall { '053 allow unbound from wireguard':
+        dport   => 5353,
+        proto   => 'udp',
+        source  => $wireguard_network,
+        iniface => $wireguard_interface,
+        jump    => 'accept',
+      }
+
+      firewall { '054 allow http from wireguard':
         dport   => 80,
         proto   => 'tcp',
         source  => $wireguard_network,
@@ -190,7 +237,7 @@ class profile::firewall (
         jump    => 'accept',
       }
 
-      firewall { '053 allow https from wireguard':
+      firewall { '055 allow https from wireguard':
         dport   => 443,
         proto   => 'tcp',
         source  => $wireguard_network,
@@ -199,7 +246,7 @@ class profile::firewall (
       }
 
       # Allow WG Portal and Puppet from WireGuard network
-      firewall { '054 allow wg-portal from wireguard':
+      firewall { '056 allow wg-portal from wireguard':
         dport   => 8888,
         proto   => 'tcp',
         source  => $wireguard_network,
@@ -207,7 +254,7 @@ class profile::firewall (
         jump    => 'accept',
       }
 
-      firewall { '055 allow puppet from wireguard':
+      firewall { '057 allow puppet from wireguard':
         dport   => 8140,
         proto   => 'tcp',
         source  => $wireguard_network,
@@ -216,7 +263,7 @@ class profile::firewall (
       }
 
       # Allow additional monitoring services from WireGuard
-      firewall { '056 allow pihole exporter from wireguard':
+      firewall { '058 allow pihole exporter from wireguard':
         dport   => 9617,
         proto   => 'tcp',
         source  => $wireguard_network,
@@ -224,7 +271,7 @@ class profile::firewall (
         jump    => 'accept',
       }
 
-      firewall { '057 allow additional monitoring from wireguard':
+      firewall { '059 allow additional monitoring from wireguard':
         dport   => 9586,
         proto   => 'tcp',
         source  => $wireguard_network,
@@ -233,7 +280,7 @@ class profile::firewall (
       }
 
       # Allow Grafana from WireGuard (if enabled)
-      firewall { '058 allow grafana from wireguard':
+      firewall { '060 allow grafana from wireguard':
         dport   => 3000,
         proto   => 'tcp',
         source  => $wireguard_network,
@@ -242,7 +289,7 @@ class profile::firewall (
       }
 
       # Allow Loki from WireGuard (if enabled)
-      firewall { '059 allow loki from wireguard':
+      firewall { '061 allow loki from wireguard':
         dport   => 3100,
         proto   => 'tcp',
         source  => $wireguard_network,
@@ -252,11 +299,47 @@ class profile::firewall (
 
       # Allow routing between WireGuard interfaces if enabled
       if $allow_wireguard_routing {
-        firewall { '060 allow wireguard routing':
+        firewall { '070 allow wireguard routing':
           chain    => 'FORWARD',
           iniface  => $wireguard_interface,
           outiface => $wireguard_interface,
           jump     => 'accept',
+        }
+
+        # Allow WireGuard to internet forwarding (essential for DNS/internet access)
+        firewall { '071 allow wireguard to internet':
+          chain    => 'FORWARD',
+          iniface  => $wireguard_interface,
+          outiface => '! wg0',  # Any interface except WireGuard
+          jump     => 'accept',
+        }
+
+        # Allow return traffic from internet to WireGuard clients
+        firewall { '072 allow internet to wireguard return':
+          chain    => 'FORWARD',
+          iniface  => '! wg0',  # Any interface except WireGuard
+          outiface => $wireguard_interface,
+          state    => ['RELATED', 'ESTABLISHED'],
+          jump     => 'accept',
+        }
+
+        # Exclude localhost traffic from masquerading
+        firewall { '072 exclude localhost from masquerading':
+          table       => 'nat',
+          chain       => 'POSTROUTING',
+          proto       => 'all',
+          source      => '127.0.0.0/8',
+          destination => '127.0.0.0/8',
+          jump        => 'RETURN',
+        }
+
+        # NAT masquerading for WireGuard traffic (critical for internet access)
+        firewall { '073 masquerade wireguard traffic':
+          table    => 'nat',
+          chain    => 'POSTROUTING',
+          proto    => 'all',
+          outiface => '! wg0',  # Any interface except WireGuard
+          jump     => 'MASQUERADE',
         }
       }
     }
@@ -287,13 +370,21 @@ class profile::firewall (
       }
     }
 
-    # Log dropped packets (optional - can be noisy)
-    # firewall { '990 log dropped input':
-    #   proto     => 'all',
-    #   jump      => 'LOG',
-    #   log_level => '4',
-    #   log_prefix => '[IPTABLES DROPPED INPUT]: ',
-    # }
+    # Log dropped packets for debugging
+    firewall { '990 log dropped input':
+      proto      => 'all',
+      jump       => 'LOG',
+      log_level  => '4',
+      log_prefix => '[IPTABLES DROPPED INPUT]: ',
+    }
+
+    firewall { '991 log dropped forward':
+      chain      => 'FORWARD',
+      proto      => 'all',
+      jump       => 'LOG',
+      log_level  => '4',
+      log_prefix => '[IPTABLES DROPPED FORWARD]: ',
+    }
 
     # Final drop rule removed - rely on default policy instead to avoid conflicts
   }
