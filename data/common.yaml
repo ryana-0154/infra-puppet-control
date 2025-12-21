@@ -10,6 +10,7 @@ profile::base::manage_ntp: false
 profile::base::manage_firewall: false
 profile::base::manage_logrotate: false
 profile::base::manage_otel_collector: false
+profile::base::manage_fail2ban: false
 
 # Firewall settings (managed via profile::base::manage_firewall)
 profile::firewall::purge_unmanaged: true
@@ -36,3 +37,13 @@ profile::logrotate::delaycompress: true
 #     notifempty: true
 #     sharedscripts: true
 #     postrotate: 'systemctl reload apache2 > /dev/null'
+
+# Fail2ban intrusion prevention settings
+profile::fail2ban::bantime: '1h'
+profile::fail2ban::findtime: '10m'
+profile::fail2ban::maxretry: 5
+profile::fail2ban::enable_ssh_jail: true
+profile::fail2ban::enable_http_jails: true
+profile::fail2ban::http_logpath:
+  - '/var/log/nginx/access.log'
+  - '/var/log/apache2/access.log'
