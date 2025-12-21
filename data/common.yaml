@@ -5,9 +5,10 @@ ntp::servers:
   - 2.uk.pool.ntp.org
   - 3.uk.pool.ntp.org
 
-manage_ntp: false
-manage_firewall: false
-manage_logrotate: true
+# Profile::base settings
+profile::base::manage_ntp: false
+profile::base::manage_firewall: false
+profile::base::manage_logrotate: true
 
 # Logrotate settings
 profile::logrotate::rotate_period: 'weekly'

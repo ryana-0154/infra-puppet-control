@@ -1,0 +1,159 @@
+x-host: &host
+  network_mode: "host"
+  restart: unless-stopped
+
+services:
+<%- if @enable_prometheus -%>
+  prometheus:
+    image: <%= @prometheus_image %>
+    <<: *host
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+      - --web.listen-address=<%= @monitoring_ip %>:<%= @prometheus_port %>
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - prometheus-data:/prometheus
+<%- end -%>
+
+<%- if @enable_grafana -%>
+  grafana:
+    image: <%= @grafana_image %>
+    <<: *host
+    container_name: grafana
+    environment:
+      - GF_SERVER_HTTP_ADDR=<%= @monitoring_ip %>
+      - GF_SERVER_HTTP_PORT=<%= @grafana_port %>
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+<%- if @grafana_admin_password -%>
+      - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_admin_password
+<%- end -%>
+<%- if @grafana_admin_password -%>
+    secrets:
+      - grafana_admin_password
+<%- end -%>
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning:ro
+<%- end -%>
+
+<%- if @enable_loki -%>
+  loki:
+    image: <%= @loki_image %>
+    <<: *host
+    container_name: loki
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+<%- end -%>
+
+<%- if @enable_promtail -%>
+  promtail:
+    image: <%= @promtail_image %>
+    <<: *host
+    container_name: promtail
+    command: -config.file=/etc/promtail/config.yaml
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yaml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /run/log/journal:/run/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
+<%- end -%>
+
+<%- if @enable_pihole_exporter -%>
+  pihole-exporter:
+    image: <%= @pihole_exporter_image %>
+    <<: *host
+    container_name: pihole-exporter
+    environment:
+      - PIHOLE_HOSTNAME=<%= @pihole_hostname %>
+<%- if @pihole_password -%>
+      - PIHOLE_PASSWORD_FILE=/run/secrets/pihole_password
+<%- end -%>
+      - PIHOLE_PORT=<%= @pihole_port %>
+      - PIHOLE_PROTOCOL=<%= @pihole_protocol %>
+      - INTERVAL=<%= @pihole_interval %>
+      - PORT=<%= @pihole_exporter_port %>
+      - ADDRESS=<%= @monitoring_ip %>
+<%- if @pihole_password || @pihole_api_token -%>
+    secrets:
+<%- if @pihole_password -%>
+      - pihole_password
+<%- end -%>
+<%- if @pihole_api_token -%>
+      - pihole_api_token
+<%- end -%>
+<%- end -%>
+<%- end -%>
+
+<%- if @enable_blackbox -%>
+  blackbox:
+    image: <%= @blackbox_image %>
+    <<: *host
+    container_name: blackbox-exporter
+    command: ["--config.file=/etc/blackbox_exporter/config.yml"]
+    volumes:
+      - ./blackbox.yaml:/etc/blackbox_exporter/config.yml:ro
+<%- end -%>
+
+<%- if @enable_node_exporter -%>
+  node_exporter:
+    image: <%= @node_exporter_image %>
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+<%- end -%>
+
+<%- if @enable_wg_portal -%>
+  wg-portal:
+    image: <%= @wg_portal_image %>
+    container_name: wg-portal
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    cap_add:
+      - NET_ADMIN
+    # Use host network mode for WireGuard and the UI. Ensure that access to the UI is properly secured.
+    network_mode: "host"
+    volumes:
+      # left side is the host path, right side is the container path
+      - /etc/wireguard:/etc/wireguard
+      - ./data:/app/data
+      - ./config:/app/config
+<%- end -%>
+
+volumes:
+<%- if @enable_grafana -%>
+  grafana-data:
+<%- end -%>
+<%- if @enable_prometheus -%>
+  prometheus-data:
+<%- end -%>
+<%- if @enable_loki -%>
+  loki-data:
+<%- end -%>
+
+<%- if @grafana_admin_password || @pihole_password || @pihole_api_token -%>
+secrets:
+<%- if @grafana_admin_password -%>
+  grafana_admin_password:
+    file: ./secrets/grafana_admin_password
+<%- end -%>
+<%- if @pihole_password -%>
+  pihole_password:
+    file: ./secrets/pihole_password
+<%- end -%>
+<%- if @pihole_api_token -%>
+  pihole_api_token:
+    file: ./secrets/pihole_api_token
+<%- end -%>
+<%- end -%>
