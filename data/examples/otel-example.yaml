@@ -1,0 +1,68 @@
+---
+# Example OpenTelemetry Collector configuration
+# Copy relevant sections to your node or common.yaml
+
+# OTEL Collector management
+profile::otel_collector::manage_otel_collector: true
+profile::otel_collector::otel_dir: '/opt/otel'
+
+# OTEL Collector ports
+profile::otel_collector::otel_grpc_port: 4317      # gRPC receiver
+profile::otel_collector::otel_http_port: 4318      # HTTP receiver
+profile::otel_collector::otel_health_port: 13133   # Health check
+profile::otel_collector::otel_pprof_port: 1777     # Profiling
+profile::otel_collector::otel_prometheus_port: 8889 # Prometheus export
+
+# Prometheus scraping configuration
+profile::otel_collector::prometheus_scrape_interval: '15s'
+
+# Container configuration
+profile::otel_collector::otel_collector_image: 'otel/opentelemetry-collector-contrib:latest'
+
+# Grafana integration
+profile::otel_collector::enable_grafana_dashboards: true
+profile::otel_collector::grafana_datasource_name: 'Prometheus'
+
+# Firewall configuration for OTEL ports
+profile::firewall::custom_rules:
+  # OTEL gRPC receiver (for Claude Code metrics)
+  otel_grpc:
+    port: 4317
+    proto: tcp
+    source: '10.10.10.0/24'  # Only from WireGuard network
+    jump: accept
+
+  # OTEL HTTP receiver (alternative endpoint)
+  otel_http:
+    port: 4318
+    proto: tcp
+    source: '10.10.10.0/24'  # Only from WireGuard network
+    jump: accept
+
+  # OTEL Prometheus export (for scraping)
+  otel_prometheus:
+    port: 8889
+    proto: tcp
+    source: '10.10.10.0/24'  # Only from WireGuard network
+    jump: accept
+
+# Example Prometheus job configuration (add to prometheus.yml):
+# scrape_configs:
+#   - job_name: 'otel-collector'
+#     static_configs:
+#       - targets: ['localhost:8889']
+#     scrape_interval: 15s
+#     metrics_path: /metrics
+
+# Claude Code client configuration:
+# Set these environment variables to send metrics to OTEL collector:
+# export OTEL_EXPORTER_OTLP_ENDPOINT=http://your-server:4317
+# export OTEL_SERVICE_NAME=claude-code
+# export OTEL_RESOURCE_ATTRIBUTES=service.version=1.0.0
+
+# Security considerations:
+# 1. OTEL ports are restricted to WireGuard network only
+# 2. Consider using authentication if exposing publicly
+# 3. Monitor OTEL collector resource usage
+# 4. Set up log rotation for container logs
+# 5. Use specific image versions instead of 'latest' in production
