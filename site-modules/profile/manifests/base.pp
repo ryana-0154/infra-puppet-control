@@ -16,10 +16,10 @@
 #   include profile::base
 #
 class profile::base (
-  Boolean $manage_ntp           = lookup('manage_ntp', Boolean, 'first', true),
-  Boolean $manage_firewall      = lookup('manage_firewall', Boolean, 'first', true),
-  Boolean $manage_logrotate     = lookup('manage_logrotate', Boolean, 'first', true),
-  Boolean $manage_otel_collector = lookup('manage_otel_collector', Boolean, 'first', false),
+  Boolean $manage_ntp           = true,
+  Boolean $manage_firewall      = true,
+  Boolean $manage_logrotate     = true,
+  Boolean $manage_otel_collector = false,
 ) {
   # NTP configuration
   if $manage_ntp {
@@ -28,7 +28,7 @@ class profile::base (
 
   # Firewall configuration
   if $manage_firewall {
-    include firewall
+    include profile::firewall
   }
 
   if $manage_logrotate {

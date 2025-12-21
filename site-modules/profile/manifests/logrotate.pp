@@ -33,15 +33,15 @@
 #       compress: true
 #
 class profile::logrotate (
-  Boolean $manage_logrotate = lookup('profile::logrotate::manage_logrotate', Boolean, 'first', true),
-  String[1] $rotate_period  = lookup('profile::logrotate::rotate_period', String[1], 'first', 'weekly'),
-  Integer[1] $rotate_count  = lookup('profile::logrotate::rotate_count', Integer[1], 'first', 4),
-  Boolean $compress         = lookup('profile::logrotate::compress', Boolean, 'first', true),
-  Boolean $delaycompress    = lookup('profile::logrotate::delaycompress', Boolean, 'first', true),
-  String[4,4] $create_mode  = lookup('profile::logrotate::create_mode', String[4,4], 'first', '0640'),
-  String[1] $create_owner   = lookup('profile::logrotate::create_owner', String[1], 'first', 'root'),
-  String[1] $create_group   = lookup('profile::logrotate::create_group', String[1], 'first', 'adm'),
-  Hash $rules               = lookup('profile::logrotate::rules', Hash, 'first', {}),
+  Boolean     $manage_logrotate = true,
+  String[1]   $rotate_period    = 'weekly',
+  Integer[1]  $rotate_count     = 4,
+  Boolean     $compress         = true,
+  Boolean     $delaycompress    = true,
+  String[4,4] $create_mode      = '0640',
+  String[1]   $create_owner     = 'root',
+  String[1]   $create_group     = 'adm',
+  Hash        $rules            = {},
 ) {
   if $manage_logrotate {
     # Manage the logrotate package and base configuration

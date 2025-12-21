@@ -5,9 +5,19 @@ ntp::servers:
   - 2.uk.pool.ntp.org
   - 3.uk.pool.ntp.org
 
-manage_ntp: false
-manage_firewall: false
-manage_logrotate: true
+# Profile::base settings
+profile::base::manage_ntp: false
+profile::base::manage_firewall: true
+profile::base::manage_logrotate: true
+
+# Firewall settings (managed via profile::base::manage_firewall)
+profile::firewall::purge_unmanaged: true
+profile::firewall::ssh_port: 22
+profile::firewall::allow_ping: true
+profile::firewall::monitoring_ports:
+  - 9090  # Prometheus
+  - 9100  # Node Exporter
+  - 9115  # Blackbox Exporter
 
 # Logrotate settings
 profile::logrotate::rotate_period: 'weekly'

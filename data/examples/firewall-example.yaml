@@ -1,0 +1,95 @@
+---
+# Example firewall configuration
+# Copy relevant sections to your node or common.yaml
+
+# Basic firewall management
+profile::base::manage_firewall: true
+profile::firewall::manage_firewall: true
+profile::firewall::purge_unmanaged: true
+
+# Default policies
+profile::firewall::default_input_policy: 'drop'   # drop or accept
+profile::firewall::default_output_policy: 'accept' # drop or accept
+profile::firewall::default_forward_policy: 'drop' # drop or accept
+
+# SSH configuration
+profile::firewall::ssh_port: 22
+profile::firewall::ssh_source:
+  - '0.0.0.0/0'          # Allow from anywhere (not recommended for production)
+  # - '192.168.1.0/24'   # Allow from local network only
+  # - '203.0.113.0/24'   # Allow from office network
+  # - '198.51.100.50/32' # Allow from specific IP
+
+# Basic connectivity
+profile::firewall::allow_ping: true
+
+# Monitoring ports (Prometheus stack)
+profile::firewall::monitoring_ports:
+  - 9090  # Prometheus web UI
+  - 9100  # Node Exporter metrics
+  - 9115  # Blackbox Exporter
+  - 3000  # Grafana (if enabled)
+  # - 3100  # Loki (if enabled)
+  # - 9080  # Promtail (usually internal only)
+
+# WireGuard VPN configuration
+profile::firewall::wireguard_port: 51820           # WireGuard UDP port
+profile::firewall::wireguard_network: '10.10.10.0/24'  # VPN network CIDR
+profile::firewall::wireguard_interface: 'wg0'      # Interface name
+profile::firewall::allow_wireguard_routing: true   # Allow peer-to-peer routing
+
+# Custom application rules
+profile::firewall::custom_rules:
+  # Web server ports
+  web_http:
+    port: 80
+    proto: tcp
+    jump: accept
+  web_https:
+    port: 443
+    proto: tcp
+    jump: accept
+
+  # Database access (restrict source as needed)
+  mysql:
+    port: 3306
+    proto: tcp
+    source: '192.168.1.0/24'  # Only from local network
+    jump: accept
+
+  # Custom application
+  app_api:
+    port: 8080
+    proto: tcp
+    jump: accept
+
+  # UDP service example
+  dns_server:
+    port: 53
+    proto: udp
+    jump: accept
+
+# Advanced: Custom rules with multiple parameters
+# profile::firewall::custom_rules:
+#   complex_rule:
+#     port: [8080, 8081, 8082]  # Multiple ports
+#     proto: tcp
+#     source: '10.0.0.0/8'      # Specific source network
+#     destination: '192.168.1.10' # Specific destination
+#     jump: accept
+#     state: ['NEW']            # Connection state
+#     iniface: 'eth0'           # Specific interface
+
+# Security considerations:
+# 1. Always restrict SSH sources to known networks when possible
+# 2. Use specific ports rather than port ranges when possible
+# 3. Consider logging dropped packets for security monitoring
+# 4. Test firewall rules in a safe environment first
+# 5. Have console access before enabling restrictive rules
+# 6. Keep monitoring ports internal-only when possible
+
+# For troubleshooting:
+# - Check active rules: iptables -L -n
+# - Check rule order: iptables -L -n --line-numbers
+# - Test connectivity: telnet <host> <port>
+# - Review logs: journalctl -u iptables
