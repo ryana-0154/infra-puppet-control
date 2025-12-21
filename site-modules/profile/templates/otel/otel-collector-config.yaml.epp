@@ -1,0 +1,88 @@
+# OpenTelemetry Collector configuration for Claude Code monitoring
+# This configuration receives metrics via gRPC/HTTP and exports to Prometheus
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:<%= $grpc_port %>
+      http:
+        endpoint: 0.0.0.0:<%= $http_port %>
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Add resource attributes for better identification
+  resource:
+    attributes:
+      - key: service.name
+        value: "claude-code"
+        action: upsert
+      - key: service.version
+        from_attribute: "claude.version"
+        action: insert
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 512
+    spike_limit_mib: 128
+    check_interval: 5s
+
+  # Filter out internal OTEL metrics if needed
+  filter:
+    metrics:
+      exclude:
+        match_type: regexp
+        metric_names:
+          - "otelcol_.*"
+
+exporters:
+  # Prometheus exporter for integration with existing monitoring
+  prometheus:
+    endpoint: "0.0.0.0:<%= $prometheus_port %>"
+    const_labels:
+      instance: "claude-code-otel"
+
+  # Logging exporter for debugging (optional)
+  logging:
+    loglevel: info
+
+  # Debug exporter for development (disable in production)
+  debug:
+    verbosity: basic
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:<%= $health_port %>
+
+  pprof:
+    endpoint: 0.0.0.0:<%= $pprof_port %>
+
+service:
+  extensions: [health_check, pprof]
+
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, filter, batch]
+      exporters: [prometheus, logging]
+
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [logging]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [logging]
+
+  telemetry:
+    logs:
+      level: "info"
+    metrics:
+      level: "basic"
+      address: "0.0.0.0:8888"
