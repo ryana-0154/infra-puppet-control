@@ -7,8 +7,9 @@ ntp::servers:
 
 # Profile::base settings
 profile::base::manage_ntp: false
-profile::base::manage_firewall: true
-profile::base::manage_logrotate: true
+profile::base::manage_firewall: false
+profile::base::manage_logrotate: false
+profile::base::manage_otel_collector: false
 
 # Firewall settings (managed via profile::base::manage_firewall)
 profile::firewall::purge_unmanaged: true
