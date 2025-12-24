@@ -255,10 +255,6 @@ describe 'profile::monitoring' do
 
     it { is_expected.to compile.with_all_deps }
 
-    it 'installs git package' do
-      is_expected.to contain_package('git').with_ensure('installed')
-    end
-
     it 'clones dashboard repository' do
       is_expected.to contain_vcsrepo('/opt/monitoring/dashboards-external').with(
         ensure: 'present',

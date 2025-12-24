@@ -230,9 +230,7 @@ class profile::monitoring (
 
     # Ensure git is installed for external dashboard repos
     if $enable_external_dashboards {
-      package { 'git':
-        ensure => installed,
-      }
+      ensure_packages(['git'])
     }
 
     # Ensure the monitoring directory exists
@@ -345,10 +343,7 @@ class profile::monitoring (
           provider => 'git',
           source   => $dashboard_repo_url,
           revision => $dashboard_repo_revision,
-          require  => [
-            File[$monitoring_dir],
-            Package['git'],
-          ],
+          require  => File[$monitoring_dir],
         }
       }
 
