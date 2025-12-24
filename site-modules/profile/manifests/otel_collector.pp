@@ -6,8 +6,7 @@
 #
 # @note Requirements
 #   - Docker must be installed and running
-#   - docker-compose v1 (`docker-compose`) or Docker Compose v2 (`docker compose`) must be available
-#   - Automatically detects and uses whichever version is available
+#   - This profile will ensure docker-compose-plugin (v2) is installed
 #
 # @param manage_otel_collector
 #   Whether to manage the OTEL collector
@@ -53,6 +52,11 @@ class profile::otel_collector (
   String[1]            $grafana_datasource_name   = 'Prometheus',
 ) {
   if $manage_otel_collector {
+    # Ensure Docker Compose v2 is installed
+    package { 'docker-compose-plugin':
+      ensure => installed,
+    }
+
     # Create OTEL directory structure
     file { [$otel_dir, "${otel_dir}/config", "${otel_dir}/dashboards"]:
       ensure => directory,
@@ -137,13 +141,13 @@ class profile::otel_collector (
     }
 
     # Ensure docker-compose stack is running
-    # Support both docker-compose v1 and docker compose v2
     exec { 'start-otel-collector':
-      command => 'sh -c "docker compose version >/dev/null 2>&1 && docker compose up -d || docker-compose up -d"',
+      command => 'docker compose up -d',
       cwd     => $otel_dir,
       path    => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       unless  => "docker ps --format '{{.Names}}' | grep -q '^otel-collector$'",
       require => [
+        Package['docker-compose-plugin'],
         File["${otel_dir}/docker-compose.yaml"],
         File["${otel_dir}/config/otel-collector-config.yaml"],
         File["${otel_dir}/.env"],
@@ -152,7 +156,7 @@ class profile::otel_collector (
 
     # Restart containers when configuration changes
     exec { 'restart-otel-collector':
-      command     => 'sh -c "docker compose version >/dev/null 2>&1 && docker compose up -d --force-recreate || docker-compose up -d --force-recreate"',
+      command     => 'docker compose up -d --force-recreate',
       cwd         => $otel_dir,
       path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       refreshonly => true,
@@ -161,6 +165,7 @@ class profile::otel_collector (
         File["${otel_dir}/config/otel-collector-config.yaml"],
         File["${otel_dir}/.env"],
       ],
+      require     => Package['docker-compose-plugin'],
     }
   }
 }

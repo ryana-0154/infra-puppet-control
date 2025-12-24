@@ -10,6 +10,10 @@ describe 'profile::otel_collector' do
       context 'with default parameters' do
         it { is_expected.to compile.with_all_deps }
 
+        it 'ensures docker-compose-plugin is installed' do
+          is_expected.to contain_package('docker-compose-plugin').with_ensure('installed')
+        end
+
         it 'creates OTEL directory structure' do
           is_expected.to contain_file('/opt/otel').with(
             ensure: 'directory',
@@ -46,16 +50,14 @@ describe 'profile::otel_collector' do
 
         it 'starts docker-compose stack' do
           is_expected.to contain_exec('start-otel-collector').with(
-            command: 'sh -c "docker compose version >/dev/null 2>&1 && docker compose up -d || docker-compose up -d"',
+            command: 'docker compose up -d',
             cwd: '/opt/otel'
           )
         end
 
         it 'restarts containers on config changes' do
           is_expected.to contain_exec('restart-otel-collector').with(
-            command: 'sh -c "docker compose version >/dev/null 2>&1 && ' \
-                     'docker compose up -d --force-recreate || ' \
-                     'docker-compose up -d --force-recreate"',
+            command: 'docker compose up -d --force-recreate',
             cwd: '/opt/otel',
             refreshonly: true
           )
