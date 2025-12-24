@@ -1,0 +1,134 @@
+---
+# Example configuration for PiHole profile
+# Copy relevant sections to your node or common.yaml
+
+# ============================================================================
+# PiHole Provisioning
+# ============================================================================
+
+# Enable PiHole configuration management
+profile::pihole::manage_pihole: true
+
+# Directory where PiHole stores its configuration
+# Default: /etc/pihole
+# profile::pihole::pihole_config_dir: '/etc/pihole'
+
+# Docker container name
+# Default: pihole
+# profile::pihole::pihole_container_name: 'pihole'
+
+# Whether to provision gravity database (blocklists/whitelists)
+# Default: true
+profile::pihole::provision_gravity_db: true
+
+# Whether to provision custom hosts file
+# Default: true
+profile::pihole::provision_custom_hosts: true
+
+# Whether to restart PiHole when configuration changes
+# Default: true
+profile::pihole::restart_on_config_change: true
+
+# ============================================================================
+# PiHole Password Hash (REQUIRED)
+# ============================================================================
+
+# The PiHole API password hash is required for authentication.
+# This hash is extracted from your pihole-teleporter.zip backup.
+#
+# To get your password hash:
+# 1. Extract pihole-teleporter.zip
+# 2. Open etc/pihole/pihole.toml
+# 3. Find the line: pwhash = "$BALLOON-SHA256$v=1$..."
+# 4. Copy the full hash value
+# 5. Encrypt it with eyaml:
+#    eyaml encrypt -s '$BALLOON-SHA256$v=1$s=1024,t=32$...'
+#
+# IMPORTANT: Always encrypt this value with eyaml before committing!
+#
+# Example (ENCRYPTED - use eyaml):
+# profile::pihole::pihole_password_hash: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+
+# For testing only (DO NOT USE IN PRODUCTION):
+# profile::pihole::pihole_password_hash: '$BALLOON-SHA256$v=1$s=1024,t=32$XS5cygjTX9ZDKxRzyxE+kg==$PwLIu3J8TfKTeDP8p2KjEIgBqca+UqH6BCpKhofuq9U='
+
+# ============================================================================
+# What Gets Provisioned
+# ============================================================================
+
+# This profile provisions the following from your backup:
+#
+# 1. pihole.toml
+#    - DNS upstream servers configuration
+#    - DNS settings (CNAME inspection, ESNI blocking, EDNS0, etc.)
+#    - DHCP configuration (if enabled)
+#    - Web interface settings
+#    - Resolver configuration
+#    - Database settings
+#    - All other PiHole settings
+#
+# 2. gravity.db (if provision_gravity_db: true)
+#    - Blocklists (adlists)
+#    - Whitelisted domains
+#    - Blacklisted domains
+#    - Regular expressions
+#    - Groups and group assignments
+#
+# 3. custom.list (if provision_custom_hosts: true)
+#    - Custom DNS records
+#    - Local hostname mappings
+#    - /etc/hosts style entries
+#
+# Note: Query history (pihole-FTL.db) and DHCP leases are NOT provisioned
+# as they are runtime data that regenerates automatically.
+
+# ============================================================================
+# Deployment Process
+# ============================================================================
+
+# 1. Ensure your pihole-teleporter.zip is in the repo root (it's gitignored)
+#
+# 2. Extract and encrypt your password hash:
+#    unzip -p pihole-teleporter.zip etc/pihole/pihole.toml | grep "pwhash ="
+#    eyaml encrypt -s 'YOUR_PASSWORD_HASH_HERE'
+#
+# 3. Add the encrypted hash to your Hiera data (above)
+#
+# 4. Apply Puppet configuration:
+#    puppet agent -t
+#
+# 5. PiHole will restart with your provisioned configuration
+#
+# 6. Verify:
+#    - Access PiHole web interface
+#    - Check that blocklists are present
+#    - Verify custom DNS entries work
+#    - Test DNS resolution
+
+# ============================================================================
+# Updating PiHole Configuration
+# ============================================================================
+
+# To update PiHole configuration:
+#
+# 1. Make changes in PiHole web interface
+#
+# 2. Create new backup:
+#    - Go to Settings → Teleporter
+#    - Click "Backup"
+#    - Download pihole-teleporter.zip
+#
+# 3. Replace the zip file in repo root
+#
+# 4. Re-extract files to update module:
+#    cd /path/to/puppet/repo
+#    ./scripts/update-pihole-from-backup.sh
+#
+# 5. Commit the updated configuration (NOT the zip file):
+#    git add site-modules/profile/files/pihole/
+#    git add site-modules/profile/templates/pihole/
+#    git commit -m "Update PiHole configuration"
+#
+# 6. Apply configuration:
+#    puppet agent -t
