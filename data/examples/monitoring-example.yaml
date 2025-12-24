@@ -18,14 +18,20 @@ profile::monitoring::pihole_exporter_port: 9617
 # Enable/disable services
 profile::monitoring::enable_prometheus: true
 profile::monitoring::enable_grafana: true
-profile::monitoring::enable_loki: true
-profile::monitoring::enable_promtail: true
+
+# Loki and Promtail for log aggregation
+# NOTE: Loki can be resource-intensive. For lightweight deployments:
+# - Keep Loki disabled and point Promtail to an external Loki instance
+# - OR reduce Loki's retention period and cache sizes
+profile::monitoring::enable_loki: true       # Log aggregation server
+profile::monitoring::enable_promtail: true   # Log collection agent
+
 profile::monitoring::enable_pihole_exporter: false  # Disable if no PiHole
 profile::monitoring::enable_blackbox: true
 profile::monitoring::enable_node_exporter: true
 profile::monitoring::enable_wg_portal: false  # Disable if no WireGuard
 
-# Image versions
+# Image versions (pin versions for stability in production)
 profile::monitoring::prometheus_image: 'prom/prometheus:v2.45.0'
 profile::monitoring::grafana_image: 'grafana/grafana:10.0.0'
 profile::monitoring::loki_image: 'grafana/loki:3.1.1'
@@ -56,3 +62,114 @@ profile::monitoring::pihole_interval: '30s'
 # For testing only (DO NOT USE IN PRODUCTION):
 # profile::monitoring::grafana_admin_password: 'changeme'
 # profile::monitoring::pihole_password: 'changeme'
+
+# ============================================================================
+# Log Collection with Loki and Promtail
+# ============================================================================
+
+# Promtail automatically collects logs from:
+# - System logs (/var/log/*log, syslog, auth.log/secure)
+# - Security logs (fail2ban)
+# - Web server logs (nginx, apache - access and error logs)
+# - Container logs (Docker)
+# - Systemd journal
+# - Puppet logs
+
+# Loki Configuration:
+# - Default retention: 7 days (168h)
+# - Storage: TSDB for better performance
+# - Automatic compaction every 10 minutes
+# - 100MB query cache with 24h TTL
+# - Grafana datasource is automatically provisioned
+
+# To view logs:
+# 1. Access Grafana at http://<monitoring_ip>:3000
+# 2. Go to Explore (compass icon in left sidebar)
+# 3. Select "Loki" as the datasource
+# 4. Use LogQL queries (see README.md for examples)
+
+# Example LogQL queries:
+# - {job="fail2ban"}                          # All fail2ban logs
+# - {job="auth"} |= "Failed password"         # Failed SSH attempts
+# - {job="nginx", log_type="access"}          # Nginx access logs
+# - {job="docker"}                            # All container logs
+# - {job="systemd-journal", unit="ssh.service"} # SSH service logs
+
+# To adjust Loki retention or performance settings, modify:
+# site-modules/profile/templates/monitoring/loki-config.yaml.erb
+
+# ============================================================================
+# Single Sign-On (SSO) with Authelia
+# ============================================================================
+
+# Enable SSO to protect Grafana, Prometheus, and Loki with centralized authentication
+# See docs/sso-authelia-setup.md for complete setup instructions
+
+# Enable SSO components (disabled by default)
+# profile::monitoring::enable_authelia: true
+# profile::monitoring::enable_nginx_proxy: true
+# profile::monitoring::enable_redis: true
+
+# Domain configuration (required for SSO)
+# profile::monitoring::domain_name: 'example.com'
+
+# This will create the following endpoints:
+# - auth.example.com - Authelia login portal
+# - grafana.example.com - Grafana (SSO protected)
+# - prometheus.example.com - Prometheus (SSO protected)
+# - loki.example.com - Loki (SSO protected)
+
+# SSO Secrets (ALL MUST BE ENCRYPTED WITH EYAML!)
+# Generate secrets with: openssl rand -hex 32
+#
+# profile::monitoring::authelia_jwt_secret: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+#
+# profile::monitoring::authelia_session_secret: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+#
+# profile::monitoring::authelia_storage_encryption_key: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+#
+# profile::monitoring::grafana_oidc_secret: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+
+# OIDC Private Key (for JWT signing)
+# Generate with: openssl genrsa -out oidc_private_key.pem 4096
+# Encrypt with: eyaml encrypt -f oidc_private_key.pem
+#
+# profile::monitoring::oidc_private_key: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+
+# SSO Users with encrypted passwords
+# Generate password hashes with:
+# docker run authelia/authelia:4.38 authelia crypto hash generate argon2 --password 'your-password'
+#
+# profile::monitoring::sso_users:
+#   admin:
+#     displayname: "Administrator"
+#     email: "admin@example.com"
+#     password: "$argon2id$v=19$m=65536,t=3,p=4$..." # NEVER commit plaintext!
+#     groups:
+#       - admins
+#   user1:
+#     displayname: "John Doe"
+#     email: "john@example.com"
+#     password: "$argon2id$v=19$m=65536,t=3,p=4$..."
+#     groups:
+#       - users
+
+# SSO Features:
+# - Centralized login for all monitoring services
+# - Two-factor authentication (TOTP, WebAuthn/hardware keys)
+# - Session management with Redis
+# - OIDC integration with Grafana (seamless login)
+# - Brute force protection
+# - Group-based access control
+
+# DNS Requirements:
+# Configure DNS A records pointing to your monitoring server:
+# - auth.example.com
+# - grafana.example.com
+# - prometheus.example.com
+# - loki.example.com
