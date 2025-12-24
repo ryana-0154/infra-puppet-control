@@ -10,10 +10,6 @@ describe 'profile::dotfiles' do
       context 'with default parameters' do
         it { is_expected.to compile.with_all_deps }
 
-        it 'installs git package' do
-          is_expected.to contain_package('git').with_ensure('installed')
-        end
-
         it 'does not configure any users by default' do
           is_expected.not_to contain_vcsrepo(%r{.*/.dotfiles})
         end
@@ -23,7 +19,6 @@ describe 'profile::dotfiles' do
         let(:params) { { manage_dotfiles: false } }
 
         it { is_expected.to compile.with_all_deps }
-        it { is_expected.not_to contain_package('git') }
       end
 
       context 'with a single user' do
@@ -204,10 +199,6 @@ describe 'profile::dotfiles' do
         end
 
         it { is_expected.to compile.with_all_deps }
-
-        it 'does not manage git package' do
-          is_expected.not_to contain_package('git')
-        end
 
         it 'still clones repository' do
           is_expected.to contain_vcsrepo('/home/ryan/.dotfiles')

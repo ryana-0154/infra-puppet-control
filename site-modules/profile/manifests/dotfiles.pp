@@ -45,9 +45,7 @@ class profile::dotfiles (
   if $manage_dotfiles {
     # Ensure git is installed
     if $install_git {
-      package { 'git':
-        ensure => installed,
-      }
+      ensure_packages(['git'])
     }
 
     # Configure dotfiles for each user
@@ -64,12 +62,6 @@ class profile::dotfiles (
           default => 'present',
         }
 
-        # Determine git package requirement
-        $git_require = $install_git ? {
-          true    => Package['git'],
-          default => [],
-        }
-
         # Clone/update dotfiles repository
         vcsrepo { $dotfiles_path:
           ensure   => $vcsrepo_ensure,
@@ -77,7 +69,14 @@ class profile::dotfiles (
           source   => $dotfiles_repo,
           revision => $dotfiles_revision,
           user     => $username,
-          require  => $git_require,
+        }
+
+        # Determine if we can run as a different user (requires root)
+        # In production, Puppet runs as root and can execute as other users
+        # In CI/non-root environments, omit user parameter to allow catalog compilation
+        $exec_user = $facts['identity']['user'] ? {
+          'root'  => $username,
+          default => undef,
         }
 
         # Run install script to create symlinks
@@ -85,7 +84,7 @@ class profile::dotfiles (
           command     => './install',
           cwd         => $dotfiles_path,
           path        => ['/usr/bin', '/usr/local/bin', '/bin'],
-          user        => $username,
+          user        => $exec_user,
           environment => ["HOME=${home_dir}"],
           # Only run if dotfiles were just cloned/updated or symlinks don't exist
           refreshonly => true,
