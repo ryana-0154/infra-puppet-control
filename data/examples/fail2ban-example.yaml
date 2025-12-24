@@ -1,0 +1,241 @@
+---
+# Example fail2ban configuration
+# Copy relevant sections to your node-specific or common.yaml
+
+# Enable fail2ban via profile::base
+profile::base::manage_fail2ban: true
+
+# Basic fail2ban settings
+profile::fail2ban::package_ensure: 'present'
+profile::fail2ban::service_ensure: 'running'
+profile::fail2ban::service_enable: true
+
+# Ban policies
+profile::fail2ban::bantime: '1h'      # How long to ban (1h, 24h, 1w, etc.)
+profile::fail2ban::findtime: '10m'    # Time window for counting failures
+profile::fail2ban::maxretry: 5        # Failed attempts before ban
+
+# Default jail toggles
+profile::fail2ban::enable_ssh_jail: true
+profile::fail2ban::enable_http_jails: true
+
+# SSH port (auto-detected from profile::firewall::ssh_port, or override here)
+# profile::fail2ban::ssh_port: 2222
+
+# HTTP/HTTPS log paths
+profile::fail2ban::http_logpath:
+  - '/var/log/nginx/access.log'
+  - '/var/log/apache2/access.log'
+
+# Email notifications (optional)
+# profile::fail2ban::destemail: 'admin@example.com'
+# profile::fail2ban::sender: 'fail2ban@example.com'
+# profile::fail2ban::action: 'action_mwl'  # Send email with whois and log lines
+
+# ============================================================================
+# Custom Jails Examples
+# ============================================================================
+
+# Custom jails for application-specific protection
+profile::fail2ban::custom_jails:
+  # Nginx rate limiting protection
+  nginx-limit-req:
+    jail_name: 'nginx-limit-req'
+    jail_content:
+      nginx-limit-req:
+        enabled: true
+        port: 'http,https'
+        logpath: '/var/log/nginx/error.log'
+        failregex: 'limiting requests, excess:.* by zone.*client: <HOST>'
+        maxretry: 2
+        bantime: '4h'
+        findtime: '1m'
+
+  # Nginx bad bots protection
+  nginx-badbots:
+    jail_name: 'nginx-badbots'
+    jail_content:
+      nginx-badbots:
+        enabled: true
+        port: 'http,https'
+        logpath: '/var/log/nginx/access.log'
+        maxretry: 2
+        bantime: '24h'
+        findtime: '10m'
+
+  # Nginx authentication failures
+  nginx-noscript:
+    jail_name: 'nginx-noscript'
+    jail_content:
+      nginx-noscript:
+        enabled: true
+        port: 'http,https'
+        logpath: '/var/log/nginx/access.log'
+        maxretry: 6
+        bantime: '12h'
+        findtime: '2m'
+
+  # Apache authentication
+  apache-auth:
+    jail_name: 'apache-auth'
+    jail_content:
+      apache-auth:
+        enabled: true
+        port: 'http,https'
+        logpath: '/var/log/apache2/error.log'
+        maxretry: 3
+        bantime: '1h'
+        findtime: '10m'
+
+  # WordPress wp-login protection
+  nginx-wp-login:
+    jail_name: 'nginx-wp-login'
+    jail_content:
+      nginx-wp-login:
+        enabled: true
+        port: 'http,https'
+        logpath: '/var/log/nginx/access.log'
+        failregex: '^<HOST>.*POST.*/wp-login.php.*'
+        maxretry: 3
+        bantime: '1h'
+        findtime: '10m'
+
+# ============================================================================
+# Custom Filters Examples
+# ============================================================================
+
+# Custom filters for application-specific patterns
+profile::fail2ban::custom_filters:
+  # Custom application login failures
+  custom-app-login:
+    filter_name: 'custom-app-login'
+    filter_content:
+      Definition:
+        failregex: '^.*Failed login attempt from <HOST>.*$'
+        ignoreregex: ''
+
+  # Custom API rate limiting
+  custom-api-ratelimit:
+    filter_name: 'custom-api-ratelimit'
+    filter_content:
+      Definition:
+        failregex: '^.*API rate limit exceeded for <HOST>.*$'
+        ignoreregex: ''
+
+# ============================================================================
+# Custom Actions Examples
+# ============================================================================
+
+# Custom actions for notifications and external integrations
+profile::fail2ban::custom_actions:
+  # Slack notification
+  slack-notify:
+    action_name: 'slack'
+    action_content:
+      Definition:
+        actionstart: 'curl -X POST https://hooks.slack.com/... -d "Fail2ban <name> started"'
+        actionban: 'curl -X POST https://hooks.slack.com/... -d "Banned <ip> in jail <name>"'
+        actionunban: 'curl -X POST https://hooks.slack.com/... -d "Unbanned <ip> in jail <name>"'
+
+# ============================================================================
+# Example Per-Node Configurations
+# ============================================================================
+
+# Example 1: Web server with strict HTTP protection
+# In data/nodes/web01.example.com.yaml:
+#
+# profile::base::manage_fail2ban: true
+# profile::fail2ban::bantime: '24h'
+# profile::fail2ban::maxretry: 3
+# profile::fail2ban::destemail: 'ops@example.com'
+# profile::fail2ban::action: 'action_mwl'
+
+# Example 2: SSH-only server (database, etc.)
+# In data/nodes/db01.example.com.yaml:
+#
+# profile::base::manage_fail2ban: true
+# profile::fail2ban::enable_http_jails: false
+# profile::fail2ban::custom_jails:
+#   sshd:
+#     jail_name: 'sshd'
+#     jail_content:
+#       sshd:
+#         enabled: true
+#         maxretry: 2
+#         bantime: '1w'
+#         ignoreip:
+#           - '127.0.0.1/8'
+#           - '10.10.10.0/24'  # VPN network
+
+# Example 3: Development environment (disabled)
+# In data/environments/development.yaml:
+#
+# profile::base::manage_fail2ban: false
+
+# ============================================================================
+# Security Best Practices
+# ============================================================================
+
+# 1. Start with conservative maxretry values (5-10), adjust based on logs
+# 2. Use longer bantimes for repeated offenders (consider recidive jail)
+# 3. Test filters with fail2ban-regex before deploying:
+#    fail2ban-regex /var/log/auth.log /etc/fail2ban/filter.d/sshd.conf
+# 4. Monitor /var/log/fail2ban.log for false positives
+# 5. Ensure log paths exist and are readable by fail2ban user
+# 6. Use ignoreip to whitelist trusted networks/IPs
+# 7. Always whitelist your management network to prevent lockout
+# 8. Keep console/IPMI access available for emergency recovery
+
+# ============================================================================
+# Testing and Monitoring Commands
+# ============================================================================
+
+# Check fail2ban status
+# systemctl status fail2ban
+
+# List all active jails
+# fail2ban-client status
+
+# Check specific jail status and banned IPs
+# fail2ban-client status sshd
+# fail2ban-client status http-get-dos
+
+# Test a filter against a log file
+# fail2ban-regex /var/log/auth.log /etc/fail2ban/filter.d/sshd.conf
+
+# Manually unban an IP
+# fail2ban-client set sshd unbanip 192.168.1.100
+
+# Ban an IP manually (for testing)
+# fail2ban-client set sshd banip 192.168.1.100
+
+# View fail2ban logs
+# tail -f /var/log/fail2ban.log
+
+# Check iptables rules created by fail2ban
+# iptables -L -n | grep f2b
+
+# ============================================================================
+# Troubleshooting
+# ============================================================================
+
+# Problem: Jail not detecting attacks
+# Solution: Check log file permissions and paths
+# - Ensure fail2ban can read log files: ls -l /var/log/auth.log
+# - Add fail2ban user to adm group if needed: usermod -a -G adm fail2ban
+
+# Problem: False positives (legitimate users banned)
+# Solution: Adjust maxretry or add to ignoreip
+# - Increase maxretry for the jail
+# - Add trusted IPs to ignoreip in jail configuration
+
+# Problem: Locked out of SSH
+# Solution: Access via console and unban
+# - Access server via cloud console or IPMI
+# - systemctl stop fail2ban
+# - fail2ban-client set sshd unbanip YOUR_IP
+# - Add your IP to ignoreip, then restart fail2ban
+
+# Problem: HTTP jails causing errors on non-web servers
+# Solution: Disable HTTP jails via Hiera
+# - profile::fail2ban::enable_http_jails: false

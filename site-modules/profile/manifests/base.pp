@@ -11,15 +11,18 @@
 #   Whether to manage logrotate configuration
 # @param manage_otel_collector
 #   Whether to manage OpenTelemetry Collector
+# @param manage_fail2ban
+#   Whether to manage fail2ban intrusion prevention
 #
 # @example
 #   include profile::base
 #
 class profile::base (
-  Boolean $manage_ntp           = true,
-  Boolean $manage_firewall      = true,
-  Boolean $manage_logrotate     = true,
+  Boolean $manage_ntp            = true,
+  Boolean $manage_firewall       = true,
+  Boolean $manage_logrotate      = true,
   Boolean $manage_otel_collector = false,
+  Boolean $manage_fail2ban       = false,
 ) {
   # NTP configuration
   if $manage_ntp {
@@ -38,6 +41,11 @@ class profile::base (
   # OpenTelemetry Collector configuration
   if $manage_otel_collector {
     include profile::otel_collector
+  }
+
+  # Fail2ban intrusion prevention
+  if $manage_fail2ban {
+    include profile::fail2ban
   }
 
   # Basic package management
