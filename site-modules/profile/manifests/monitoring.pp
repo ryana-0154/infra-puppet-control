@@ -98,6 +98,16 @@
 #   Password for PiHole API access (should be encrypted with eyaml)
 # @param pihole_api_token
 #   API token for PiHole access (should be encrypted with eyaml)
+# @param enable_external_dashboards
+#   Whether to provision Grafana dashboards from an external Git repository
+# @param dashboard_repo_url
+#   Git repository URL containing Grafana dashboards (required if enable_external_dashboards is true)
+# @param dashboard_repo_revision
+#   Git branch, tag, or commit to checkout for dashboards repository
+# @param enable_embedded_dashboards
+#   Whether to keep provisioning the embedded Loki dashboard (can be used alongside external dashboards)
+# @param dashboard_auto_update
+#   Whether to automatically pull latest dashboard changes on each Puppet run
 #
 # @example Basic usage
 #   include profile::monitoring
@@ -170,6 +180,13 @@ class profile::monitoring (
   Optional[String[1]]            $grafana_admin_password    = undef,
   Optional[String[1]]            $pihole_password           = undef,
   Optional[String[1]]            $pihole_api_token          = undef,
+
+  # Grafana Dashboard configuration
+  Boolean                        $enable_external_dashboards = false,
+  Optional[String[1]]            $dashboard_repo_url        = undef,
+  String[1]                      $dashboard_repo_revision   = 'main',
+  Boolean                        $enable_embedded_dashboards = true,
+  Boolean                        $dashboard_auto_update     = false,
 ) {
   # Validate SSO parameters when Authelia is enabled
   if $enable_authelia {
@@ -200,10 +217,20 @@ class profile::monitoring (
     fail('profile::monitoring: grafana_oidc_secret is required when both enable_authelia and enable_grafana are true')
   }
 
+  # Validate external dashboard parameters
+  if $enable_external_dashboards and !$dashboard_repo_url {
+    fail('profile::monitoring: dashboard_repo_url is required when enable_external_dashboards is true')
+  }
+
   if $manage_monitoring {
     # Ensure Docker Compose v2 is installed
     package { 'docker-compose-plugin':
       ensure => installed,
+    }
+
+    # Ensure git is installed for external dashboard repos
+    if $enable_external_dashboards {
+      ensure_packages(['git'])
     }
 
     # Ensure the monitoring directory exists
@@ -304,22 +331,44 @@ class profile::monitoring (
         require => File["${monitoring_dir}/provisioning"],
       }
 
+      # Clone external dashboards repository if enabled
+      if $enable_external_dashboards {
+        $dashboard_repo_ensure = $dashboard_auto_update ? {
+          true    => 'latest',
+          default => 'present',
+        }
+
+        vcsrepo { "${monitoring_dir}/dashboards-external":
+          ensure   => $dashboard_repo_ensure,
+          provider => 'git',
+          source   => $dashboard_repo_url,
+          revision => $dashboard_repo_revision,
+          require  => File[$monitoring_dir],
+        }
+      }
+
       file { "${monitoring_dir}/provisioning/dashboards/dashboard-provider.yaml":
         ensure  => file,
-        content => template('profile/monitoring/provisioning/dashboards/dashboard-provider.yaml.erb'),
+        content => epp('profile/monitoring/provisioning/dashboards/dashboard-provider.yaml.epp', {
+          enable_embedded_dashboards => $enable_embedded_dashboards,
+          enable_external_dashboards => $enable_external_dashboards,
+          monitoring_dir             => $monitoring_dir,
+        }),
         group   => $monitoring_dir_group,
         mode    => '0644',
         owner   => $monitoring_dir_owner,
         require => File["${monitoring_dir}/provisioning/dashboards"],
       }
 
-      file { "${monitoring_dir}/provisioning/dashboards/loki-logs-overview.json":
-        ensure  => file,
-        content => template('profile/monitoring/provisioning/dashboards/loki-logs-overview.json.erb'),
-        group   => $monitoring_dir_group,
-        mode    => '0644',
-        owner   => $monitoring_dir_owner,
-        require => File["${monitoring_dir}/provisioning/dashboards"],
+      if $enable_embedded_dashboards {
+        file { "${monitoring_dir}/provisioning/dashboards/loki-logs-overview.json":
+          ensure  => file,
+          content => template('profile/monitoring/provisioning/dashboards/loki-logs-overview.json.erb'),
+          group   => $monitoring_dir_group,
+          mode    => '0644',
+          owner   => $monitoring_dir_owner,
+          require => File["${monitoring_dir}/provisioning/dashboards"],
+        }
       }
     }
 
@@ -447,8 +496,12 @@ class profile::monitoring (
       true    => [File["${monitoring_dir}/nginx.conf"]],
       default => [],
     }
+    $external_dashboards_subscribe = $enable_external_dashboards ? {
+      true    => [Vcsrepo["${monitoring_dir}/dashboards-external"]],
+      default => [],
+    }
 
-    $all_subscribe = $base_subscribe + $prometheus_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe
+    $all_subscribe = $base_subscribe + $prometheus_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe + $external_dashboards_subscribe
 
     exec { 'restart-monitoring-stack':
       command     => 'docker compose up -d --force-recreate',
