@@ -6,6 +6,33 @@ auth_enabled: false
 server:
   http_listen_port: 3100
   grpc_listen_port: 9096
+  log_level: info
+
+# Configure limits for ingestion and querying
+limits_config:
+  # Enforce a maximum label set per stream
+  enforce_metric_name: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h  # 7 days
+
+  # Ingestion rate limits
+  ingestion_rate_mb: 4
+  ingestion_burst_size_mb: 6
+
+  # Query limits
+  max_query_length: 721h  # 30 days
+  max_query_parallelism: 32
+  max_streams_per_user: 10000
+  max_global_streams_per_user: 0
+  max_chunks_per_query: 2000000
+  max_query_series: 500
+
+  # Per-stream limits
+  per_stream_rate_limit: 3MB
+  per_stream_rate_limit_burst: 15MB
+
+  # Retention (7 days default, adjust as needed)
+  retention_period: 168h
 
 common:
   instance_addr: <%= @monitoring_ip %>
@@ -19,15 +46,40 @@ common:
     kvstore:
       store: inmemory
 
+# Compactor for log retention
+compactor:
+  working_directory: /loki/compactor
+  shared_store: filesystem
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+
 query_range:
+  align_queries_with_step: true
+  max_retries: 5
+  cache_results: true
   results_cache:
     cache:
       embedded_cache:
         enabled: true
-        max_size_mb: 100
+        max_size_mb: 500
+        ttl: 24h
 
+# Query scheduler for better query distribution
+query_scheduler:
+  max_outstanding_requests_per_tenant: 256
+
+# Frontend worker configuration
+frontend_worker:
+  frontend_address: <%= @monitoring_ip %>:9095
+  grpc_client_config:
+    max_send_msg_size: 104857600  # 100MB
+
+# Use TSDB for better performance (Loki 2.8+)
 schema_config:
   configs:
+    # Legacy config for existing data
     - from: 2020-10-24
       store: boltdb-shipper
       object_store: filesystem
@@ -35,18 +87,59 @@ schema_config:
       index:
         prefix: index_
         period: 24h
+    # New TSDB config for better performance
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v12
+      index:
+        prefix: index_
+        period: 24h
 
+# Storage configuration
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/index_cache
+    cache_ttl: 24h
+    shared_store: filesystem
+  tsdb_shipper:
+    active_index_directory: /loki/tsdb-index
+    cache_location: /loki/tsdb-cache
+    cache_ttl: 24h
+    shared_store: filesystem
+  filesystem:
+    directory: /loki/chunks
+
+# Table manager for index management
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 168h  # 7 days
+
+# Ruler configuration for alerts
 ruler:
-  alertmanager_url: http://localhost:9093
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  rule_path: /loki/rules-temp
+  alertmanager_url: http://<%= @monitoring_ip %>:9093
+  ring:
+    kvstore:
+      store: inmemory
+  enable_api: true
+  enable_alertmanager_v2: true
 
-# By default, Loki will send anonymous, but uniquely-identifiable usage and configuration
-# analytics to Grafana Labs. These statistics are sent to https://stats.grafana.org/
-#
-# Statistics help us better understand how Loki is used, and they show us performance
-# levels for most users. This helps us prioritize features and documentation.
-# For more information on what's sent: https://github.com/grafana/loki/blob/main/pkg/usagestats/stats.go
-# Refer to the buildReport method to see what goes into a report.
-#
-# If you would like to disable reporting, uncomment the following lines:
+# Disable analytics
 analytics:
   reporting_enabled: false
+
+# Memberlist for clustering (single-instance mode)
+memberlist:
+  join_members: []
+  dead_node_reclaim_time: 30s
+  gossip_to_dead_nodes_time: 15s
+  left_ingesters_timeout: 30s
+  bind_addr:
+    - <%= @monitoring_ip %>
+  bind_port: 7946

@@ -1,0 +1,36 @@
+# Grafana datasource provisioning for Loki
+# Managed by Puppet - do not edit manually
+
+apiVersion: 1
+
+datasources:
+<%- if @enable_loki -%>
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://<%= @monitoring_ip %>:3100
+    isDefault: false
+    editable: true
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        # Extract trace IDs from logs if present
+        - datasourceUid: tempo
+          matcherRegex: "trace_id=(\\w+)"
+          name: TraceID
+          url: "$${__value.raw}"
+    version: 1
+<%- end -%>
+<%- if @enable_prometheus -%>
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://<%= @monitoring_ip %>:<%= @prometheus_port %>
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: "30s"
+      queryTimeout: "60s"
+      httpMethod: POST
+    version: 1
+<%- end -%>
