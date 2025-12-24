@@ -37,3 +37,7 @@ log/
 # Temporary files
 tmp/
 .tmp/
+
+# PiHole backups (contain secrets)
+pihole-teleporter.zip
+pihole-teleporter/
