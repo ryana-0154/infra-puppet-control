@@ -38,6 +38,12 @@
 #   Whether to enable Node Exporter service
 # @param enable_wg_portal
 #   Whether to enable WireGuard Portal service
+# @param enable_authelia
+#   Whether to enable Authelia SSO
+# @param enable_nginx_proxy
+#   Whether to enable Nginx reverse proxy for SSO
+# @param enable_redis
+#   Whether to enable Redis for Authelia session storage
 # @param prometheus_image
 #   Docker image for Prometheus
 # @param grafana_image
@@ -54,6 +60,26 @@
 #   Docker image for Node Exporter
 # @param wg_portal_image
 #   Docker image for WireGuard Portal
+# @param authelia_image
+#   Docker image for Authelia
+# @param nginx_image
+#   Docker image for Nginx
+# @param redis_image
+#   Docker image for Redis
+# @param domain_name
+#   Domain name for SSO (e.g., example.com)
+# @param authelia_jwt_secret
+#   JWT secret for Authelia (should be encrypted with eyaml)
+# @param authelia_session_secret
+#   Session secret for Authelia (should be encrypted with eyaml)
+# @param authelia_storage_encryption_key
+#   Storage encryption key for Authelia (should be encrypted with eyaml)
+# @param sso_users
+#   Hash of SSO users with encrypted passwords
+# @param grafana_oidc_secret
+#   OIDC client secret for Grafana integration (should be encrypted with eyaml)
+# @param oidc_private_key
+#   Private key for OIDC JWT signing (should be encrypted with eyaml)
 # @param pihole_hostname
 #   Hostname/IP of PiHole instance
 # @param pihole_port
@@ -101,6 +127,11 @@ class profile::monitoring (
   Boolean                        $enable_node_exporter      = true,
   Boolean                        $enable_wg_portal          = true,
 
+  # SSO/Authentication
+  Boolean                        $enable_authelia           = false,
+  Boolean                        $enable_nginx_proxy        = false,
+  Boolean                        $enable_redis              = false,
+
   # Image versions
   String[1]                      $prometheus_image          = 'prom/prometheus:latest',
   String[1]                      $grafana_image             = 'grafana/grafana:latest',
@@ -110,6 +141,20 @@ class profile::monitoring (
   String[1]                      $blackbox_image            = 'prom/blackbox-exporter:latest',
   String[1]                      $node_exporter_image       = 'quay.io/prometheus/node-exporter:latest',
   String[1]                      $wg_portal_image           = 'wgportal/wg-portal:v2',
+
+  # SSO images
+  String[1]                      $authelia_image            = 'authelia/authelia:4.38',
+  String[1]                      $nginx_image               = 'nginx:1.25-alpine',
+  String[1]                      $redis_image               = 'redis:7-alpine',
+
+  # SSO configuration
+  Optional[String[1]]            $domain_name               = undef,
+  Optional[String[1]]            $authelia_jwt_secret       = undef,
+  Optional[String[1]]            $authelia_session_secret   = undef,
+  Optional[String[1]]            $authelia_storage_encryption_key = undef,
+  Hash                           $sso_users                 = {},
+  Optional[String[1]]            $grafana_oidc_secret       = undef,
+  Optional[String[1]]            $oidc_private_key          = undef,
 
   # PiHole configuration
   String[1]                      $pihole_hostname           = '10.10.10.1',
@@ -225,6 +270,38 @@ class profile::monitoring (
           owner   => $monitoring_dir_owner,
           require => File["${monitoring_dir}/secrets"],
         }
+      }
+    }
+
+    # Create SSO configuration files
+    if $enable_authelia {
+      file { "${monitoring_dir}/authelia-config.yaml":
+        ensure  => file,
+        content => template('profile/monitoring/authelia-config.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File[$monitoring_dir],
+      }
+
+      file { "${monitoring_dir}/authelia-users.yaml":
+        ensure  => file,
+        content => template('profile/monitoring/authelia-users.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0600',
+        owner   => $monitoring_dir_owner,
+        require => File[$monitoring_dir],
+      }
+    }
+
+    if $enable_nginx_proxy {
+      file { "${monitoring_dir}/nginx.conf":
+        ensure  => file,
+        content => template('profile/monitoring/nginx.conf.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File[$monitoring_dir],
       }
     }
   }

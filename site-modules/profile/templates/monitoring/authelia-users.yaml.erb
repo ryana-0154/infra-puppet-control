@@ -1,0 +1,18 @@
+# Authelia users database
+# Managed by Puppet - do not edit manually
+
+users:
+<%- @sso_users.each do |username, user_config| -%>
+  <%= username %>:
+    displayname: "<%= user_config['displayname'] || username.capitalize %>"
+    password: "<%= user_config['password'] %>"
+    email: <%= user_config['email'] || "#{username}@#{@domain_name}" %>
+    groups:
+<%- if user_config['groups'] -%>
+<%- user_config['groups'].each do |group| -%>
+      - <%= group %>
+<%- end -%>
+<%- else -%>
+      - admins
+<%- end -%>
+<%- end -%>

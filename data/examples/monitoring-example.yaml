@@ -56,3 +56,79 @@ profile::monitoring::pihole_interval: '30s'
 # For testing only (DO NOT USE IN PRODUCTION):
 # profile::monitoring::grafana_admin_password: 'changeme'
 # profile::monitoring::pihole_password: 'changeme'
+
+# ============================================================================
+# Single Sign-On (SSO) with Authelia
+# ============================================================================
+
+# Enable SSO to protect Grafana, Prometheus, and Loki with centralized authentication
+# See docs/sso-authelia-setup.md for complete setup instructions
+
+# Enable SSO components (disabled by default)
+# profile::monitoring::enable_authelia: true
+# profile::monitoring::enable_nginx_proxy: true
+# profile::monitoring::enable_redis: true
+
+# Domain configuration (required for SSO)
+# profile::monitoring::domain_name: 'example.com'
+
+# This will create the following endpoints:
+# - auth.example.com - Authelia login portal
+# - grafana.example.com - Grafana (SSO protected)
+# - prometheus.example.com - Prometheus (SSO protected)
+# - loki.example.com - Loki (SSO protected)
+
+# SSO Secrets (ALL MUST BE ENCRYPTED WITH EYAML!)
+# Generate secrets with: openssl rand -hex 32
+#
+# profile::monitoring::authelia_jwt_secret: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+#
+# profile::monitoring::authelia_session_secret: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+#
+# profile::monitoring::authelia_storage_encryption_key: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+#
+# profile::monitoring::grafana_oidc_secret: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+
+# OIDC Private Key (for JWT signing)
+# Generate with: openssl genrsa -out oidc_private_key.pem 4096
+# Encrypt with: eyaml encrypt -f oidc_private_key.pem
+#
+# profile::monitoring::oidc_private_key: >
+#   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
+
+# SSO Users with encrypted passwords
+# Generate password hashes with:
+# docker run authelia/authelia:4.38 authelia crypto hash generate argon2 --password 'your-password'
+#
+# profile::monitoring::sso_users:
+#   admin:
+#     displayname: "Administrator"
+#     email: "admin@example.com"
+#     password: "$argon2id$v=19$m=65536,t=3,p=4$..." # NEVER commit plaintext!
+#     groups:
+#       - admins
+#   user1:
+#     displayname: "John Doe"
+#     email: "john@example.com"
+#     password: "$argon2id$v=19$m=65536,t=3,p=4$..."
+#     groups:
+#       - users
+
+# SSO Features:
+# - Centralized login for all monitoring services
+# - Two-factor authentication (TOTP, WebAuthn/hardware keys)
+# - Session management with Redis
+# - OIDC integration with Grafana (seamless login)
+# - Brute force protection
+# - Group-based access control
+
+# DNS Requirements:
+# Configure DNS A records pointing to your monitoring server:
+# - auth.example.com
+# - grafana.example.com
+# - prometheus.example.com
+# - loki.example.com
