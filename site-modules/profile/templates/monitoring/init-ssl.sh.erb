@@ -1,0 +1,65 @@
+#!/bin/bash
+# Initialize SSL certificates with Let's Encrypt
+# This script should be run once before enabling SSL in docker-compose
+# Managed by Puppet - do not edit manually
+
+set -e
+
+DOMAIN="<%= @domain_name %>"
+EMAIL="<%= @letsencrypt_email %>"
+MONITORING_DIR="<%= @monitoring_dir %>"
+
+echo "Initializing SSL certificates for ${DOMAIN}"
+echo "Email: ${EMAIL}"
+echo ""
+
+# Create directory for ACME challenges
+mkdir -p "${MONITORING_DIR}/certbot/www"
+
+# Request certificates for all subdomains
+DOMAINS=(
+    "auth.${DOMAIN}"
+<%- if @enable_grafana -%>
+    "grafana.${DOMAIN}"
+<%- end -%>
+<%- if @enable_prometheus -%>
+    "prometheus.${DOMAIN}"
+<%- end -%>
+<%- if @enable_loki -%>
+    "loki.${DOMAIN}"
+<%- end -%>
+)
+
+# Build domain arguments for certbot
+DOMAIN_ARGS=""
+for domain in "${DOMAINS[@]}"; do
+    DOMAIN_ARGS="${DOMAIN_ARGS} -d ${domain}"
+done
+
+echo "Requesting certificates for: ${DOMAINS[*]}"
+echo ""
+
+# Run certbot to obtain certificates
+docker run --rm \
+    -v "${MONITORING_DIR}/letsencrypt:/etc/letsencrypt" \
+    -v "${MONITORING_DIR}/certbot/www:/var/www/certbot" \
+    -p 80:80 \
+    <%= @certbot_image %> certonly \
+    --standalone \
+    --non-interactive \
+    --agree-tos \
+    --email "${EMAIL}" \
+    --cert-name "${DOMAIN}" \
+    ${DOMAIN_ARGS}
+
+echo ""
+echo "✓ Certificates obtained successfully!"
+echo ""
+echo "Certificate location: ${MONITORING_DIR}/letsencrypt/live/${DOMAIN}/"
+echo ""
+echo "Next steps:"
+echo "1. Enable SSL in Hiera: profile::monitoring::enable_ssl: true"
+echo "2. Run puppet apply to update configuration"
+echo "3. Restart monitoring stack: cd ${MONITORING_DIR} && docker compose up -d"
+echo ""
+echo "Certificates will auto-renew via the certbot container"

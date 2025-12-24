@@ -72,6 +72,12 @@
 #   Docker image for Redis
 # @param domain_name
 #   Domain name for SSO (e.g., example.com)
+# @param enable_ssl
+#   Whether to enable SSL/TLS with Let's Encrypt
+# @param letsencrypt_email
+#   Email address for Let's Encrypt certificate notifications (required if enable_ssl is true)
+# @param certbot_image
+#   Docker image for Certbot
 # @param authelia_jwt_secret
 #   JWT secret for Authelia (should be encrypted with eyaml)
 # @param authelia_session_secret
@@ -163,6 +169,12 @@ class profile::monitoring (
 
   # SSO configuration
   Optional[String[1]]            $domain_name               = undef,
+
+  # SSL/TLS configuration
+  Boolean                        $enable_ssl                = false,
+  Optional[String[1]]            $letsencrypt_email         = undef,
+  String[1]                      $certbot_image             = 'certbot/certbot:latest',
+
   Optional[String[1]]            $authelia_jwt_secret       = undef,
   Optional[String[1]]            $authelia_session_secret   = undef,
   Optional[String[1]]            $authelia_storage_encryption_key = undef,
@@ -220,6 +232,15 @@ class profile::monitoring (
   # Validate external dashboard parameters
   if $enable_external_dashboards and !$dashboard_repo_url {
     fail('profile::monitoring: dashboard_repo_url is required when enable_external_dashboards is true')
+  }
+
+  # Validate SSL parameters
+  if $enable_ssl and !$letsencrypt_email {
+    fail('profile::monitoring: letsencrypt_email is required when enable_ssl is true')
+  }
+
+  if $enable_ssl and !$domain_name {
+    fail('profile::monitoring: domain_name is required when enable_ssl is true')
   }
 
   if $manage_monitoring {
@@ -442,6 +463,18 @@ class profile::monitoring (
         mode    => '0644',
         owner   => $monitoring_dir_owner,
         require => File[$monitoring_dir],
+      }
+
+      # Deploy SSL initialization script
+      if $enable_ssl {
+        file { "${monitoring_dir}/init-ssl.sh":
+          ensure  => file,
+          content => template('profile/monitoring/init-ssl.sh.erb'),
+          group   => $monitoring_dir_group,
+          mode    => '0755',
+          owner   => $monitoring_dir_owner,
+          require => File[$monitoring_dir],
+        }
       }
     }
 
