@@ -44,17 +44,18 @@ describe 'profile::otel_collector' do
           )
         end
 
-        it 'creates systemd service' do
-          is_expected.to contain_file('/etc/systemd/system/otel-collector.service').with(
-            ensure: 'file',
-            mode: '0644'
+        it 'starts docker-compose stack' do
+          is_expected.to contain_exec('start-otel-collector').with(
+            command: 'docker-compose up -d',
+            cwd: '/opt/otel'
           )
         end
 
-        it 'enables and starts OTEL collector service' do
-          is_expected.to contain_service('otel-collector').with(
-            ensure: 'running',
-            enable: true
+        it 'restarts containers on config changes' do
+          is_expected.to contain_exec('restart-otel-collector').with(
+            command: 'docker-compose up -d --force-recreate',
+            cwd: '/opt/otel',
+            refreshonly: true
           )
         end
 
@@ -66,13 +67,6 @@ describe 'profile::otel_collector' do
           is_expected.to contain_file('/opt/otel/dashboards/claude-code-costs.json').with(
             ensure: 'file',
             mode: '0644'
-          )
-        end
-
-        it 'reloads systemd daemon' do
-          is_expected.to contain_exec('systemctl-daemon-reload-otel').with(
-            command: '/bin/systemctl daemon-reload',
-            refreshonly: true
           )
         end
       end
@@ -135,7 +129,8 @@ describe 'profile::otel_collector' do
 
         it 'does not create any OTEL resources' do
           is_expected.not_to contain_file('/opt/otel')
-          is_expected.not_to contain_service('otel-collector')
+          is_expected.not_to contain_exec('start-otel-collector')
+          is_expected.not_to contain_exec('restart-otel-collector')
         end
       end
     end

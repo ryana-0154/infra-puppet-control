@@ -221,4 +221,23 @@ describe 'profile::monitoring' do
 
     it { is_expected.not_to contain_file('/opt/monitoring/nginx.conf') }
   end
+
+  context 'with docker-compose management' do
+    it { is_expected.to compile.with_all_deps }
+
+    it 'starts docker-compose stack' do
+      is_expected.to contain_exec('start-monitoring-stack').with(
+        command: 'docker-compose up -d',
+        cwd: '/opt/monitoring'
+      )
+    end
+
+    it 'restarts containers on config changes' do
+      is_expected.to contain_exec('restart-monitoring-stack').with(
+        command: 'docker-compose up -d --force-recreate',
+        cwd: '/opt/monitoring',
+        refreshonly: true
+      )
+    end
+  end
 end
