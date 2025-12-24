@@ -4,7 +4,7 @@
 # It deploys configuration files, blocklists, and custom hosts to a PiHole instance.
 #
 # @param manage_pihole
-#   Whether to manage PiHole configuration
+#   Whether to manage PiHole configuration (default: false)
 # @param pihole_config_dir
 #   Directory where PiHole stores its configuration
 # @param pihole_password_hash
@@ -26,7 +26,7 @@
 #     ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw...]
 #
 class profile::pihole (
-  Boolean                  $manage_pihole              = true,
+  Boolean                  $manage_pihole              = false,
   Stdlib::Absolutepath     $pihole_config_dir          = '/etc/pihole',
   Optional[String[1]]      $pihole_password_hash       = undef,
   String[1]                $pihole_container_name      = 'pihole',

@@ -6,7 +6,7 @@
 # PiHole Provisioning
 # ============================================================================
 
-# Enable PiHole configuration management
+# Enable PiHole configuration management (disabled by default)
 profile::pihole::manage_pihole: true
 
 # Directory where PiHole stores its configuration

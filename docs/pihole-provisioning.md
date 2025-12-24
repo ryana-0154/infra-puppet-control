@@ -94,8 +94,8 @@ The complete PiHole configuration including:
 All options with their defaults:
 
 ```yaml
-# Whether to manage PiHole configuration
-profile::pihole::manage_pihole: true
+# Whether to manage PiHole configuration (disabled by default)
+profile::pihole::manage_pihole: false
 
 # PiHole configuration directory
 profile::pihole::pihole_config_dir: '/etc/pihole'
