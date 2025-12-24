@@ -244,4 +244,98 @@ describe 'profile::monitoring' do
       )
     end
   end
+
+  context 'with external dashboards enabled' do
+    let(:params) do
+      {
+        enable_external_dashboards: true,
+        dashboard_repo_url: 'https://github.com/example/dashboards.git'
+      }
+    end
+
+    it { is_expected.to compile.with_all_deps }
+
+    it 'installs git package' do
+      is_expected.to contain_package('git').with_ensure('installed')
+    end
+
+    it 'clones dashboard repository' do
+      is_expected.to contain_vcsrepo('/opt/monitoring/dashboards-external').with(
+        ensure: 'present',
+        provider: 'git',
+        source: 'https://github.com/example/dashboards.git',
+        revision: 'main'
+      )
+    end
+
+    it 'includes embedded dashboards by default' do
+      is_expected.to contain_file('/opt/monitoring/provisioning/dashboards/loki-logs-overview.json')
+    end
+  end
+
+  context 'with external dashboards and auto-update enabled' do
+    let(:params) do
+      {
+        enable_external_dashboards: true,
+        dashboard_repo_url: 'https://github.com/example/dashboards.git',
+        dashboard_auto_update: true
+      }
+    end
+
+    it { is_expected.to compile.with_all_deps }
+
+    it 'clones repository with latest ensure' do
+      is_expected.to contain_vcsrepo('/opt/monitoring/dashboards-external').with_ensure('latest')
+    end
+  end
+
+  context 'with external dashboards only (no embedded)' do
+    let(:params) do
+      {
+        enable_external_dashboards: true,
+        dashboard_repo_url: 'https://github.com/example/dashboards.git',
+        enable_embedded_dashboards: false
+      }
+    end
+
+    it { is_expected.to compile.with_all_deps }
+
+    it 'does not include embedded dashboard' do
+      is_expected.not_to contain_file('/opt/monitoring/provisioning/dashboards/loki-logs-overview.json')
+    end
+
+    it 'still creates dashboard provider config' do
+      is_expected.to contain_file('/opt/monitoring/provisioning/dashboards/dashboard-provider.yaml')
+    end
+  end
+
+  context 'with external dashboards enabled but no URL' do
+    let(:params) do
+      {
+        enable_external_dashboards: true
+      }
+    end
+
+    it 'fails with validation error' do
+      is_expected.to compile.and_raise_error(
+        /dashboard_repo_url is required when enable_external_dashboards is true/
+      )
+    end
+  end
+
+  context 'with custom dashboard repository revision' do
+    let(:params) do
+      {
+        enable_external_dashboards: true,
+        dashboard_repo_url: 'https://github.com/example/dashboards.git',
+        dashboard_repo_revision: 'v1.2.3'
+      }
+    end
+
+    it { is_expected.to compile.with_all_deps }
+
+    it 'uses custom revision' do
+      is_expected.to contain_vcsrepo('/opt/monitoring/dashboards-external').with_revision('v1.2.3')
+    end
+  end
 end

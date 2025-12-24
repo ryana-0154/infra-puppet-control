@@ -53,6 +53,9 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ./provisioning:/etc/grafana/provisioning:ro
+<%- if @enable_external_dashboards -%>
+      - ./dashboards-external:/etc/grafana/dashboards-external:ro
+<%- end -%>
 <%- end -%>
 
 <%- if @enable_loki -%>
