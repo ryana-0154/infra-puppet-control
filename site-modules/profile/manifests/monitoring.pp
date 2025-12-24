@@ -4,7 +4,7 @@
 #
 # @note Requirements
 #   - Docker must be installed and running
-#   - docker-compose (v1 or v2) must be available in PATH
+#   - This profile will ensure docker-compose-plugin (v2) is installed
 #
 # @param manage_monitoring
 #   Whether to manage monitoring configuration
@@ -201,6 +201,11 @@ class profile::monitoring (
   }
 
   if $manage_monitoring {
+    # Ensure Docker Compose v2 is installed
+    package { 'docker-compose-plugin':
+      ensure => installed,
+    }
+
     # Ensure the monitoring directory exists
     file { $monitoring_dir:
       ensure => directory,
@@ -395,11 +400,14 @@ class profile::monitoring (
 
     # Ensure docker-compose stack is running
     exec { 'start-monitoring-stack':
-      command => 'docker-compose up -d',
+      command => 'docker compose up -d',
       cwd     => $monitoring_dir,
       path    => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
-      unless  => 'docker-compose ps -q 2>/dev/null | grep -q .',
-      require => File["${monitoring_dir}/docker-compose.yaml"],
+      unless  => 'docker compose ps -q 2>/dev/null | grep -q .',
+      require => [
+        Package['docker-compose-plugin'],
+        File["${monitoring_dir}/docker-compose.yaml"],
+      ],
     }
 
     # Restart containers when configuration changes
@@ -443,11 +451,12 @@ class profile::monitoring (
     $all_subscribe = $base_subscribe + $prometheus_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe
 
     exec { 'restart-monitoring-stack':
-      command     => 'docker-compose up -d --force-recreate',
+      command     => 'docker compose up -d --force-recreate',
       cwd         => $monitoring_dir,
       path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       refreshonly => true,
       subscribe   => $all_subscribe,
+      require     => Package['docker-compose-plugin'],
     }
   }
 }

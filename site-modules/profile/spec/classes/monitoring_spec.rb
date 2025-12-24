@@ -225,16 +225,20 @@ describe 'profile::monitoring' do
   context 'with docker-compose management' do
     it { is_expected.to compile.with_all_deps }
 
+    it 'ensures docker-compose-plugin is installed' do
+      is_expected.to contain_package('docker-compose-plugin').with_ensure('installed')
+    end
+
     it 'starts docker-compose stack' do
       is_expected.to contain_exec('start-monitoring-stack').with(
-        command: 'docker-compose up -d',
+        command: 'docker compose up -d',
         cwd: '/opt/monitoring'
       )
     end
 
     it 'restarts containers on config changes' do
       is_expected.to contain_exec('restart-monitoring-stack').with(
-        command: 'docker-compose up -d --force-recreate',
+        command: 'docker compose up -d --force-recreate',
         cwd: '/opt/monitoring',
         refreshonly: true
       )
