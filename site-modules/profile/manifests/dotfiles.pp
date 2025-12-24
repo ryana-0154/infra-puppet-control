@@ -45,9 +45,7 @@ class profile::dotfiles (
   if $manage_dotfiles {
     # Ensure git is installed
     if $install_git {
-      package { 'git':
-        ensure => installed,
-      }
+      ensure_packages(['git'])
     }
 
     # Configure dotfiles for each user
@@ -64,12 +62,6 @@ class profile::dotfiles (
           default => 'present',
         }
 
-        # Determine git package requirement
-        $git_require = $install_git ? {
-          true    => Package['git'],
-          default => [],
-        }
-
         # Clone/update dotfiles repository
         vcsrepo { $dotfiles_path:
           ensure   => $vcsrepo_ensure,
@@ -77,7 +69,6 @@ class profile::dotfiles (
           source   => $dotfiles_repo,
           revision => $dotfiles_revision,
           user     => $username,
-          require  => $git_require,
         }
 
         # Run install script to create symlinks
