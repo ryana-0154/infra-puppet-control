@@ -4,7 +4,8 @@
 #
 # @note Requirements
 #   - Docker must be installed and running
-#   - docker-compose (v1 or v2) must be available in PATH
+#   - docker-compose v1 (`docker-compose`) or Docker Compose v2 (`docker compose`) must be available
+#   - Automatically detects and uses whichever version is available
 #
 # @param manage_monitoring
 #   Whether to manage monitoring configuration
@@ -394,11 +395,12 @@ class profile::monitoring (
     }
 
     # Ensure docker-compose stack is running
+    # Support both docker-compose v1 and docker compose v2
     exec { 'start-monitoring-stack':
-      command => 'docker-compose up -d',
+      command => 'sh -c "docker compose version >/dev/null 2>&1 && docker compose up -d || docker-compose up -d"',
       cwd     => $monitoring_dir,
       path    => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
-      unless  => 'docker-compose ps -q 2>/dev/null | grep -q .',
+      unless  => 'sh -c "docker compose ps -q 2>/dev/null | grep -q . || docker-compose ps -q 2>/dev/null | grep -q ."',
       require => File["${monitoring_dir}/docker-compose.yaml"],
     }
 
@@ -443,7 +445,7 @@ class profile::monitoring (
     $all_subscribe = $base_subscribe + $prometheus_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe
 
     exec { 'restart-monitoring-stack':
-      command     => 'docker-compose up -d --force-recreate',
+      command     => 'sh -c "docker compose version >/dev/null 2>&1 && docker compose up -d --force-recreate || docker-compose up -d --force-recreate"',
       cwd         => $monitoring_dir,
       path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       refreshonly => true,

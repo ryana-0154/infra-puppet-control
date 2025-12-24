@@ -6,7 +6,8 @@
 #
 # @note Requirements
 #   - Docker must be installed and running
-#   - docker-compose (v1 or v2) must be available in PATH
+#   - docker-compose v1 (`docker-compose`) or Docker Compose v2 (`docker compose`) must be available
+#   - Automatically detects and uses whichever version is available
 #
 # @param manage_otel_collector
 #   Whether to manage the OTEL collector
@@ -136,8 +137,9 @@ class profile::otel_collector (
     }
 
     # Ensure docker-compose stack is running
+    # Support both docker-compose v1 and docker compose v2
     exec { 'start-otel-collector':
-      command => 'docker-compose up -d',
+      command => 'sh -c "docker compose version >/dev/null 2>&1 && docker compose up -d || docker-compose up -d"',
       cwd     => $otel_dir,
       path    => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       unless  => "docker ps --format '{{.Names}}' | grep -q '^otel-collector$'",
@@ -150,7 +152,7 @@ class profile::otel_collector (
 
     # Restart containers when configuration changes
     exec { 'restart-otel-collector':
-      command     => 'docker-compose up -d --force-recreate',
+      command     => 'sh -c "docker compose version >/dev/null 2>&1 && docker compose up -d --force-recreate || docker-compose up -d --force-recreate"',
       cwd         => $otel_dir,
       path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       refreshonly => true,

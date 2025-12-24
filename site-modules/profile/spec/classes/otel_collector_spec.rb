@@ -46,14 +46,16 @@ describe 'profile::otel_collector' do
 
         it 'starts docker-compose stack' do
           is_expected.to contain_exec('start-otel-collector').with(
-            command: 'docker-compose up -d',
+            command: 'sh -c "docker compose version >/dev/null 2>&1 && docker compose up -d || docker-compose up -d"',
             cwd: '/opt/otel'
           )
         end
 
         it 'restarts containers on config changes' do
           is_expected.to contain_exec('restart-otel-collector').with(
-            command: 'docker-compose up -d --force-recreate',
+            command: 'sh -c "docker compose version >/dev/null 2>&1 && ' \
+                     'docker compose up -d --force-recreate || ' \
+                     'docker-compose up -d --force-recreate"',
             cwd: '/opt/otel',
             refreshonly: true
           )
