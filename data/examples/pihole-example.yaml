@@ -29,6 +29,25 @@ profile::pihole::provision_custom_hosts: true
 # Default: true
 profile::pihole::restart_on_config_change: true
 
+# File ownership for gravity.db
+# Use 'root:root' for Docker bind mounts (default)
+# Use 'pihole:pihole' only if pihole user/group exists on host
+# Default: root
+# profile::pihole::gravity_db_owner: 'root'
+# profile::pihole::gravity_db_group: 'root'
+
+# ============================================================================
+# Docker Requirements
+# ============================================================================
+
+# This profile requires:
+# - Docker installed and running
+# - PiHole container exists (created via docker-compose or manually)
+# - Files bind-mounted from /etc/pihole on host into container
+#
+# The profile will automatically verify the container exists before
+# attempting to restart it.
+
 # ============================================================================
 # PiHole Password Hash (REQUIRED)
 # ============================================================================

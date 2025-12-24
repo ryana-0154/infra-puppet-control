@@ -112,10 +112,23 @@ profile::pihole::provision_custom_hosts: true
 # Restart PiHole when config changes
 profile::pihole::restart_on_config_change: true
 
+# File ownership for gravity.db (use 'root' for Docker bind mounts)
+profile::pihole::gravity_db_owner: 'root'
+profile::pihole::gravity_db_group: 'root'
+
 # Password hash (REQUIRED - must be encrypted with eyaml)
 profile::pihole::pihole_password_hash: >
   ENC[PKCS7,...]
 ```
+
+### Docker Requirements
+
+This profile assumes:
+- Docker is installed and running
+- The PiHole container exists (will be created if using docker-compose or another method)
+- Files are bind-mounted from `/etc/pihole` on the host into the container
+
+The profile will verify the container exists before attempting to restart it.
 
 ## Updating Configuration
 
@@ -144,6 +157,76 @@ If you only need to update specific settings:
 2. Update blocklists: Replace `site-modules/profile/files/pihole/gravity.db`
 3. Update hosts: Edit `site-modules/profile/files/pihole/custom_hosts`
 4. Commit and apply
+
+## Rolling Back Configuration
+
+If a configuration change breaks PiHole, you have several rollback options:
+
+### Option 1: Quick Disable (Emergency)
+
+Temporarily disable Puppet provisioning to restore PiHole manually:
+
+```bash
+# In Hiera configuration
+echo "profile::pihole::manage_pihole: false" >> data/nodes/yournode.yaml
+puppet agent -t
+
+# Manually fix PiHole
+docker exec -it pihole bash
+# Edit /etc/pihole/pihole.toml or restore from backup
+# Exit container
+
+# Re-enable provisioning after fixing the issue
+```
+
+### Option 2: Git Revert to Previous Configuration
+
+```bash
+# Find the commit with working configuration
+git log --oneline site-modules/profile/
+
+# Revert to specific commit
+git checkout <commit-hash> site-modules/profile/files/pihole/
+git checkout <commit-hash> site-modules/profile/templates/pihole/
+
+# Apply the old configuration
+git add site-modules/profile/
+git commit -m "Rollback PiHole configuration to working state"
+puppet agent -t
+```
+
+### Option 3: Restore from PiHole Teleporter Backup
+
+If you have a working `pihole-teleporter.zip` backup:
+
+```bash
+# Copy the backup to the repo root
+cp /path/to/working/pihole-teleporter.zip .
+
+# Extract and update module files
+./scripts/update-pihole-from-backup.sh
+
+# Commit and apply
+git add site-modules/profile/
+git commit -m "Restore PiHole configuration from backup"
+puppet agent -t
+```
+
+### Option 4: Disable Auto-Restart for Testing
+
+Before applying risky changes, disable auto-restart to test manually:
+
+```yaml
+profile::pihole::restart_on_config_change: false
+```
+
+Apply configuration, then manually restart when ready:
+
+```bash
+docker restart pihole
+# Check logs
+docker logs pihole
+```
 
 ## Selective Provisioning
 

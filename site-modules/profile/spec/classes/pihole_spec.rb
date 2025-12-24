@@ -61,8 +61,8 @@ describe 'profile::pihole' do
       is_expected.to contain_file('/etc/pihole/gravity.db').with(
         ensure: 'file',
         source: 'puppet:///modules/profile/pihole/gravity.db',
-        owner: 'pihole',
-        group: 'pihole',
+        owner: 'root',
+        group: 'root',
         mode: '0644'
       )
     end
@@ -79,9 +79,9 @@ describe 'profile::pihole' do
 
     it do
       is_expected.to contain_exec('restart-pihole').with(
-        command: '/usr/bin/docker restart pihole',
+        command: 'docker restart pihole',
         refreshonly: true
-      )
+      ).that_requires('File[/etc/pihole/pihole.toml]')
     end
   end
 
@@ -94,6 +94,8 @@ describe 'profile::pihole' do
   end
 
   context 'without password hash' do
+    let(:params) { { manage_pihole: true } }
+
     it { is_expected.to compile.and_raise_error(/pihole_password_hash is required/) }
   end
 
@@ -148,7 +150,7 @@ describe 'profile::pihole' do
 
     it do
       is_expected.to contain_exec('restart-pihole').with(
-        command: '/usr/bin/docker restart my-pihole'
+        command: 'docker restart my-pihole'
       )
     end
   end

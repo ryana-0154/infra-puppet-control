@@ -61,8 +61,16 @@ TOML_TEMPLATE="$MODULE_DIR/templates/pihole/pihole.toml.erb"
 mkdir -p "$(dirname "$TOML_TEMPLATE")"
 
 # Copy and parameterize password hash
-sed 's/pwhash = ".*"/pwhash = "<%= @pihole_password_hash %>"/' \
+# Use a more specific regex to only match the actual password hash line
+sed '/^[[:space:]]*pwhash = /s/pwhash = ".*"/pwhash = "<%= @pihole_password_hash %>"/' \
     "$TEMP_DIR/etc/pihole/pihole.toml" > "$TOML_TEMPLATE"
+
+# Verify the password hash was parameterized
+if ! grep -q '<%= @pihole_password_hash %>' "$TOML_TEMPLATE"; then
+    echo -e "${RED}Error: Failed to parameterize password hash in template${NC}"
+    rm -rf "$TEMP_DIR"
+    exit 1
+fi
 
 echo -e "  ${GREEN}✓${NC} Updated $TOML_TEMPLATE"
 

@@ -17,6 +17,10 @@
 #   Whether to provision custom hosts file
 # @param restart_on_config_change
 #   Whether to restart PiHole when configuration changes
+# @param gravity_db_owner
+#   Owner for gravity.db file (use 'root' if bind-mounting into Docker)
+# @param gravity_db_group
+#   Group for gravity.db file (use 'root' if bind-mounting into Docker)
 #
 # @example Basic usage
 #   include profile::pihole
@@ -33,10 +37,19 @@ class profile::pihole (
   Boolean                  $provision_gravity_db       = true,
   Boolean                  $provision_custom_hosts     = true,
   Boolean                  $restart_on_config_change   = true,
+  String[1]                $gravity_db_owner           = 'root',
+  String[1]                $gravity_db_group           = 'root',
 ) {
   # Validate that password hash is provided
   if $manage_pihole and !$pihole_password_hash {
     fail('profile::pihole: pihole_password_hash is required when manage_pihole is true')
+  }
+
+  # Validate password hash format
+  if $manage_pihole and $pihole_password_hash {
+    unless $pihole_password_hash =~ /^\$BALLOON-SHA256\$/ {
+      fail('profile::pihole: pihole_password_hash must be a Balloon hash (starts with $BALLOON-SHA256$)')
+    }
   }
 
   if $manage_pihole {
@@ -70,8 +83,8 @@ class profile::pihole (
       file { "${pihole_config_dir}/gravity.db":
         ensure  => file,
         source  => 'puppet:///modules/profile/pihole/gravity.db',
-        owner   => 'pihole',
-        group   => 'pihole',
+        owner   => $gravity_db_owner,
+        group   => $gravity_db_group,
         mode    => '0644',
         require => File[$pihole_config_dir],
         notify  => $notify_target,
@@ -93,9 +106,10 @@ class profile::pihole (
 
     # Restart PiHole container when configuration changes
     exec { 'restart-pihole':
-      command     => "/usr/bin/docker restart ${pihole_container_name}",
+      command     => "docker restart ${pihole_container_name}",
       refreshonly => true,
-      path        => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+      path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
+      onlyif      => "docker ps -a --format '{{.Names}}' | grep -q '^${pihole_container_name}$'",
     }
   }
 }
