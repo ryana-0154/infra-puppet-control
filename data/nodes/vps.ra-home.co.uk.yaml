@@ -8,7 +8,7 @@ profile::base::manage_otel_collector: true
 # Monitoring configuration
 profile::monitoring::manage_monitoring: true
 profile::monitoring::monitoring_dir: '/opt/monitoring_test'
-profile::monitoring::monitoring_ip: '0.0.0.0'  # Listen on all interfaces for VPS
+profile::monitoring::monitoring_ip: '10.10.10.1'  # Listen on all interfaces for VPS
 
 # Service ports
 profile::monitoring::prometheus_port: 9090

@@ -10,8 +10,6 @@ server:
 
 # Configure limits for ingestion and querying
 limits_config:
-  # Enforce a maximum label set per stream
-  enforce_metric_name: false
   reject_old_samples: true
   reject_old_samples_max_age: 168h  # 7 days
 
@@ -49,7 +47,6 @@ common:
 # Compactor for log retention
 compactor:
   working_directory: /loki/compactor
-  shared_store: filesystem
   compaction_interval: 10m
   retention_enabled: true
   retention_delete_delay: 2h
@@ -87,7 +84,6 @@ storage_config:
     active_index_directory: /loki/tsdb-index
     cache_location: /loki/tsdb-cache
     cache_ttl: 24h
-    shared_store: filesystem
   filesystem:
     directory: /loki/chunks
 
