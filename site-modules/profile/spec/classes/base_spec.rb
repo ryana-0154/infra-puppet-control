@@ -29,6 +29,20 @@ describe 'profile::base' do
         it { is_expected.to compile.with_all_deps }
         it { is_expected.not_to contain_class('firewall') }
       end
+
+      context 'with manage_fail2ban enabled' do
+        let(:params) { { manage_fail2ban: true } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_class('profile::fail2ban') }
+      end
+
+      context 'with manage_fail2ban disabled' do
+        let(:params) { { manage_fail2ban: false } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.not_to contain_class('profile::fail2ban') }
+      end
     end
   end
 end

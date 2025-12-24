@@ -17,6 +17,9 @@ mod 'puppetlabs-inifile', '6.1.1'
 mod 'puppet-logrotate', '7.1.0'
 mod 'puppet-systemd', '7.1.0'
 
+# Security modules
+mod 'puppet-fail2ban', '7.0.0'
+
 # Git-based modules (examples)
 # mod 'custom_module',
 #   :git => 'https://github.com/org/custom_module.git',
