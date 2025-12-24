@@ -71,7 +71,6 @@ profile::monitoring::oidc_private_key: >
 # SSO Users with encrypted passwords
 # Generate password hashes with:
 # docker run authelia/authelia:4.38 authelia crypto hash generate argon2 --password 'your-password'
-
 profile::monitoring::sso_users:
   ryan:
     displayname: "ryan"

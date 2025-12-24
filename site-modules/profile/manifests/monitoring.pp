@@ -388,5 +388,23 @@ class profile::monitoring (
         require => File[$monitoring_dir],
       }
     }
+
+    # Ensure docker-compose stack is running
+    exec { 'start-monitoring-stack':
+      command => 'docker-compose up -d',
+      cwd     => $monitoring_dir,
+      path    => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
+      unless  => "docker ps --format '{{.Names}}' | grep -E '(prometheus|grafana|loki|promtail)' | wc -l | grep -qE '[1-9]'",
+      require => File["${monitoring_dir}/docker-compose.yaml"],
+    }
+
+    # Restart containers when configuration changes
+    exec { 'restart-monitoring-stack':
+      command     => 'docker-compose up -d --force-recreate',
+      cwd         => $monitoring_dir,
+      path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
+      refreshonly => true,
+      subscribe   => File["${monitoring_dir}/docker-compose.yaml"],
+    }
   }
 }

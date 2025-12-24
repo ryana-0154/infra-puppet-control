@@ -131,38 +131,30 @@ class profile::otel_collector (
       require => File[$otel_dir],
     }
 
-    # Systemd service for OTEL Collector
-    file { '/etc/systemd/system/otel-collector.service':
-      ensure  => file,
-      mode    => '0644',
-      owner   => 'root',
-      group   => 'root',
-      content => epp('profile/otel/otel-collector.service.epp', {
-        otel_dir => $otel_dir,
-      }),
-    }
-
-    # Enable and start OTEL Collector service
-    service { 'otel-collector':
-      ensure    => running,
-      enable    => true,
-      subscribe => [
+    # Ensure docker-compose stack is running
+    exec { 'start-otel-collector':
+      command => 'docker-compose up -d',
+      cwd     => $otel_dir,
+      path    => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
+      unless  => "docker ps --format '{{.Names}}' | grep -q '^otel-collector$'",
+      require => [
         File["${otel_dir}/docker-compose.yaml"],
         File["${otel_dir}/config/otel-collector-config.yaml"],
         File["${otel_dir}/.env"],
-        File['/etc/systemd/system/otel-collector.service'],
-      ],
-      require   => [
-        File['/etc/systemd/system/otel-collector.service'],
-        Exec['systemctl-daemon-reload-otel'],
       ],
     }
 
-    # Reload systemd after creating service file
-    exec { 'systemctl-daemon-reload-otel':
-      command     => '/bin/systemctl daemon-reload',
+    # Restart containers when configuration changes
+    exec { 'restart-otel-collector':
+      command     => 'docker-compose up -d --force-recreate',
+      cwd         => $otel_dir,
+      path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       refreshonly => true,
-      subscribe   => File['/etc/systemd/system/otel-collector.service'],
+      subscribe   => [
+        File["${otel_dir}/docker-compose.yaml"],
+        File["${otel_dir}/config/otel-collector-config.yaml"],
+        File["${otel_dir}/.env"],
+      ],
     }
   }
 }
