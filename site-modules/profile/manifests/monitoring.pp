@@ -375,7 +375,7 @@ class profile::monitoring (
       file { "${monitoring_dir}/secrets":
         ensure => directory,
         group  => $monitoring_dir_group,
-        mode   => '0700',
+        mode   => '0755',
         owner  => $monitoring_dir_owner,
       }
 
@@ -384,7 +384,7 @@ class profile::monitoring (
           ensure  => file,
           content => $grafana_admin_password,
           group   => $monitoring_dir_group,
-          mode    => '0600',
+          mode    => '0644',
           owner   => $monitoring_dir_owner,
           require => File["${monitoring_dir}/secrets"],
         }
@@ -395,7 +395,7 @@ class profile::monitoring (
           ensure  => file,
           content => $pihole_password,
           group   => $monitoring_dir_group,
-          mode    => '0600',
+          mode    => '0644',
           owner   => $monitoring_dir_owner,
           require => File["${monitoring_dir}/secrets"],
         }
@@ -406,7 +406,7 @@ class profile::monitoring (
           ensure  => file,
           content => $pihole_api_token,
           group   => $monitoring_dir_group,
-          mode    => '0600',
+          mode    => '0644',
           owner   => $monitoring_dir_owner,
           require => File["${monitoring_dir}/secrets"],
         }
