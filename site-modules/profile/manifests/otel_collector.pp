@@ -4,6 +4,10 @@
 # and forwards them to Prometheus for monitoring and alerting. Includes Grafana
 # dashboards for visualization of cost, token usage, and performance metrics.
 #
+# @note Requirements
+#   - Docker must be installed and running
+#   - docker-compose (v1 or v2) must be available in PATH
+#
 # @param manage_otel_collector
 #   Whether to manage the OTEL collector
 # @param otel_dir

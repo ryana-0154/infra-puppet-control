@@ -2,6 +2,10 @@
 #
 # This profile sets up monitoring directories and related infrastructure.
 #
+# @note Requirements
+#   - Docker must be installed and running
+#   - docker-compose (v1 or v2) must be available in PATH
+#
 # @param manage_monitoring
 #   Whether to manage monitoring configuration
 # @param monitoring_dir
@@ -394,17 +398,56 @@ class profile::monitoring (
       command => 'docker-compose up -d',
       cwd     => $monitoring_dir,
       path    => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
-      unless  => "docker ps --format '{{.Names}}' | grep -E '(prometheus|grafana|loki|promtail)' | wc -l | grep -qE '[1-9]'",
+      unless  => 'docker-compose ps -q 2>/dev/null | grep -q .',
       require => File["${monitoring_dir}/docker-compose.yaml"],
     }
 
     # Restart containers when configuration changes
+    # Build subscribe array based on enabled services
+    $base_subscribe = [File["${monitoring_dir}/docker-compose.yaml"]]
+    $prometheus_subscribe = $enable_prometheus ? {
+      true    => [File["${monitoring_dir}/prometheus.yaml"]],
+      default => [],
+    }
+    $loki_subscribe = $enable_loki ? {
+      true    => [File["${monitoring_dir}/loki-config.yaml"]],
+      default => [],
+    }
+    $promtail_subscribe = $enable_promtail ? {
+      true    => [File["${monitoring_dir}/promtail-config.yaml"]],
+      default => [],
+    }
+    $blackbox_subscribe = $enable_blackbox ? {
+      true    => [File["${monitoring_dir}/blackbox.yaml"]],
+      default => [],
+    }
+    $grafana_subscribe = $enable_grafana ? {
+      true    => [
+        File["${monitoring_dir}/provisioning/datasources/loki.yaml"],
+        File["${monitoring_dir}/provisioning/dashboards/dashboard-provider.yaml"],
+      ],
+      default => [],
+    }
+    $authelia_subscribe = $enable_authelia ? {
+      true    => [
+        File["${monitoring_dir}/authelia-config.yaml"],
+        File["${monitoring_dir}/authelia-users.yaml"],
+      ],
+      default => [],
+    }
+    $nginx_subscribe = $enable_nginx_proxy ? {
+      true    => [File["${monitoring_dir}/nginx.conf"]],
+      default => [],
+    }
+
+    $all_subscribe = $base_subscribe + $prometheus_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe
+
     exec { 'restart-monitoring-stack':
       command     => 'docker-compose up -d --force-recreate',
       cwd         => $monitoring_dir,
       path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       refreshonly => true,
-      subscribe   => File["${monitoring_dir}/docker-compose.yaml"],
+      subscribe   => $all_subscribe,
     }
   }
 }
