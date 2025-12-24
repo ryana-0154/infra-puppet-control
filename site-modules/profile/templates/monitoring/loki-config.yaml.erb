@@ -24,7 +24,7 @@ limits_config:
   max_query_parallelism: 32
   max_streams_per_user: 10000
   max_global_streams_per_user: 0
-  max_chunks_per_query: 2000000
+  max_chunks_per_query: 100000
   max_query_series: 500
 
   # Per-stream limits
@@ -53,7 +53,7 @@ compactor:
   compaction_interval: 10m
   retention_enabled: true
   retention_delete_delay: 2h
-  retention_delete_worker_count: 150
+  retention_delete_worker_count: 10
 
 query_range:
   align_queries_with_step: true
@@ -70,25 +70,10 @@ query_range:
 query_scheduler:
   max_outstanding_requests_per_tenant: 256
 
-# Frontend worker configuration
-frontend_worker:
-  frontend_address: <%= @monitoring_ip %>:9095
-  grpc_client_config:
-    max_send_msg_size: 104857600  # 100MB
-
 # Use TSDB for better performance (Loki 2.8+)
 schema_config:
   configs:
-    # Legacy config for existing data
     - from: 2020-10-24
-      store: boltdb-shipper
-      object_store: filesystem
-      schema: v11
-      index:
-        prefix: index_
-        period: 24h
-    # New TSDB config for better performance
-    - from: 2024-01-01
       store: tsdb
       object_store: filesystem
       schema: v12
@@ -98,11 +83,6 @@ schema_config:
 
 # Storage configuration
 storage_config:
-  boltdb_shipper:
-    active_index_directory: /loki/index
-    cache_location: /loki/index_cache
-    cache_ttl: 24h
-    shared_store: filesystem
   tsdb_shipper:
     active_index_directory: /loki/tsdb-index
     cache_location: /loki/tsdb-cache
@@ -110,11 +90,6 @@ storage_config:
     shared_store: filesystem
   filesystem:
     directory: /loki/chunks
-
-# Table manager for index management
-table_manager:
-  retention_deletes_enabled: true
-  retention_period: 168h  # 7 days
 
 # Ruler configuration for alerts
 ruler:
