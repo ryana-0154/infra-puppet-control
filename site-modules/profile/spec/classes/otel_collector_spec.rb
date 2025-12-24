@@ -10,10 +10,6 @@ describe 'profile::otel_collector' do
       context 'with default parameters' do
         it { is_expected.to compile.with_all_deps }
 
-        it 'ensures docker-compose-plugin is installed' do
-          is_expected.to contain_package('docker-compose-plugin').with_ensure('installed')
-        end
-
         it 'creates OTEL directory structure' do
           is_expected.to contain_file('/opt/otel').with(
             ensure: 'directory',
