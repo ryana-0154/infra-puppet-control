@@ -16,6 +16,7 @@ mod 'puppetlabs-inifile', '6.1.1'
 # System management
 mod 'puppet-logrotate', '7.1.0'
 mod 'puppet-systemd', '7.1.0'
+mod 'puppetlabs-vcsrepo', '6.1.0'
 
 # Security modules
 mod 'puppet-fail2ban', '7.0.0'
