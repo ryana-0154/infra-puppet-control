@@ -1,0 +1,34 @@
+<%- |
+  Boolean $enable_embedded_dashboards,
+  Boolean $enable_external_dashboards,
+  String  $monitoring_dir,
+| -%>
+# Grafana dashboard provisioning configuration
+# Managed by Puppet - do not edit manually
+
+apiVersion: 1
+
+providers:
+<%- if $enable_embedded_dashboards { -%>
+  - name: 'Loki Logs'
+    orgId: 1
+    folder: 'Logs'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+<%- } -%>
+<%- if $enable_external_dashboards { -%>
+  - name: 'External Dashboards'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards-external
+      foldersFromFilesStructure: true
+<%- } -%>

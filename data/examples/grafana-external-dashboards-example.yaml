@@ -1,0 +1,162 @@
+---
+# Example configuration for Grafana external dashboard provisioning
+# Copy relevant sections to your node or common.yaml
+
+# ============================================================================
+# External Dashboard Provisioning
+# ============================================================================
+
+# Enable provisioning dashboards from an external Git repository
+# Default: false (dashboards are embedded in this repo)
+profile::monitoring::enable_external_dashboards: true
+
+# Git repository URL containing Grafana dashboards
+# This is REQUIRED when enable_external_dashboards is true
+# Example: https://github.com/yourusername/grafana-dashboards.git
+profile::monitoring::dashboard_repo_url: 'https://github.com/yourusername/grafana-dashboards.git'
+
+# Branch, tag, or commit to checkout
+# Default: main
+profile::monitoring::dashboard_repo_revision: 'main'
+
+# Whether to automatically pull latest changes on each Puppet run
+# Default: false (only clone once)
+# Set to true to keep dashboards updated automatically
+profile::monitoring::dashboard_auto_update: false
+
+# Whether to keep provisioning the embedded Loki dashboard
+# Default: true
+# Set to false if you want ONLY external dashboards
+profile::monitoring::enable_embedded_dashboards: true
+
+# ============================================================================
+# Dashboard Repository Structure
+# ============================================================================
+
+# Your external dashboard repository should be organized like this:
+#
+# grafana-dashboards/
+# ├── Logs/
+# │   ├── loki-logs-overview.json
+# │   └── application-logs.json
+# ├── Metrics/
+# │   ├── system-metrics.json
+# │   └── application-metrics.json
+# ├── Alerts/
+# │   └── alert-overview.json
+# └── Custom/
+#     └── custom-dash.json
+#
+# Each top-level directory becomes a folder in Grafana, and dashboard JSON
+# files within those directories are automatically provisioned.
+#
+# For example:
+# - TEST/test-dash.json → Creates "TEST" folder with "test-dash" dashboard
+# - Monitoring/cpu.json → Creates "Monitoring" folder with "cpu" dashboard
+#
+# Grafana automatically scans subdirectories and creates the folder structure
+# using the foldersFromFilesStructure option.
+
+# ============================================================================
+# How It Works
+# ============================================================================
+
+# When enable_external_dashboards is true, this profile will:
+# 1. Clone the dashboard repository to /opt/monitoring/dashboards-external
+# 2. Mount it into the Grafana container at /etc/grafana/dashboards-external
+# 3. Configure Grafana's dashboard provisioning to scan the directory
+# 4. (Optional) Pull latest changes on each Puppet run if auto_update is enabled
+# 5. Restart Grafana container when dashboards are updated
+
+# Grafana will automatically:
+# - Discover all .json files in the repository
+# - Create folders based on directory structure
+# - Load dashboards into those folders
+# - Update dashboards when the repository is updated
+
+# ============================================================================
+# Embedded vs External Dashboards
+# ============================================================================
+
+# You can use both embedded and external dashboards simultaneously:
+#
+# Option 1: Only external dashboards
+# profile::monitoring::enable_external_dashboards: true
+# profile::monitoring::enable_embedded_dashboards: false
+# profile::monitoring::dashboard_repo_url: 'https://github.com/...'
+#
+# Option 2: Both embedded and external (default when external is enabled)
+# profile::monitoring::enable_external_dashboards: true
+# profile::monitoring::enable_embedded_dashboards: true
+# profile::monitoring::dashboard_repo_url: 'https://github.com/...'
+#
+# Option 3: Only embedded dashboards (original behavior)
+# profile::monitoring::enable_external_dashboards: false
+# profile::monitoring::enable_embedded_dashboards: true
+
+# ============================================================================
+# Dashboard File Format
+# ============================================================================
+
+# Dashboard files must be valid Grafana dashboard JSON exports.
+# To create a dashboard:
+# 1. Design your dashboard in Grafana web UI
+# 2. Click "Share" → "Export" → "Save to file"
+# 3. Add the .json file to your dashboard repository
+# 4. Commit and push to your repository
+# 5. Puppet will automatically provision it on the next run
+
+# ============================================================================
+# Prerequisites
+# ============================================================================
+
+# This feature requires:
+# - git (automatically installed when enable_external_dashboards is true)
+# - puppetlabs-vcsrepo module (already in Puppetfile)
+# - Network access to the dashboard repository URL
+# - Valid Git repository URL (public or with credentials configured)
+
+# ============================================================================
+# Private Repositories
+# ============================================================================
+
+# To use a private repository, you can:
+#
+# 1. Use SSH with deploy keys:
+#    profile::monitoring::dashboard_repo_url: 'git@github.com:org/private-dashboards.git'
+#    (Requires SSH keys configured on the server)
+#
+# 2. Use HTTPS with credentials in URL (not recommended for security):
+#    profile::monitoring::dashboard_repo_url: 'https://username:token@github.com/org/private-dashboards.git'
+#
+# 3. Use HTTPS with Git credential helper (recommended):
+#    Configure Git credential helper on the server separately
+
+# ============================================================================
+# Advanced Configuration
+# ============================================================================
+
+# Pin to a specific version:
+# profile::monitoring::dashboard_repo_revision: 'v1.2.3'
+
+# Use a different branch:
+# profile::monitoring::dashboard_repo_revision: 'develop'
+
+# Auto-update dashboards (pulls on every Puppet run):
+# profile::monitoring::dashboard_auto_update: true
+# Note: This triggers Grafana container restart when there are changes
+
+# ============================================================================
+# Deployment
+# ============================================================================
+
+# To deploy external dashboards:
+# 1. Create a Git repository for your dashboards
+# 2. Organize dashboards into folders (directories)
+# 3. Add the configuration above to your Hiera data
+# 4. Run Puppet: puppet agent -t
+# 5. Dashboards will be cloned and provisioned to Grafana
+
+# To update dashboards:
+# - If auto_update: false (default): Manually git pull in /opt/monitoring/dashboards-external
+# - If auto_update: true: Puppet automatically pulls latest on each run
