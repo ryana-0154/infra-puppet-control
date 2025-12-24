@@ -110,6 +110,23 @@ Promtail automatically collects logs from:
 
 To adjust retention, modify `limits_config.retention_period` in the Loki configuration.
 
+### Pre-built Dashboard
+
+A comprehensive Loki dashboard is automatically provisioned when Grafana starts. To access it:
+
+1. Log in to Grafana at `http://<monitoring_ip>:<grafana_port>`
+2. Go to Dashboards → Browse
+3. Open the "Logs" folder
+4. Select "Loki Logs Overview"
+
+The dashboard includes:
+- **Security monitoring**: Failed SSH attempts, fail2ban activity by jail
+- **Web server metrics**: Request rates, status code distribution, error levels
+- **System logs**: Puppet errors/warnings, Docker container activity, systemd journal priorities
+- **Recent log panels**: Live log streams for fail2ban, authentication, nginx errors, puppet, and docker
+
+You can also use the dashboard as a template to create custom log visualizations.
+
 ### LogQL Query Examples
 
 Access Grafana's Explore interface and use the Loki datasource to run queries:

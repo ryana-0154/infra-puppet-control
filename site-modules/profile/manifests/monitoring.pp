@@ -211,6 +211,33 @@ class profile::monitoring (
         owner   => $monitoring_dir_owner,
         require => File["${monitoring_dir}/provisioning/datasources"],
       }
+
+      # Dashboard provisioning
+      file { "${monitoring_dir}/provisioning/dashboards":
+        ensure  => directory,
+        group   => $monitoring_dir_group,
+        mode    => '0755',
+        owner   => $monitoring_dir_owner,
+        require => File["${monitoring_dir}/provisioning"],
+      }
+
+      file { "${monitoring_dir}/provisioning/dashboards/dashboard-provider.yaml":
+        ensure  => file,
+        content => template('profile/monitoring/provisioning/dashboards/dashboard-provider.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File["${monitoring_dir}/provisioning/dashboards"],
+      }
+
+      file { "${monitoring_dir}/provisioning/dashboards/loki-logs-overview.json":
+        ensure  => file,
+        content => template('profile/monitoring/provisioning/dashboards/loki-logs-overview.json.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File["${monitoring_dir}/provisioning/dashboards"],
+      }
     }
 
     # Create secrets directory if any secrets are defined
