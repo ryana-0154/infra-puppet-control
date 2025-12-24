@@ -18,14 +18,20 @@ profile::monitoring::pihole_exporter_port: 9617
 # Enable/disable services
 profile::monitoring::enable_prometheus: true
 profile::monitoring::enable_grafana: true
-profile::monitoring::enable_loki: true
-profile::monitoring::enable_promtail: true
+
+# Loki and Promtail for log aggregation
+# NOTE: Loki can be resource-intensive. For lightweight deployments:
+# - Keep Loki disabled and point Promtail to an external Loki instance
+# - OR reduce Loki's retention period and cache sizes
+profile::monitoring::enable_loki: true       # Log aggregation server
+profile::monitoring::enable_promtail: true   # Log collection agent
+
 profile::monitoring::enable_pihole_exporter: false  # Disable if no PiHole
 profile::monitoring::enable_blackbox: true
 profile::monitoring::enable_node_exporter: true
 profile::monitoring::enable_wg_portal: false  # Disable if no WireGuard
 
-# Image versions
+# Image versions (pin versions for stability in production)
 profile::monitoring::prometheus_image: 'prom/prometheus:v2.45.0'
 profile::monitoring::grafana_image: 'grafana/grafana:10.0.0'
 profile::monitoring::loki_image: 'grafana/loki:3.1.1'
@@ -56,6 +62,41 @@ profile::monitoring::pihole_interval: '30s'
 # For testing only (DO NOT USE IN PRODUCTION):
 # profile::monitoring::grafana_admin_password: 'changeme'
 # profile::monitoring::pihole_password: 'changeme'
+
+# ============================================================================
+# Log Collection with Loki and Promtail
+# ============================================================================
+
+# Promtail automatically collects logs from:
+# - System logs (/var/log/*log, syslog, auth.log/secure)
+# - Security logs (fail2ban)
+# - Web server logs (nginx, apache - access and error logs)
+# - Container logs (Docker)
+# - Systemd journal
+# - Puppet logs
+
+# Loki Configuration:
+# - Default retention: 7 days (168h)
+# - Storage: TSDB for better performance
+# - Automatic compaction every 10 minutes
+# - 100MB query cache with 24h TTL
+# - Grafana datasource is automatically provisioned
+
+# To view logs:
+# 1. Access Grafana at http://<monitoring_ip>:3000
+# 2. Go to Explore (compass icon in left sidebar)
+# 3. Select "Loki" as the datasource
+# 4. Use LogQL queries (see README.md for examples)
+
+# Example LogQL queries:
+# - {job="fail2ban"}                          # All fail2ban logs
+# - {job="auth"} |= "Failed password"         # Failed SSH attempts
+# - {job="nginx", log_type="access"}          # Nginx access logs
+# - {job="docker"}                            # All container logs
+# - {job="systemd-journal", unit="ssh.service"} # SSH service logs
+
+# To adjust Loki retention or performance settings, modify:
+# site-modules/profile/templates/monitoring/loki-config.yaml.erb
 
 # ============================================================================
 # Single Sign-On (SSO) with Authelia

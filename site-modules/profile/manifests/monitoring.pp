@@ -259,6 +259,61 @@ class profile::monitoring (
       }
     }
 
+    # Create Grafana provisioning configuration
+    if $enable_grafana {
+      file { "${monitoring_dir}/provisioning":
+        ensure  => directory,
+        group   => $monitoring_dir_group,
+        mode    => '0755',
+        owner   => $monitoring_dir_owner,
+        require => File[$monitoring_dir],
+      }
+
+      file { "${monitoring_dir}/provisioning/datasources":
+        ensure  => directory,
+        group   => $monitoring_dir_group,
+        mode    => '0755',
+        owner   => $monitoring_dir_owner,
+        require => File["${monitoring_dir}/provisioning"],
+      }
+
+      file { "${monitoring_dir}/provisioning/datasources/loki.yaml":
+        ensure  => file,
+        content => template('profile/monitoring/provisioning/datasources/loki.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File["${monitoring_dir}/provisioning/datasources"],
+      }
+
+      # Dashboard provisioning
+      file { "${monitoring_dir}/provisioning/dashboards":
+        ensure  => directory,
+        group   => $monitoring_dir_group,
+        mode    => '0755',
+        owner   => $monitoring_dir_owner,
+        require => File["${monitoring_dir}/provisioning"],
+      }
+
+      file { "${monitoring_dir}/provisioning/dashboards/dashboard-provider.yaml":
+        ensure  => file,
+        content => template('profile/monitoring/provisioning/dashboards/dashboard-provider.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File["${monitoring_dir}/provisioning/dashboards"],
+      }
+
+      file { "${monitoring_dir}/provisioning/dashboards/loki-logs-overview.json":
+        ensure  => file,
+        content => template('profile/monitoring/provisioning/dashboards/loki-logs-overview.json.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File["${monitoring_dir}/provisioning/dashboards"],
+      }
+    }
+
     # Create secrets directory if any secrets are defined
     if $grafana_admin_password or $pihole_password or $pihole_api_token {
       file { "${monitoring_dir}/secrets":

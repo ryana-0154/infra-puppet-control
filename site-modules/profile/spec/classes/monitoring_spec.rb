@@ -72,6 +72,79 @@ describe 'profile::monitoring' do
     end
   end
 
+  context 'with grafana enabled' do
+    let(:params) { { enable_grafana: true } }
+
+    it { is_expected.to compile.with_all_deps }
+
+    it do
+      is_expected.to contain_file('/opt/monitoring/provisioning').with(
+        ensure: 'directory',
+        owner: 'root',
+        group: 'root',
+        mode: '0755'
+      )
+    end
+
+    it do
+      is_expected.to contain_file('/opt/monitoring/provisioning/datasources').with(
+        ensure: 'directory',
+        owner: 'root',
+        group: 'root',
+        mode: '0755'
+      )
+    end
+
+    it do
+      is_expected.to contain_file('/opt/monitoring/provisioning/datasources/loki.yaml').with(
+        ensure: 'file',
+        owner: 'root',
+        group: 'root',
+        mode: '0644'
+      )
+    end
+
+    it do
+      is_expected.to contain_file('/opt/monitoring/provisioning/dashboards').with(
+        ensure: 'directory',
+        owner: 'root',
+        group: 'root',
+        mode: '0755'
+      )
+    end
+
+    it do
+      is_expected.to contain_file('/opt/monitoring/provisioning/dashboards/dashboard-provider.yaml').with(
+        ensure: 'file',
+        owner: 'root',
+        group: 'root',
+        mode: '0644'
+      )
+    end
+
+    it do
+      is_expected.to contain_file('/opt/monitoring/provisioning/dashboards/loki-logs-overview.json').with(
+        ensure: 'file',
+        owner: 'root',
+        group: 'root',
+        mode: '0644'
+      )
+    end
+  end
+
+  context 'with grafana disabled' do
+    let(:params) { { enable_grafana: false } }
+
+    it { is_expected.to compile.with_all_deps }
+
+    it { is_expected.not_to contain_file('/opt/monitoring/provisioning') }
+    it { is_expected.not_to contain_file('/opt/monitoring/provisioning/datasources') }
+    it { is_expected.not_to contain_file('/opt/monitoring/provisioning/datasources/loki.yaml') }
+    it { is_expected.not_to contain_file('/opt/monitoring/provisioning/dashboards') }
+    it { is_expected.not_to contain_file('/opt/monitoring/provisioning/dashboards/dashboard-provider.yaml') }
+    it { is_expected.not_to contain_file('/opt/monitoring/provisioning/dashboards/loki-logs-overview.json') }
+  end
+
   context 'with Authelia SSO enabled' do
     let(:params) do
       {
