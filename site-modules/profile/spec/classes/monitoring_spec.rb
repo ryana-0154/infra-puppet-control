@@ -144,4 +144,81 @@ describe 'profile::monitoring' do
     it { is_expected.not_to contain_file('/opt/monitoring/provisioning/dashboards/dashboard-provider.yaml') }
     it { is_expected.not_to contain_file('/opt/monitoring/provisioning/dashboards/loki-logs-overview.json') }
   end
+
+  context 'with Authelia SSO enabled' do
+    let(:params) do
+      {
+        enable_authelia: true,
+        domain_name: 'example.com',
+        authelia_jwt_secret: 'test_jwt_secret',
+        authelia_session_secret: 'test_session_secret',
+        authelia_storage_encryption_key: 'test_storage_key',
+        sso_users: {
+          'admin' => {
+            'displayname' => 'Administrator',
+            'email' => 'admin@example.com',
+            'password' => '$argon2id$v=19$m=65536,t=3,p=4$test',
+            'groups' => ['admins']
+          }
+        }
+      }
+    end
+
+    it { is_expected.to compile.with_all_deps }
+
+    it do
+      is_expected.to contain_file('/opt/monitoring/authelia-config.yaml').with(
+        ensure: 'file',
+        owner: 'root',
+        group: 'root',
+        mode: '0644'
+      )
+    end
+
+    it do
+      is_expected.to contain_file('/opt/monitoring/authelia-users.yaml').with(
+        ensure: 'file',
+        owner: 'root',
+        group: 'root',
+        mode: '0600'
+      )
+    end
+  end
+
+  context 'with Authelia disabled' do
+    let(:params) { { enable_authelia: false } }
+
+    it { is_expected.to compile.with_all_deps }
+
+    it { is_expected.not_to contain_file('/opt/monitoring/authelia-config.yaml') }
+    it { is_expected.not_to contain_file('/opt/monitoring/authelia-users.yaml') }
+  end
+
+  context 'with nginx proxy enabled' do
+    let(:params) do
+      {
+        enable_nginx_proxy: true,
+        domain_name: 'example.com'
+      }
+    end
+
+    it { is_expected.to compile.with_all_deps }
+
+    it do
+      is_expected.to contain_file('/opt/monitoring/nginx.conf').with(
+        ensure: 'file',
+        owner: 'root',
+        group: 'root',
+        mode: '0644'
+      )
+    end
+  end
+
+  context 'with nginx proxy disabled' do
+    let(:params) { { enable_nginx_proxy: false } }
+
+    it { is_expected.to compile.with_all_deps }
+
+    it { is_expected.not_to contain_file('/opt/monitoring/nginx.conf') }
+  end
 end
