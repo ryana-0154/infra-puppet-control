@@ -1,0 +1,124 @@
+---
+# Example configuration for dotfiles deployment
+# Copy relevant sections to your node or common.yaml
+
+# ============================================================================
+# Dotfiles Deployment
+# ============================================================================
+
+# Enable dotfiles management (enabled by default)
+profile::dotfiles::manage_dotfiles: true
+
+# Git repository containing your dotfiles
+# Default: https://github.com/ryana-0154/dotfiles.git
+# profile::dotfiles::dotfiles_repo: 'https://github.com/yourusername/dotfiles.git'
+
+# Branch, tag, or commit to checkout
+# Default: main
+# profile::dotfiles::dotfiles_revision: 'main'
+
+# Directory name for cloned dotfiles (relative to home directory)
+# Default: .dotfiles
+# profile::dotfiles::dotfiles_dir_name: '.dotfiles'
+
+# Whether to automatically pull latest changes on each Puppet run
+# Default: false (only clone once)
+# Set to true if you want to keep dotfiles updated automatically
+profile::dotfiles::auto_update: false
+
+# Whether to ensure git package is installed
+# Default: true
+# profile::dotfiles::install_git: true
+
+# ============================================================================
+# User Configuration
+# ============================================================================
+
+# Configure which users should have dotfiles deployed
+# Each user can specify:
+#   - home_dir: Home directory path (default: /home/USERNAME)
+#   - ensure: present or absent (default: present)
+
+profile::dotfiles::dotfiles_users:
+  # Example: Single user with explicit home directory
+  ryan:
+    home_dir: /home/ryan
+    ensure: present
+
+  # Example: Multiple users
+  # alice:
+  #   home_dir: /home/alice
+  # bob:
+  #   home_dir: /home/bob
+
+  # Example: Root user
+  # root:
+  #   home_dir: /root
+
+  # Example: User with inferred home directory
+  # If home_dir is omitted, it defaults to /home/USERNAME
+  # charlie: {}
+
+  # Example: Remove dotfiles for a user
+  # olduser:
+  #   home_dir: /home/olduser
+  #   ensure: absent
+
+# ============================================================================
+# How It Works
+# ============================================================================
+
+# For each configured user, this profile will:
+# 1. Clone the dotfiles repository to ~/DOTFILES_DIR_NAME
+# 2. Ensure the install script is executable
+# 3. Run the install script to create symlinks
+# 4. (Optional) Keep repository updated if auto_update is enabled
+
+# The install script creates symlinks for:
+# - bash configuration
+# - git configuration
+# - vim configuration and plugins
+# - tmux configuration
+# - curl, wget, htop settings
+# - custom binaries in extra_bins
+# - claude configuration
+
+# ============================================================================
+# Prerequisites
+# ============================================================================
+
+# This profile requires:
+# - git (managed automatically if install_git is true)
+# - User accounts must already exist on the system
+# - Users must have write access to their home directories
+
+# ============================================================================
+# Advanced Configuration
+# ============================================================================
+
+# Use a private repository (requires SSH key authentication)
+# profile::dotfiles::dotfiles_repo: 'git@github.com:yourusername/dotfiles.git'
+
+# Pin to a specific version
+# profile::dotfiles::dotfiles_revision: 'v1.2.3'
+
+# Use a different branch for testing
+# profile::dotfiles::dotfiles_revision: 'develop'
+
+# Keep dotfiles automatically updated (pulls on every Puppet run)
+# profile::dotfiles::auto_update: true
+# Note: This will trigger re-running the install script if there are changes
+
+# ============================================================================
+# Deployment
+# ============================================================================
+
+# To deploy dotfiles:
+# 1. Add user configuration to your Hiera data (above)
+# 2. Include the profile in your role or node manifest
+# 3. Run Puppet: puppet agent -t
+# 4. Dotfiles will be cloned and symlinked to user home directories
+
+# To update dotfiles:
+# - If auto_update: false (default): Users can manually git pull in ~/.dotfiles
+# - If auto_update: true: Puppet will automatically pull latest changes
