@@ -224,9 +224,7 @@ class profile::monitoring (
 
   if $manage_monitoring {
     # Ensure Docker Compose v2 is installed
-    package { 'docker-compose-plugin':
-      ensure => installed,
-    }
+    ensure_packages(['docker-compose-plugin'])
 
     # Ensure git is installed for external dashboard repos
     if $enable_external_dashboards {
@@ -453,10 +451,7 @@ class profile::monitoring (
       cwd     => $monitoring_dir,
       path    => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       unless  => 'docker compose ps -q 2>/dev/null | grep -q .',
-      require => [
-        Package['docker-compose-plugin'],
-        File["${monitoring_dir}/docker-compose.yaml"],
-      ],
+      require => File["${monitoring_dir}/docker-compose.yaml"],
     }
 
     # Restart containers when configuration changes
@@ -509,7 +504,6 @@ class profile::monitoring (
       path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       refreshonly => true,
       subscribe   => $all_subscribe,
-      require     => Package['docker-compose-plugin'],
     }
   }
 }

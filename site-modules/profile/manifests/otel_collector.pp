@@ -53,9 +53,7 @@ class profile::otel_collector (
 ) {
   if $manage_otel_collector {
     # Ensure Docker Compose v2 is installed
-    package { 'docker-compose-plugin':
-      ensure => installed,
-    }
+    ensure_packages(['docker-compose-plugin'])
 
     # Create OTEL directory structure
     file { [$otel_dir, "${otel_dir}/config", "${otel_dir}/dashboards"]:
@@ -147,7 +145,6 @@ class profile::otel_collector (
       path    => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       unless  => "docker ps --format '{{.Names}}' | grep -q '^otel-collector$'",
       require => [
-        Package['docker-compose-plugin'],
         File["${otel_dir}/docker-compose.yaml"],
         File["${otel_dir}/config/otel-collector-config.yaml"],
         File["${otel_dir}/.env"],
@@ -165,7 +162,6 @@ class profile::otel_collector (
         File["${otel_dir}/config/otel-collector-config.yaml"],
         File["${otel_dir}/.env"],
       ],
-      require     => Package['docker-compose-plugin'],
     }
   }
 }
