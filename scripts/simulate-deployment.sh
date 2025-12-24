@@ -184,15 +184,128 @@ EOF
     fi
 done
 
+# Test common profile combinations
+print_header "Step 4: Test Profile Combinations"
+print_info "Testing common profile combinations to catch resource contention..."
+
+FAILED_COMBINATIONS=()
+PASSED_COMBINATIONS=()
+
+# Test combination: Base + Monitoring + OTEL
+print_info "Testing: Base + Monitoring + OTEL..."
+cat > "$TEST_DIR/combo_test.pp" <<'EOF'
+node 'test-combo.example.com' {
+  class { 'profile::base':
+    manage_otel_collector => true,
+  }
+  include profile::monitoring
+}
+EOF
+
+if puppet apply --noop \
+    --certname=test-combo.example.com \
+    --modulepath=modules:site-modules \
+    --hiera_config=hiera.yaml \
+    "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
+    print_success "Base + Monitoring + OTEL - no resource conflicts"
+    PASSED_COMBINATIONS+=("Base + Monitoring + OTEL")
+else
+    print_failure "Base + Monitoring + OTEL - resource conflicts detected"
+    echo "Error output:"
+    cat "$TEST_DIR/combo_output.log" | grep -A 5 "Error:\|Duplicate declaration:"
+    echo ""
+    FAILED_COMBINATIONS+=("Base + Monitoring + OTEL")
+fi
+
+# Test combination: Base + Monitoring (no OTEL)
+print_info "Testing: Base + Monitoring (no OTEL)..."
+cat > "$TEST_DIR/combo_test.pp" <<'EOF'
+node 'test-combo.example.com' {
+  class { 'profile::base':
+    manage_otel_collector => false,
+  }
+  include profile::monitoring
+}
+EOF
+
+if puppet apply --noop \
+    --certname=test-combo.example.com \
+    --modulepath=modules:site-modules \
+    --hiera_config=hiera.yaml \
+    "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
+    print_success "Base + Monitoring (no OTEL) - no resource conflicts"
+    PASSED_COMBINATIONS+=("Base + Monitoring (no OTEL)")
+else
+    print_failure "Base + Monitoring (no OTEL) - resource conflicts detected"
+    echo "Error output:"
+    cat "$TEST_DIR/combo_output.log" | grep -A 5 "Error:\|Duplicate declaration:"
+    echo ""
+    FAILED_COMBINATIONS+=("Base + Monitoring (no OTEL)")
+fi
+
+# Test combination: Monitoring + OTEL
+print_info "Testing: Monitoring + OTEL..."
+cat > "$TEST_DIR/combo_test.pp" <<'EOF'
+node 'test-combo.example.com' {
+  include profile::monitoring
+  include profile::otel_collector
+}
+EOF
+
+if puppet apply --noop \
+    --certname=test-combo.example.com \
+    --modulepath=modules:site-modules \
+    --hiera_config=hiera.yaml \
+    "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
+    print_success "Monitoring + OTEL - no resource conflicts"
+    PASSED_COMBINATIONS+=("Monitoring + OTEL")
+else
+    print_failure "Monitoring + OTEL - resource conflicts detected"
+    echo "Error output:"
+    cat "$TEST_DIR/combo_output.log" | grep -A 5 "Error:\|Duplicate declaration:"
+    echo ""
+    FAILED_COMBINATIONS+=("Monitoring + OTEL")
+fi
+
+# Test combination: Base + Dotfiles
+print_info "Testing: Base + Dotfiles..."
+cat > "$TEST_DIR/combo_test.pp" <<'EOF'
+node 'test-combo.example.com' {
+  include profile::base
+  include profile::dotfiles
+}
+EOF
+
+if puppet apply --noop \
+    --certname=test-combo.example.com \
+    --modulepath=modules:site-modules \
+    --hiera_config=hiera.yaml \
+    "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
+    print_success "Base + Dotfiles - no resource conflicts"
+    PASSED_COMBINATIONS+=("Base + Dotfiles")
+else
+    print_failure "Base + Dotfiles - resource conflicts detected"
+    echo "Error output:"
+    cat "$TEST_DIR/combo_output.log" | grep -A 5 "Error:\|Duplicate declaration:"
+    echo ""
+    FAILED_COMBINATIONS+=("Base + Dotfiles")
+fi
+
 # Summary
 print_header "Deployment Simulation Summary"
 
-echo "Total classes tested: $((${#PASSED_PROFILES[@]} + ${#FAILED_PROFILES[@]}))"
-echo "Passed: ${#PASSED_PROFILES[@]}"
-echo "Failed: ${#FAILED_PROFILES[@]}"
+echo "Individual classes tested: $((${#PASSED_PROFILES[@]} + ${#FAILED_PROFILES[@]}))"
+echo "  Passed: ${#PASSED_PROFILES[@]}"
+echo "  Failed: ${#FAILED_PROFILES[@]}"
+echo ""
+echo "Profile combinations tested: $((${#PASSED_COMBINATIONS[@]} + ${#FAILED_COMBINATIONS[@]}))"
+echo "  Passed: ${#PASSED_COMBINATIONS[@]}"
+echo "  Failed: ${#FAILED_COMBINATIONS[@]}"
 echo ""
 
-if [ ${#FAILED_PROFILES[@]} -eq 0 ]; then
+TOTAL_FAILED=$((${#FAILED_PROFILES[@]} + ${#FAILED_COMBINATIONS[@]}))
+
+if [ $TOTAL_FAILED -eq 0 ]; then
     print_success "All catalogs compiled successfully!"
     echo ""
     echo "This deployment simulation verifies that:"
@@ -200,12 +313,27 @@ if [ ${#FAILED_PROFILES[@]} -eq 0 ]; then
     echo "  ✓ No missing dependencies"
     echo "  ✓ All class parameters are valid"
     echo "  ✓ Catalogs can be compiled without errors"
+    echo "  ✓ Common profile combinations work without resource conflicts"
     exit 0
 else
     print_failure "Deployment simulation found issues:"
-    for failed in "${FAILED_PROFILES[@]}"; do
-        echo "  - $failed"
-    done
+
+    if [ ${#FAILED_PROFILES[@]} -gt 0 ]; then
+        echo ""
+        echo "Failed individual classes:"
+        for failed in "${FAILED_PROFILES[@]}"; do
+            echo "  - $failed"
+        done
+    fi
+
+    if [ ${#FAILED_COMBINATIONS[@]} -gt 0 ]; then
+        echo ""
+        echo "Failed profile combinations (resource conflicts):"
+        for failed in "${FAILED_COMBINATIONS[@]}"; do
+            echo "  - $failed"
+        done
+    fi
+
     echo ""
     echo "Fix these issues before deploying to production!"
     exit 1
