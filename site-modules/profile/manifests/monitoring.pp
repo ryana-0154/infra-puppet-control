@@ -167,6 +167,35 @@ class profile::monitoring (
   Optional[String[1]]            $pihole_password           = undef,
   Optional[String[1]]            $pihole_api_token          = undef,
 ) {
+  # Validate SSO parameters when Authelia is enabled
+  if $enable_authelia {
+    if !$domain_name {
+      fail('profile::monitoring: domain_name is required when enable_authelia is true')
+    }
+    if !$authelia_jwt_secret {
+      fail('profile::monitoring: authelia_jwt_secret is required when enable_authelia is true')
+    }
+    if !$authelia_session_secret {
+      fail('profile::monitoring: authelia_session_secret is required when enable_authelia is true')
+    }
+    if !$authelia_storage_encryption_key {
+      fail('profile::monitoring: authelia_storage_encryption_key is required when enable_authelia is true')
+    }
+    if $sso_users.empty {
+      fail('profile::monitoring: sso_users hash cannot be empty when enable_authelia is true')
+    }
+  }
+
+  # Validate nginx proxy parameters
+  if $enable_nginx_proxy and !$domain_name {
+    fail('profile::monitoring: domain_name is required when enable_nginx_proxy is true')
+  }
+
+  # Validate Grafana OIDC integration
+  if $enable_authelia and $enable_grafana and !$grafana_oidc_secret {
+    fail('profile::monitoring: grafana_oidc_secret is required when both enable_authelia and enable_grafana are true')
+  }
+
   if $manage_monitoring {
     # Ensure the monitoring directory exists
     file { $monitoring_dir:

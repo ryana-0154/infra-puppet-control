@@ -6,7 +6,7 @@ users:
   <%= username %>:
     displayname: "<%= user_config['displayname'] || username.capitalize %>"
     password: "<%= user_config['password'] %>"
-    email: <%= user_config['email'] || "#{username}@#{@domain_name}" %>
+    email: "<%= user_config['email'] || "#{username}@#{@domain_name}" %>"
     groups:
 <%- if user_config['groups'] -%>
 <%- user_config['groups'].each do |group| -%>

@@ -167,11 +167,40 @@ Or use a wildcard:
 
 ## SSL/TLS Setup
 
-For production, configure SSL/TLS termination. Options:
+**IMPORTANT**: The default configuration uses HTTP (port 80) for simplicity. **This is NOT secure for production use.** Authelia sessions can be stolen over unencrypted HTTP connections.
 
-### Option 1: Nginx with Let's Encrypt
+### Current Configuration (HTTP-only)
 
-Add to nginx configuration:
+The provided `nginx.conf.erb` template listens on port 80 only:
+```nginx
+server {
+    listen 80;
+    server_name grafana.example.com;
+    # ...
+}
+```
+
+While the redirect URLs reference `https://`, this assumes you have **external TLS termination** (e.g., a load balancer, CDN, or external reverse proxy handling SSL).
+
+### Production Deployment Options
+
+For production, you **must** configure SSL/TLS termination. Choose one of these options:
+
+#### Option 1: External TLS Termination (Recommended for Cloud/CDN)
+
+Use an external service to handle SSL:
+- **Cloudflare**: Free SSL with Cloudflare Tunnel (no port forwarding needed)
+- **AWS ALB/NLB**: Application or Network Load Balancer with ACM certificates
+- **Cloud Load Balancers**: GCP, Azure, or DigitalOcean load balancers
+
+In this setup:
+1. External service terminates SSL (HTTPS → HTTP)
+2. Nginx receives HTTP traffic from the external service
+3. No changes needed to nginx.conf.erb
+
+#### Option 2: Nginx with Let's Encrypt (Recommended for Self-Hosted)
+
+Modify `nginx.conf.erb` to add SSL configuration:
 
 ```nginx
 server {
@@ -180,21 +209,42 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
 
-    # ... rest of config
+    # ... rest of config (auth_request, proxy_pass, etc.)
+}
+
+# Redirect HTTP to HTTPS
+server {
+    listen 80;
+    server_name grafana.example.com;
+    return 301 https://$server_name$request_uri;
 }
 ```
 
-### Option 2: External Reverse Proxy
+Obtain certificates using Certbot:
+```bash
+sudo certbot certonly --standalone -d auth.example.com -d grafana.example.com -d prometheus.example.com -d loki.example.com
+```
 
-Use an external proxy like:
-- Traefik with automatic Let's Encrypt
-- Nginx Proxy Manager
-- Caddy with automatic HTTPS
+#### Option 3: Reverse Proxy in Front of Nginx
 
-### Option 3: Cloudflare Tunnel
+Use another reverse proxy with automatic HTTPS:
+- **Traefik**: Automatic Let's Encrypt with Docker labels
+- **Caddy**: Automatic HTTPS by default
+- **Nginx Proxy Manager**: Web UI for Let's Encrypt management
 
-Use Cloudflare Zero Trust tunnels for automatic HTTPS without port forwarding.
+In this setup, the external proxy handles SSL and forwards HTTP to the monitoring Nginx container.
+
+### Testing in Development
+
+For **non-production testing only**, you can:
+1. Use HTTP with localhost/private IPs
+2. Accept the security risk of session theft
+3. Use SSH tunneling for secure access: `ssh -L 8080:localhost:80 server`
+
+**Never use HTTP in production or over the internet.**
 
 ## First Login
 
@@ -250,6 +300,167 @@ After 3 failed login attempts within 2 minutes, the IP is banned for 5 minutes.
 - **Inactivity timeout**: 5 minutes
 - **Remember me**: 1 month (optional)
 - **Session storage**: Redis (survives Authelia restarts)
+
+## Redis Security
+
+The default Redis configuration **runs without authentication** and is only accessible via Docker's internal network. This is acceptable for development but should be hardened for production.
+
+### Current Security Posture
+
+- **Network isolation**: Redis only listens on Docker's internal network
+- **No authentication**: No password required (default)
+- **No encryption**: Traffic between Authelia and Redis is unencrypted
+- **Ephemeral storage**: Data stored in Docker volume, persists across restarts
+
+### Production Recommendations
+
+1. **Enable Redis AUTH** (if exposing beyond Docker network):
+   ```bash
+   # In docker-compose.yaml.erb, add command:
+   command: redis-server --requirepass your_strong_password_here
+   ```
+   Then update Authelia config to use the password.
+
+2. **Limit network exposure**:
+   - Keep Redis on internal Docker network only
+   - Never expose Redis port (6379) to the host or internet
+   - Use Docker network isolation
+
+3. **Enable TLS** (for highly sensitive environments):
+   - Configure Redis with TLS certificates
+   - Update Authelia config to use `rediss://` (Redis with TLS)
+
+4. **Monitor Redis**:
+   ```bash
+   # Check Redis memory usage
+   docker exec redis redis-cli info memory
+
+   # Monitor connected clients
+   docker exec redis redis-cli info clients
+   ```
+
+5. **Backup Redis** (optional):
+   - Sessions are ephemeral and can be recreated
+   - User 2FA devices are stored in SQLite (not Redis)
+   - Only sessions would be lost on Redis data loss
+
+### Default Configuration is Acceptable If:
+
+- Redis is NOT exposed outside Docker network
+- You're running on a private server (not shared hosting)
+- You trust all users with access to the Docker host
+- You understand that someone with Docker access can read sessions
+
+## Emergency Access Procedures
+
+If you're locked out of Authelia or encountering authentication issues, use these procedures to regain access.
+
+### Scenario 1: Forgotten Password
+
+**Solution**: Reset password via Hiera
+
+1. Generate new password hash:
+   ```bash
+   docker run authelia/authelia:4.38 authelia crypto hash generate argon2 --password 'new-password'
+   ```
+
+2. Update user's password in Hiera configuration
+3. Encrypt with eyaml
+4. Apply Puppet configuration: `puppet agent -t`
+5. Restart Authelia: `cd /opt/monitoring && docker-compose restart authelia`
+
+### Scenario 2: Lost 2FA Device
+
+**Solution**: Remove 2FA requirement from user database
+
+1. Stop Authelia:
+   ```bash
+   cd /opt/monitoring
+   docker-compose stop authelia
+   ```
+
+2. Access Authelia's SQLite database:
+   ```bash
+   docker run --rm -v monitoring_authelia-data:/data -it alpine sh
+   apk add sqlite
+   sqlite3 /data/db.sqlite3
+   ```
+
+3. Remove user's 2FA devices:
+   ```sql
+   -- List user's devices
+   SELECT * FROM totp_configurations WHERE username = 'admin';
+   SELECT * FROM webauthn_devices WHERE username = 'admin';
+
+   -- Delete devices
+   DELETE FROM totp_configurations WHERE username = 'admin';
+   DELETE FROM webauthn_devices WHERE username = 'admin';
+
+   .quit
+   ```
+
+4. Restart Authelia:
+   ```bash
+   docker-compose start authelia
+   ```
+
+5. User can now log in with just password and re-enroll 2FA
+
+### Scenario 3: Complete Lockout (All Admins Locked)
+
+**Solution**: Temporarily disable SSO
+
+1. Update Hiera configuration:
+   ```yaml
+   profile::monitoring::enable_authelia: false
+   profile::monitoring::enable_nginx_proxy: false
+   ```
+
+2. Apply configuration:
+   ```bash
+   puppet agent -t
+   cd /opt/monitoring
+   docker-compose down
+   docker-compose up -d
+   ```
+
+3. Services now accessible directly:
+   - Grafana: `http://server-ip:3000`
+   - Prometheus: `http://server-ip:9090`
+   - Loki: `http://server-ip:3100`
+
+4. After regaining access, re-enable SSO and fix authentication issues
+
+### Scenario 4: Nginx Misconfiguration
+
+**Solution**: Access services via direct ports
+
+Even with Nginx proxy enabled, services listen on their original ports within the Docker network:
+
+```bash
+# Access via SSH tunnel
+ssh -L 3000:localhost:3000 server-hostname
+
+# Then browse to http://localhost:3000 for Grafana
+```
+
+Or temporarily stop Nginx:
+```bash
+docker-compose stop nginx
+```
+
+Services remain accessible on their original ports.
+
+### Scenario 5: Redis Session Issues
+
+**Solution**: Restart Redis to clear sessions
+
+```bash
+cd /opt/monitoring
+docker-compose restart redis authelia
+```
+
+All users will be logged out and need to re-authenticate.
 
 ## Troubleshooting
 
