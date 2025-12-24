@@ -47,3 +47,17 @@ profile::fail2ban::enable_http_jails: true
 profile::fail2ban::http_logpath:
   - '/var/log/nginx/access.log'
   - '/var/log/apache2/access.log'
+
+
+profile::dotfiles::manage_dotfiles: true
+profile::dotfiles::dotfiles_repo: 'https://github.com/ryana-0154/dotfiles.git'
+profile::dotfiles::dotfiles_revision: 'main'
+profile::dotfiles::auto_update: true
+profile::dotfiles::dotfiles_dir_name: 'dotfiles'
+profile::dotfiles::dotfiles_users:
+  ryan:
+    home_dir: /home/ryan
+    ensure: present
+  root:
+    home_dir: /root
+    ensure: present
