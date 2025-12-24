@@ -17,27 +17,162 @@ clients:
 <%- end -%>
 
 scrape_configs:
+# System logs
 - job_name: system
   static_configs:
   - targets:
       - localhost
     labels:
       job: varlogs
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/*log
 
+# Syslog
+- job_name: syslog
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: syslog
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      __path__: /var/log/syslog
+
+# Authentication logs (Debian/Ubuntu)
+- job_name: auth
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: auth
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: authentication
+      __path__: /var/log/auth.log
+
+# Secure logs (RedHat/Rocky/AlmaLinux)
+- job_name: secure
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: secure
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: authentication
+      __path__: /var/log/secure
+
+# Fail2ban logs
+- job_name: fail2ban
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: fail2ban
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: security
+      __path__: /var/log/fail2ban.log
+  pipeline_stages:
+    - regex:
+        expression: '(?P<timestamp>\S+ \S+) (?P<jail>\S+)\s+\[(?P<pid>\d+)\]: (?P<level>\S+)\s+(?P<message>.*)'
+    - labels:
+        jail:
+        level:
+
+# Puppet logs
+- job_name: puppet
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: puppet
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: configuration_management
+      __path__: /var/log/puppetlabs/puppet/*.log
+
+# Nginx access logs
+- job_name: nginx_access
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: nginx
+      log_type: access
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      __path__: /var/log/nginx/*access.log
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<remote_addr>\S+) - (?P<remote_user>[^ ]*) \[(?P<time_local>.*)\] "(?P<method>[^ ]*) (?P<path>[^ ]*) (?P<protocol>[^ ]*)" (?P<status>[\d]+) (?P<body_bytes_sent>[\d]+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"'
+    - labels:
+        method:
+        status:
+
+# Nginx error logs
+- job_name: nginx_error
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: nginx
+      log_type: error
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      __path__: /var/log/nginx/*error.log
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<timestamp>\S+ \S+) \[(?P<level>\w+)\] (?P<message>.*)'
+    - labels:
+        level:
+
+# Apache access logs
+- job_name: apache_access
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: apache
+      log_type: access
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      __path__: /var/log/apache2/*access*.log
+
+# Apache error logs
+- job_name: apache_error
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: apache
+      log_type: error
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      __path__: /var/log/apache2/*error*.log
+
+# Docker container logs
 - job_name: docker
   static_configs:
   - targets:
       - localhost
     labels:
       job: docker
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/lib/docker/containers/*/*log
+  pipeline_stages:
+    - json:
+        expressions:
+          output: log
+          stream: stream
+          time: time
+    - labels:
+        stream:
+    - output:
+        source: output
 
+# Systemd journal logs
 - job_name: systemd-journal
   journal:
     max_age: 12h
     labels:
       job: systemd-journal
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
   relabel_configs:
     - source_labels: ['__journal__systemd_unit']
       target_label: 'unit'
+    - source_labels: ['__journal_priority']
+      target_label: 'priority'
+    - source_labels: ['__journal__hostname']
+      target_label: 'nodename'
