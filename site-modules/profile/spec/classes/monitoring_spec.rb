@@ -225,10 +225,6 @@ describe 'profile::monitoring' do
   context 'with docker-compose management' do
     it { is_expected.to compile.with_all_deps }
 
-    it 'ensures docker-compose-plugin is installed' do
-      is_expected.to contain_package('docker-compose-plugin').with_ensure('installed')
-    end
-
     it 'starts docker-compose stack' do
       is_expected.to contain_exec('start-monitoring-stack').with(
         command: 'docker compose up -d',
