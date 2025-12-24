@@ -71,12 +71,20 @@ class profile::dotfiles (
           user     => $username,
         }
 
+        # Determine if we can run as a different user (requires root)
+        # In production, Puppet runs as root and can execute as other users
+        # In CI/non-root environments, omit user parameter to allow catalog compilation
+        $exec_user = $facts['identity']['user'] ? {
+          'root'  => $username,
+          default => undef,
+        }
+
         # Run install script to create symlinks
         exec { "install-dotfiles-${username}":
           command     => './install',
           cwd         => $dotfiles_path,
           path        => ['/usr/bin', '/usr/local/bin', '/bin'],
-          user        => $username,
+          user        => $exec_user,
           environment => ["HOME=${home_dir}"],
           # Only run if dotfiles were just cloned/updated or symlinks don't exist
           refreshonly => true,
