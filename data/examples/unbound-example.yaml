@@ -1,0 +1,77 @@
+---
+# Example configuration for Unbound DNS resolver
+# Copy relevant sections to your node or common.yaml
+
+# Basic Unbound configuration
+profile::unbound::manage_unbound: true
+
+# Network configuration
+# Listen on localhost only by default (suitable for Pi-hole upstream)
+profile::unbound::listen_interface: '127.0.0.1'
+profile::unbound::listen_port: 5353  # Non-standard port to avoid conflicts with Pi-hole
+
+# Performance settings
+profile::unbound::num_threads: 4
+profile::unbound::cache_min_ttl: 1800   # 30 minutes
+profile::unbound::cache_max_ttl: 14400  # 4 hours
+profile::unbound::enable_prefetch: true  # Prefetch cache elements before expiry
+
+# Access control
+# Define which networks can query Unbound
+profile::unbound::access_control:
+  '0.0.0.0/0': 'refuse'        # Deny all by default
+  '127.0.0.1/32': 'allow'      # Allow localhost
+  '10.10.10.0/24': 'allow'     # Allow WireGuard network
+
+# Security settings
+profile::unbound::enable_dnssec: true   # Enable DNSSEC validation
+profile::unbound::enable_ipv6: false    # Disable IPv6 if not needed
+profile::unbound::private_addresses:    # Hide private network addresses
+  - '10.0.0.0/8'
+  - '172.16.0.0/12'
+  - '192.168.0.0/16'
+
+# Logging
+profile::unbound::enable_logging: true
+profile::unbound::verbosity: 1  # 0-5, higher is more verbose
+
+# ============================================================================
+# Integration with Pi-hole
+# ============================================================================
+
+# Configure Pi-hole to use Unbound as upstream DNS:
+# 1. In Pi-hole admin interface, go to Settings → DNS
+# 2. Uncheck all upstream DNS servers
+# 3. Add custom upstream DNS: 127.0.0.1#5353
+# 4. Enable "Use DNSSEC"
+# 5. Save changes
+
+# This setup provides:
+# - DNSSEC validation (cryptographic DNS security)
+# - Privacy (no queries sent to third-party DNS providers)
+# - Caching (improved performance)
+# - Control (you own the entire DNS resolution chain)
+
+# ============================================================================
+# Monitoring and Troubleshooting
+# ============================================================================
+
+# Check Unbound status:
+# sudo systemctl status unbound
+
+# View Unbound logs:
+# sudo tail -f /var/log/unbound/unbound.log
+
+# Test DNS resolution through Unbound:
+# dig @127.0.0.1 -p 5353 example.com
+
+# Check DNSSEC validation:
+# dig @127.0.0.1 -p 5353 dnssec.works
+# dig @127.0.0.1 -p 5353 dnssec-failed.org  # Should fail validation
+
+# View Unbound statistics:
+# sudo unbound-control stats_noreset
+
+# Flush Unbound cache:
+# sudo unbound-control flush_zone .
+# sudo unbound-control reload

@@ -81,12 +81,17 @@ profile::monitoring::pihole_interval: '30s'
 # ============================================================================
 
 # Promtail automatically collects logs from:
-# - System logs (/var/log/*log, syslog, auth.log/secure)
+# - System logs (/var/log/*log, syslog, auth.log/secure, kern.log)
 # - Security logs (fail2ban)
 # - Web server logs (nginx, apache - access and error logs)
-# - Container logs (Docker)
+# - Container logs (Docker - all containers)
 # - Systemd journal
 # - Puppet logs
+# - DNS logs (Unbound, Pi-hole, Pi-hole FTL)
+# - Package management (APT, unattended-upgrades)
+# - Cron logs
+# - Monitoring stack (Prometheus, Grafana, Loki, Promtail, exporters)
+# - SSO components (Authelia, Redis, Nginx proxy)
 
 # Loki Configuration:
 # - Default retention: 7 days (168h)
@@ -107,6 +112,16 @@ profile::monitoring::pihole_interval: '30s'
 # - {job="nginx", log_type="access"}          # Nginx access logs
 # - {job="docker"}                            # All container logs
 # - {job="systemd-journal", unit="ssh.service"} # SSH service logs
+# - {job="unbound"}                           # Unbound DNS resolver logs
+# - {job="pihole"}                            # Pi-hole DNS logs
+# - {job="kernel"}                            # Kernel logs
+# - {job="apt"}                               # Package management logs
+# - {job="cron"}                              # Cron job logs
+# - {job="prometheus"}                        # Prometheus logs
+# - {job="grafana"}                           # Grafana logs
+# - {job="loki"}                              # Loki logs (yes, Loki logs itself!)
+# - {job="promtail"}                          # Promtail logs
+# - {log_type="monitoring"}                   # All monitoring stack logs
 
 # To adjust Loki retention or performance settings, modify:
 # site-modules/profile/templates/monitoring/loki-config.yaml.erb

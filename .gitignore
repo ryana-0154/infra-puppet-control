@@ -41,3 +41,6 @@ tmp/
 # PiHole backups (contain secrets)
 pihole-teleporter.zip
 pihole-teleporter/
+
+# Temporary directories for Claude
+FOR_CLAUDE/
