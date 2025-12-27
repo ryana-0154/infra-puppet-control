@@ -93,6 +93,9 @@ services:
 <%- if @pihole_password -%>
       - PIHOLE_PASSWORD_FILE=/run/secrets/pihole_password
 <%- end -%>
+<%- if @pihole_api_token -%>
+      - PIHOLE_API_TOKEN_FILE=/run/secrets/pihole_api_token
+<%- end -%>
       - PIHOLE_PORT=<%= @pihole_port %>
       - PIHOLE_PROTOCOL=<%= @pihole_protocol %>
       - INTERVAL=<%= @pihole_interval %>
