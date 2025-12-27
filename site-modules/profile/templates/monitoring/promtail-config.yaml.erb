@@ -176,3 +176,85 @@ scrape_configs:
       target_label: 'priority'
     - source_labels: ['__journal__hostname']
       target_label: 'nodename'
+
+# Unbound DNS resolver logs
+- job_name: unbound
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: unbound
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: dns
+      __path__: /var/log/unbound/unbound.log
+  pipeline_stages:
+    - regex:
+        expression: '^\[(?P<timestamp>.*?)\] unbound\[(?P<pid>\d+):(?P<thread>\d+)\] (?P<level>\w+): (?P<message>.*)'
+    - labels:
+        level:
+
+# Pi-hole logs
+- job_name: pihole
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: pihole
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: dns
+      __path__: /var/log/pihole/pihole.log
+
+# Pi-hole FTL logs
+- job_name: pihole-ftl
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: pihole-ftl
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: dns
+      __path__: /var/log/pihole/FTL.log
+
+# Kernel logs
+- job_name: kernel
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: kernel
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: system
+      __path__: /var/log/kern.log
+
+# Cron logs
+- job_name: cron
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: cron
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: system
+      __path__: /var/log/cron.log
+
+# APT/package management logs
+- job_name: apt
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: apt
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: package_management
+      __path__: /var/log/apt/*.log
+
+# Unattended upgrades logs
+- job_name: unattended-upgrades
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: unattended-upgrades
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: package_management
+      __path__: /var/log/unattended-upgrades/unattended-upgrades.log
