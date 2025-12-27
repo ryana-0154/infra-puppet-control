@@ -114,9 +114,16 @@
 #   Whether to keep provisioning the embedded Loki dashboard (can be used alongside external dashboards)
 # @param dashboard_auto_update
 #   Whether to automatically pull latest dashboard changes on each Puppet run
+# @param grafana_plugins
+#   Array of Grafana plugin IDs to install (e.g., ['grafana-piechart-panel', 'grafana-clock-panel'])
 #
 # @example Basic usage
 #   include profile::monitoring
+#
+# @example With Grafana plugins via Hiera
+#   profile::monitoring::grafana_plugins:
+#     - grafana-piechart-panel
+#     - grafana-clock-panel
 #
 # @example With custom directory via Hiera
 #   profile::monitoring::monitoring_dir: '/opt/custom-monitoring'
@@ -199,6 +206,7 @@ class profile::monitoring (
   String[1]                      $dashboard_repo_revision   = 'main',
   Boolean                        $enable_embedded_dashboards = true,
   Boolean                        $dashboard_auto_update     = false,
+  Array[String[1]]               $grafana_plugins           = [],
 ) {
   # Validate SSO parameters when Authelia is enabled
   if $enable_authelia {
