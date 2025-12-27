@@ -88,18 +88,17 @@ services:
     image: <%= @pihole_exporter_image %>
     <<: *host
     container_name: pihole-exporter
-    environment:
-      - PIHOLE_HOSTNAME=<%= @pihole_hostname %>
-      - PIHOLE_PORT=<%= @pihole_port %>
 <%- if @pihole_password -%>
-      - PIHOLE_PASSWORD_FILE=/run/secrets/pihole_password
-<%- end -%>
-      - INTERVAL=<%= @pihole_interval %>
-      - PORT=<%= @pihole_exporter_port %>
-<%- if @pihole_password -%>
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["PIHOLE_PASSWORD=$$(cat /run/secrets/pihole_password) /pihole-exporter"]
     secrets:
       - pihole_password
 <%- end -%>
+    environment:
+      - PIHOLE_HOSTNAME=<%= @pihole_hostname %>
+      - PIHOLE_PORT=<%= @pihole_port %>
+      - INTERVAL=<%= @pihole_interval %>
+      - PORT=<%= @pihole_exporter_port %>
 <%- end -%>
 
 <%- if @enable_blackbox -%>
