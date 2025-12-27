@@ -62,17 +62,15 @@ class profile::unbound (
   String[1]                $listen_interface    = '127.0.0.1',
   Integer[1,65535]         $listen_port         = 5353,
   Integer[1,128]           $num_threads         = 4,
-  Hash[String[1],String[1]] $access_control     = {
-    '0.0.0.0/0'     => 'refuse',
+  Hash[String[1],Enum['allow', 'refuse', 'deny', 'allow_setrd', 'allow_snoop', 'deny_non_local', 'refuse_non_local']] $access_control = {
     '127.0.0.1/32'  => 'allow',
-    '10.10.10.0/24' => 'allow',
   },
   Boolean                  $enable_ipv6         = false,
   Integer[0]               $cache_min_ttl       = 1800,
   Integer[0]               $cache_max_ttl       = 14400,
   Boolean                  $enable_prefetch     = true,
   Boolean                  $enable_dnssec       = true,
-  Array[String[1]]         $private_addresses   = ['10.0.0.0/8'],
+  Array[String[1]]         $private_addresses   = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
   Boolean                  $enable_logging      = true,
   Integer[0,5]             $verbosity           = 1,
 ) {
@@ -100,6 +98,15 @@ class profile::unbound (
 
     # Ensure log directory exists
     file { $log_dir:
+      ensure  => directory,
+      owner   => 'unbound',
+      group   => 'unbound',
+      mode    => '0750',
+      require => Package[$package_name],
+    }
+
+    # Ensure DNSSEC trust anchor directory exists
+    file { '/var/lib/unbound':
       ensure  => directory,
       owner   => 'unbound',
       group   => 'unbound',
@@ -160,6 +167,11 @@ class profile::unbound (
       require    => [
         Package[$package_name],
         File[$config_file],
+        File["${config_dir}/unbound.conf.d/pi-hole.conf"],
+        File["${config_dir}/unbound.conf.d/remote-control.conf"],
+        File["${config_dir}/unbound.conf.d/root-auto-trust-anchor-file.conf"],
+        File['/var/lib/unbound'],
+        File[$log_dir],
       ],
     }
   }

@@ -9,10 +9,6 @@
 # /etc/unbound/unbound.conf.d directory.
 include-toplevel: "/etc/unbound/unbound.conf.d/*.conf"
 
-remote-control:
-  control-enable: yes
-  control-interface: /run/unbound.ctl
-
 server:
   statistics-interval: 0
   extended-statistics: yes
