@@ -5,6 +5,17 @@ profile::base::manage_firewall: true
 profile::base::manage_logrotate: true
 profile::base::manage_otel_collector: true
 
+# Unbound DNS resolver configuration
+profile::unbound::manage_unbound: true
+profile::unbound::listen_interface: '127.0.0.1'
+profile::unbound::listen_port: 5353
+profile::unbound::num_threads: 4
+profile::unbound::enable_ipv6: false
+profile::unbound::access_control:
+  '0.0.0.0/0': 'refuse'
+  '127.0.0.1/32': 'allow'
+  '10.10.10.0/24': 'allow'
+
 # Monitoring configuration
 profile::monitoring::manage_monitoring: true
 profile::monitoring::monitoring_dir: '/opt/monitoring_test'

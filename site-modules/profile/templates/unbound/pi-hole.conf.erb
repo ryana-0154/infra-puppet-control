@@ -1,0 +1,47 @@
+server:
+  num-threads: <%= @num_threads %>
+
+  # Enable operation information logging; up to 5
+  verbosity: <%= @verbosity %>
+
+  # Listen to queries on configured interface
+  interface: <%= @listen_interface %>
+  port: <%= @listen_port %>
+
+  # Disable ipv6
+  do-ip6: <%= @enable_ipv6 ? 'yes' : 'no' %>
+
+  # IP range authorized to send queries to DNS
+<%- @access_control.each do |network, action| -%>
+  access-control: <%= network %> <%= action %>
+<%- end -%>
+
+  # Hide id.server and hostname.bind
+  hide-identity: yes
+
+  # Hide version.server and version.bind
+  hide-version: yes
+
+  # Hide addresses on the private network
+<%- @private_addresses.each do |addr| -%>
+  private-address: <%= addr %>
+<%- end -%>
+
+  # A total number of unwanted replies is kept track of; when reached cache is cleared to prevent DNS Poisoning
+  unwanted-reply-threshold: 10000000
+
+<%- if @enable_prefetch -%>
+  # Because my server has low traffic/usage I enable prefetch; this adds load but cache elements are prefetched before expiry
+  prefetch: yes
+  prefetch-key: yes
+<%- end -%>
+
+  # Add minimum cache lifetime in seconds
+  cache-min-ttl: <%= @cache_min_ttl %>
+  cache-max-ttl: <%= @cache_max_ttl %>
+
+<%- if @enable_dnssec -%>
+  # Secure DNS and use DNSSEC
+  harden-glue: yes
+  harden-dnssec-stripped: yes
+<%- end -%>

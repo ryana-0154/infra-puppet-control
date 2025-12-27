@@ -142,7 +142,7 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/apache2/*error*.log
 
-# Docker container logs
+# Docker container logs (general)
 - job_name: docker
   static_configs:
   - targets:
@@ -162,6 +162,207 @@ scrape_configs:
     - output:
         source: output
 
+# Monitoring stack container logs (labeled specifically)
+<%- if @enable_prometheus -%>
+- job_name: prometheus-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/prometheus'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: prometheus
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
+<%- if @enable_grafana -%>
+- job_name: grafana-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/grafana'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: grafana
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
+<%- if @enable_loki -%>
+- job_name: loki-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/loki'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: loki
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
+<%- if @enable_promtail -%>
+- job_name: promtail-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/promtail'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: promtail
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
+<%- if @enable_blackbox -%>
+- job_name: blackbox-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/blackbox-exporter'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: blackbox-exporter
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
+<%- if @enable_node_exporter -%>
+- job_name: node-exporter-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/node_exporter'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: node-exporter
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
+<%- if @enable_pihole_exporter -%>
+- job_name: pihole-exporter-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/pihole-exporter'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: pihole-exporter
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
+<%- if @enable_nginx_proxy -%>
+- job_name: nginx-proxy-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/nginx-proxy'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: nginx-proxy
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
+<%- if @enable_authelia -%>
+- job_name: authelia-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/authelia'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: authelia
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
+<%- if @enable_redis -%>
+- job_name: redis-container
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/redis'
+      action: keep
+    - source_labels: ['__meta_docker_container_name']
+      target_label: container_name
+    - source_labels: ['__meta_docker_container_log_stream']
+      target_label: stream
+  static_configs:
+  - labels:
+      job: redis
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: monitoring
+<%- end -%>
+
 # Systemd journal logs
 - job_name: systemd-journal
   journal:
@@ -176,3 +377,85 @@ scrape_configs:
       target_label: 'priority'
     - source_labels: ['__journal__hostname']
       target_label: 'nodename'
+
+# Unbound DNS resolver logs
+- job_name: unbound
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: unbound
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: dns
+      __path__: /var/log/unbound/unbound.log
+  pipeline_stages:
+    - regex:
+        expression: '^\[(?P<timestamp>.*?)\] unbound\[(?P<pid>\d+):(?P<thread>\d+)\] (?P<level>\w+): (?P<message>.*)'
+    - labels:
+        level:
+
+# Pi-hole logs
+- job_name: pihole
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: pihole
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: dns
+      __path__: /var/log/pihole/pihole.log
+
+# Pi-hole FTL logs
+- job_name: pihole-ftl
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: pihole-ftl
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: dns
+      __path__: /var/log/pihole/FTL.log
+
+# Kernel logs
+- job_name: kernel
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: kernel
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: system
+      __path__: /var/log/kern.log
+
+# Cron logs
+- job_name: cron
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: cron
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: system
+      __path__: /var/log/cron.log
+
+# APT/package management logs
+- job_name: apt
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: apt
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: package_management
+      __path__: /var/log/apt/*.log
+
+# Unattended upgrades logs
+- job_name: unattended-upgrades
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: unattended-upgrades
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: package_management
+      __path__: /var/log/unattended-upgrades/unattended-upgrades.log
