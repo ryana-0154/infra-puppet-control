@@ -28,6 +28,9 @@ services:
 <%- if @grafana_admin_password -%>
       - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_admin_password
 <%- end -%>
+<%- unless @grafana_plugins.empty? -%>
+      - GF_INSTALL_PLUGINS=<%= @grafana_plugins.join(',') %>
+<%- end -%>
 <%- if @enable_authelia -%>
       # OIDC SSO with Authelia
       - GF_AUTH_GENERIC_OAUTH_ENABLED=true

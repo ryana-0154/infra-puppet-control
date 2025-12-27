@@ -124,3 +124,7 @@ profile::monitoring::dashboard_repo_url: 'https://github.com/ryana-0154/infra-gr
 profile::monitoring::dashboard_repo_revision: 'main'
 profile::monitoring::dashboard_auto_update: true
 profile::monitoring::enable_embedded_dashboards: true
+
+# Grafana plugins to install
+profile::monitoring::grafana_plugins:
+  - grafana-piechart-panel

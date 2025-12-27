@@ -64,6 +64,19 @@ profile::monitoring::pihole_interval: '30s'
 # profile::monitoring::pihole_password: 'changeme'
 
 # ============================================================================
+# Grafana Configuration
+# ============================================================================
+
+# Install Grafana plugins
+# Plugins are installed automatically when the container starts
+# Find plugins at: https://grafana.com/grafana/plugins/
+#
+# profile::monitoring::grafana_plugins:
+#   - grafana-piechart-panel
+#   - grafana-clock-panel
+#   - grafana-worldmap-panel
+
+# ============================================================================
 # Log Collection with Loki and Promtail
 # ============================================================================
 
