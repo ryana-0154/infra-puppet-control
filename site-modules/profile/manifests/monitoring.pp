@@ -400,7 +400,7 @@ class profile::monitoring (
     }
 
     # Create secrets directory if any secrets are defined
-    if $grafana_admin_password or $pihole_password or $pihole_api_token {
+    if $grafana_admin_password {
       file { "${monitoring_dir}/secrets":
         ensure => directory,
         group  => $monitoring_dir_group,
@@ -408,37 +408,13 @@ class profile::monitoring (
         owner  => $monitoring_dir_owner,
       }
 
-      if $grafana_admin_password {
-        file { "${monitoring_dir}/secrets/grafana_admin_password":
-          ensure  => file,
-          content => $grafana_admin_password,
-          group   => $monitoring_dir_group,
-          mode    => '0644',
-          owner   => $monitoring_dir_owner,
-          require => File["${monitoring_dir}/secrets"],
-        }
-      }
-
-      if $pihole_password {
-        file { "${monitoring_dir}/secrets/pihole_password":
-          ensure  => file,
-          content => $pihole_password,
-          group   => $monitoring_dir_group,
-          mode    => '0644',
-          owner   => $monitoring_dir_owner,
-          require => File["${monitoring_dir}/secrets"],
-        }
-      }
-
-      if $pihole_api_token {
-        file { "${monitoring_dir}/secrets/pihole_api_token":
-          ensure  => file,
-          content => $pihole_api_token,
-          group   => $monitoring_dir_group,
-          mode    => '0644',
-          owner   => $monitoring_dir_owner,
-          require => File["${monitoring_dir}/secrets"],
-        }
+      file { "${monitoring_dir}/secrets/grafana_admin_password":
+        ensure  => file,
+        content => $grafana_admin_password,
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File["${monitoring_dir}/secrets"],
       }
     }
 
