@@ -120,3 +120,9 @@ profile::firewall::custom_rules:
     proto: tcp
     source: '10.10.10.0/24'
     jump: accept
+
+profile::monitoring::enable_external_dashboards: true
+profile::monitoring::dashboard_repo_url: 'https://github.com/ryana-0154/infra-grafana-dashboards.git'
+profile::monitoring::dashboard_repo_revision: 'main'
+profile::monitoring::dashboard_auto_update: true
+profile::monitoring::enable_embedded_dashboards: true
