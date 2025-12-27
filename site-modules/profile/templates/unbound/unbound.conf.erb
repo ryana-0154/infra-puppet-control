@@ -1,0 +1,25 @@
+# Unbound configuration file for Debian.
+#
+# See the unbound.conf(5) man page.
+#
+# See /usr/share/doc/unbound/examples/unbound.conf for a commented
+# reference config file.
+#
+# The following line includes additional configuration files from the
+# /etc/unbound/unbound.conf.d directory.
+include-toplevel: "/etc/unbound/unbound.conf.d/*.conf"
+
+remote-control:
+  control-enable: yes
+  control-interface: /run/unbound.ctl
+
+server:
+  statistics-interval: 0
+  extended-statistics: yes
+  statistics-cumulative: yes
+<%- if @enable_logging -%>
+  logfile: <%= @log_dir %>/unbound.log
+  log-time-ascii: yes
+  log-queries: yes
+  log-replies: yes
+<%- end -%>
