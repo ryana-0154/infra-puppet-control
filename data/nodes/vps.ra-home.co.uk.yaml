@@ -128,3 +128,5 @@ profile::monitoring::enable_embedded_dashboards: true
 # Grafana plugins to install
 profile::monitoring::grafana_plugins:
   - grafana-piechart-panel
+  - grafana-clock-panel
+  - grafana-worldmap-panel
