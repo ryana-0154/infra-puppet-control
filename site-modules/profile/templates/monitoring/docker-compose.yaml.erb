@@ -91,15 +91,12 @@ services:
     image: <%= @pihole_exporter_image %>
     <<: *host
     container_name: pihole-exporter
-<%- if @pihole_password -%>
-    entrypoint: ["/bin/sh", "-c"]
-    command: ["PIHOLE_PASSWORD=$$(cat /run/secrets/pihole_password) /pihole-exporter"]
-    secrets:
-      - pihole_password
-<%- end -%>
     environment:
       - PIHOLE_HOSTNAME=<%= @pihole_hostname %>
       - PIHOLE_PORT=<%= @pihole_port %>
+<%- if @pihole_password -%>
+      - PIHOLE_PASSWORD=<%= @pihole_password %>
+<%- end -%>
       - INTERVAL=<%= @pihole_interval %>
       - PORT=<%= @pihole_exporter_port %>
 <%- end -%>
@@ -236,18 +233,8 @@ volumes:
   letsencrypt-www:
 <%- end -%>
 
-<%- if @grafana_admin_password || @pihole_password || @pihole_api_token -%>
-secrets:
 <%- if @grafana_admin_password -%>
+secrets:
   grafana_admin_password:
     file: ./secrets/grafana_admin_password
-<%- end -%>
-<%- if @pihole_password -%>
-  pihole_password:
-    file: ./secrets/pihole_password
-<%- end -%>
-<%- if @pihole_api_token -%>
-  pihole_api_token:
-    file: ./secrets/pihole_api_token
-<%- end -%>
 <%- end -%>
