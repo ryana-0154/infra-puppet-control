@@ -37,7 +37,6 @@ profile::monitoring::prometheus_image: 'prom/prometheus:v2.45.0'
 profile::monitoring::grafana_image: 'grafana/grafana:10.0.0'
 profile::monitoring::loki_image: 'grafana/loki:3.1.1'
 profile::monitoring::promtail_image: 'grafana/promtail:3.1.1'
-profile::monitoring::pihole_exporter_image: 'ghcr.io/bazmonk/pihole6_exporter:latest'
 
 profile::monitoring::grafana_admin_password: >
   ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAhQEC0uzDiu6Hi40tYToJQw2cJ4iOY6afssakMfB74W6cTwBPbVCDbDvdZUdhT2rhhVhtbqH+AG6smHdkhM5TbrWNiyQkryYf9ajf7OEKgQh/QRZvnkIn7WgvKbApkZXrYcOz0Nk8N9kc0x9FxuZuY+bIKhGYYEUnTVqakeAwjzqr5FJsZpH4EEpa+012Tgvbbh0OPA+sGmjffc3IR8Sv/Nej5upn2ef/769nGl/LBSiLPgppjQatworDIkJ9/J1EzEsUeXL2Qo6KPUKruCAjBUAYXUdkdgSM+UQSJKN5B9Blm4BxQ5+wFOt+DQUhIKcAG7dEkfcPZHTkxMgae1MXjTA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCOBM/lDdp39fRSSbgLslpVgBBG1Rx+O1AwP39C/Fh8JWDa]
