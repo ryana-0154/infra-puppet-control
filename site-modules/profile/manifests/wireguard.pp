@@ -137,8 +137,14 @@ class profile::wireguard (
         require      => Class['ufw'],
       }
 
-      # Get SSH port from hiera
-      $ssh_port = lookup('profile::ssh_hardening::ssh_port', Optional[Integer], 'first', undef)
+      # Get SSH port from hiera (may be encrypted)
+      # Convert to integer if it's a string from eyaml decryption
+      $ssh_port_raw = lookup('profile::ssh_hardening::ssh_port', Optional[Variant[Integer, String]], 'first', undef)
+      $ssh_port = $ssh_port_raw ? {
+        String  => Integer($ssh_port_raw),
+        Integer => $ssh_port_raw,
+        default => undef,
+      }
 
       # Allow SSH from anywhere (required for remote access)
       if $ssh_port {
