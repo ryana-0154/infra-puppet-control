@@ -62,12 +62,16 @@ class profile::pihole_native (
   Enum['single','all','local','bind'] $dnsmasq_listening = 'bind',
 ) {
   if $manage_pihole {
+    # Ensure curl is installed for Pi-hole installer
+    ensure_packages(['curl'])
+
     # Create Pi-hole configuration directory
     file { '/etc/pihole':
-      ensure => directory,
-      owner  => 'root',
-      group  => 'root',
-      mode   => '0755',
+      ensure  => directory,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0755',
+      require => Package['curl'],
     }
 
     # Create setupVars.conf for automated installation
@@ -88,7 +92,10 @@ class profile::pihole_native (
         path    => ['/usr/bin', '/usr/local/bin', '/bin'],
         creates => '/usr/local/bin/pihole',
         timeout => 600,
-        require => File['/etc/pihole/setupVars.conf'],
+        require => [
+          File['/etc/pihole/setupVars.conf'],
+          Package['curl'],
+        ],
       }
 
       # Set web password after installation
