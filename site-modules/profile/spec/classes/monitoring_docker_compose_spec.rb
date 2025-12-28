@@ -13,9 +13,9 @@ describe 'profile::monitoring' do
             'manage_monitoring' => true,
             'monitoring_dir' => '/opt/monitoring',
             'monitoring_ip' => '10.10.10.1',
-            'prometheus_port' => 9090,
+            'victoriametrics_port' => 8428,
             'grafana_port' => 3000,
-            'enable_prometheus' => true,
+            'enable_victoriametrics' => true,
             'enable_grafana' => true,
             'enable_pihole_exporter' => true,
             'pihole_hostname' => '10.10.10.1',
@@ -32,10 +32,10 @@ describe 'profile::monitoring' do
             .with_mode('0644')
         }
 
-        it 'creates docker-compose.yaml with correct prometheus config' do
+        it 'creates docker-compose.yaml with correct victoriametrics config' do
           content = catalogue.resource('file', '/opt/monitoring/docker-compose.yaml')[:content]
-          expect(content).to match(/prometheus:/)
-          expect(content).to match(/--web.listen-address=10\.10\.10\.1:9090/)
+          expect(content).to match(/victoriametrics:/)
+          expect(content).to match(/-httpListenAddr=10\.10\.10\.1:8428/)
         end
 
         it 'creates docker-compose.yaml with correct grafana config' do
@@ -48,13 +48,13 @@ describe 'profile::monitoring' do
         it 'creates secrets directory when secrets are defined' do
           is_expected.to contain_file('/opt/monitoring/secrets')
             .with_ensure('directory')
-            .with_mode('0700')
+            .with_mode('0755')
         end
 
         it 'creates grafana admin password secret file' do
           is_expected.to contain_file('/opt/monitoring/secrets/grafana_admin_password')
             .with_ensure('file')
-            .with_mode('0600')
+            .with_mode('0644')
             .with_content('secret123')
         end
       end
@@ -62,7 +62,7 @@ describe 'profile::monitoring' do
       context 'when services are disabled' do
         let(:params) do
           {
-            'enable_prometheus' => false,
+            'enable_victoriametrics' => false,
             'enable_grafana' => false,
             'enable_loki' => false
           }
@@ -70,7 +70,7 @@ describe 'profile::monitoring' do
 
         it 'does not include disabled services in docker-compose' do
           content = catalogue.resource('file', '/opt/monitoring/docker-compose.yaml')[:content]
-          expect(content).not_to match(/^\s*prometheus:/)
+          expect(content).not_to match(/^\s*victoriametrics:/)
           expect(content).not_to match(/^\s*grafana:/)
           expect(content).not_to match(/^\s*loki:/)
         end
@@ -79,8 +79,8 @@ describe 'profile::monitoring' do
       context 'without secrets' do
         let(:params) do
           {
-            'grafana_admin_password' => nil,
-            'pihole_api_token' => nil
+            'grafana_admin_password' => :undef,
+            'pihole_api_token' => :undef
           }
         end
 

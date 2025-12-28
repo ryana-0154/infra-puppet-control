@@ -149,10 +149,12 @@ describe 'profile::monitoring' do
     let(:params) do
       {
         enable_authelia: true,
+        enable_grafana: true,
         domain_name: 'example.com',
         authelia_jwt_secret: 'test_jwt_secret',
         authelia_session_secret: 'test_session_secret',
         authelia_storage_encryption_key: 'test_storage_key',
+        grafana_oidc_secret: 'test_oidc_secret',
         sso_users: {
           'admin' => {
             'displayname' => 'Administrator',

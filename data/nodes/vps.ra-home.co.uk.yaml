@@ -37,7 +37,7 @@ profile::monitoring::monitoring_dir: '/opt/monitoring_test'
 profile::monitoring::monitoring_ip: '10.10.10.1'  # Listen on all interfaces for VPS
 
 # Service ports
-profile::monitoring::prometheus_port: 9090
+profile::monitoring::victoriametrics_port: 8428
 profile::monitoring::grafana_port: 3000
 profile::monitoring::blackbox_port: 9115
 profile::monitoring::pihole_exporter_port: 9617
@@ -45,7 +45,7 @@ profile::monitoring::wireguard_exporter_port: 9586
 profile::monitoring::unbound_exporter_port: 9167
 
 # Enable/disable services
-profile::monitoring::enable_prometheus: true
+profile::monitoring::enable_victoriametrics: true
 profile::monitoring::enable_grafana: true
 profile::monitoring::enable_loki: true       # Log aggregation server
 profile::monitoring::enable_promtail: true   # Log collection agent
@@ -70,7 +70,7 @@ profile::monitoring::pihole_protocol: 'http'
 profile::monitoring::pihole_interval: '30s'
 
 # Image versions (pin versions for stability in production)
-profile::monitoring::prometheus_image: 'prom/prometheus:v2.45.0'
+profile::monitoring::victoriametrics_image: 'victoriametrics/victoria-metrics:v1.96.0'
 profile::monitoring::grafana_image: 'grafana/grafana:10.0.0'
 profile::monitoring::loki_image: 'grafana/loki:3.1.1'
 profile::monitoring::promtail_image: 'grafana/promtail:3.1.1'

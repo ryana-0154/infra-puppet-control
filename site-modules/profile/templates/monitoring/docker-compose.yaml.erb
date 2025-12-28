@@ -3,17 +3,19 @@ x-host: &host
   restart: unless-stopped
 
 services:
-<%- if @enable_prometheus -%>
-  prometheus:
-    image: <%= @prometheus_image %>
+<%- if @enable_victoriametrics -%>
+  victoriametrics:
+    image: <%= @victoriametrics_image %>
     <<: *host
-    container_name: prometheus
+    container_name: victoriametrics
     command:
-      - --config.file=/etc/prometheus/prometheus.yaml
-      - --web.listen-address=<%= @monitoring_ip %>:<%= @prometheus_port %>
+      - -promscrape.config=/etc/victoriametrics/scrape.yaml
+      - -httpListenAddr=<%= @monitoring_ip %>:<%= @victoriametrics_port %>
+      - -storageDataPath=/victoria-metrics-data
+      - -retentionPeriod=12
     volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
-      - prometheus-data:/prometheus
+      - ./victoriametrics-scrape.yaml:/etc/victoriametrics/scrape.yaml:ro
+      - victoriametrics-data:/victoria-metrics-data
 <%- end -%>
 
 <%- if @enable_grafana -%>
@@ -217,8 +219,8 @@ services:
 <%- if @enable_grafana -%>
       - grafana
 <%- end -%>
-<%- if @enable_prometheus -%>
-      - prometheus
+<%- if @enable_victoriametrics -%>
+      - victoriametrics
 <%- end -%>
 <%- if @enable_loki -%>
       - loki
@@ -239,8 +241,8 @@ volumes:
 <%- if @enable_grafana -%>
   grafana-data:
 <%- end -%>
-<%- if @enable_prometheus -%>
-  prometheus-data:
+<%- if @enable_victoriametrics -%>
+  victoriametrics-data:
 <%- end -%>
 <%- if @enable_loki -%>
   loki-data:
