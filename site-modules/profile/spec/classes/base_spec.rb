@@ -43,6 +43,34 @@ describe 'profile::base' do
         it { is_expected.to compile.with_all_deps }
         it { is_expected.not_to contain_class('profile::fail2ban') }
       end
+
+      context 'with manage_unattended_upgrades enabled' do
+        let(:params) { { manage_unattended_upgrades: true } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_class('profile::unattended_upgrades') }
+      end
+
+      context 'with manage_unattended_upgrades disabled' do
+        let(:params) { { manage_unattended_upgrades: false } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.not_to contain_class('profile::unattended_upgrades') }
+      end
+
+      context 'with manage_ssh_hardening enabled' do
+        let(:params) { { manage_ssh_hardening: true } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_class('profile::ssh_hardening') }
+      end
+
+      context 'with manage_ssh_hardening disabled' do
+        let(:params) { { manage_ssh_hardening: false } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.not_to contain_class('profile::ssh_hardening') }
+      end
     end
   end
 end

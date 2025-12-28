@@ -124,6 +124,32 @@ services:
       - '/:/host:ro,rslave'
 <%- end -%>
 
+<%- if @enable_wireguard_exporter -%>
+  wireguard-exporter:
+    image: <%= @wireguard_exporter_image %>
+    <<: *host
+    container_name: wireguard-exporter
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PROMETHEUS_METRICS_ADDR=<%= @monitoring_ip %>:<%= @wireguard_exporter_port %>
+    volumes:
+      - <%= @wireguard_config_path %>:/etc/wireguard:ro
+<%- end -%>
+
+<%- if @enable_unbound_exporter -%>
+  unbound-exporter:
+    image: <%= @unbound_exporter_image %>
+    <<: *host
+    container_name: unbound-exporter
+    command:
+      - unbound-exporter
+      - -unbound.host
+      - <%= @unbound_host %>:<%= @unbound_control_port %>
+      - -web.listen-address
+      - <%= @monitoring_ip %>:<%= @unbound_exporter_port %>
+<%- end -%>
+
 <%- if @enable_wg_portal -%>
   wg-portal:
     image: <%= @wg_portal_image %>
