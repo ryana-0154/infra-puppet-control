@@ -122,13 +122,12 @@ class profile::wireguard (
 
     # Manage UFW firewall rules for WireGuard
     if $manage_ufw {
-      # Configure UFW with default deny policy
-      class { 'ufw':
-        default_input_policy       => 'deny',
-        default_output_policy      => 'allow',
-        default_forward_policy     => 'deny',
-        default_application_policy => 'skip',
-      }
+      # Include UFW module (default policy is DROP/deny in /etc/default/ufw)
+      # The kogitoapp-ufw module defaults are:
+      #   DEFAULT_INPUT_POLICY="DROP"    (deny all incoming by default)
+      #   DEFAULT_OUTPUT_POLICY="ACCEPT" (allow all outgoing)
+      #   DEFAULT_FORWARD_POLICY="DROP"  (deny forwarding by default)
+      include ufw
 
       # Allow WireGuard port from anywhere (UDP)
       ufw_rule { "allow wireguard port ${listen_port}":
@@ -138,8 +137,14 @@ class profile::wireguard (
         require      => Class['ufw'],
       }
 
-      # Get SSH port from hiera
-      $ssh_port = lookup('profile::ssh_hardening::ssh_port', Optional[Integer], 'first', undef)
+      # Get SSH port from hiera (may be encrypted)
+      # Convert to integer if it's a string from eyaml decryption
+      $ssh_port_raw = lookup('profile::ssh_hardening::ssh_port', Optional[Variant[Integer, String]], 'first', undef)
+      $ssh_port = $ssh_port_raw ? {
+        String  => Integer($ssh_port_raw),
+        Integer => $ssh_port_raw,
+        default => undef,
+      }
 
       # Allow SSH from anywhere (required for remote access)
       if $ssh_port {
