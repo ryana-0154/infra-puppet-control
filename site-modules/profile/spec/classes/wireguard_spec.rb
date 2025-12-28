@@ -83,9 +83,27 @@ describe 'profile::wireguard' do
           }
 
           it { is_expected.to contain_ufw_rule('allow wireguard port 51820') }
+
+          # Deny rules - block monitoring ports from internet
+          it { is_expected.to contain_ufw_rule('deny HTTP from internet') }
+          it { is_expected.to contain_ufw_rule('deny HTTPS from internet') }
+          it { is_expected.to contain_ufw_rule('deny Grafana from internet') }
+          it { is_expected.to contain_ufw_rule('deny VictoriaMetrics from internet') }
+          it { is_expected.to contain_ufw_rule('deny OTEL from internet') }
+          it { is_expected.to contain_ufw_rule('deny OTEL Prometheus from internet') }
+          it { is_expected.to contain_ufw_rule('deny exporters from internet') }
+
+          # Allow rules - permit VPN network access
           it { is_expected.to contain_ufw_rule('allow DNS from VPN network') }
           it { is_expected.to contain_ufw_rule('allow HTTP from VPN network') }
           it { is_expected.to contain_ufw_rule('allow HTTPS from VPN network') }
+          it { is_expected.to contain_ufw_rule('allow Grafana from VPN network') }
+          it { is_expected.to contain_ufw_rule('allow VictoriaMetrics from VPN network') }
+          it { is_expected.to contain_ufw_rule('allow OTEL from VPN network') }
+          it { is_expected.to contain_ufw_rule('allow OTEL Prometheus from VPN network') }
+          it { is_expected.to contain_ufw_rule('allow exporters from VPN network') }
+
+          # Route rules
           it { is_expected.to contain_ufw_route('allow VPN traffic from wg0 to eth0') }
           it { is_expected.to contain_ufw_route('allow VPN-to-VPN traffic on wg0') }
         end
