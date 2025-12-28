@@ -38,6 +38,12 @@ class profile::base (
   # Firewall configuration
   if $manage_firewall {
     include profile::firewall
+  } else {
+    # When firewall is disabled, purge old iptables rules created by puppetlabs-firewall module
+    # This prevents conflicts with UFW
+    resources { 'firewall':
+      purge => true,
+    }
   }
 
   if $manage_logrotate {

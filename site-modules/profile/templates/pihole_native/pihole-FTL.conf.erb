@@ -1,0 +1,16 @@
+# Pi-hole FTL Configuration
+# Managed by Puppet - DO NOT EDIT MANUALLY
+#
+# This configures pihole-FTL to bind its web server ONLY to the VPN IP address
+# to prevent the Pi-hole web interface from being exposed to the internet
+
+# Extract just the IP address from the CIDR notation (e.g., "10.10.10.1/24" -> "10.10.10.1")
+<%
+  vpn_ip = @pihole_ipv4_address.split('/').first
+-%>
+
+# Bind web server to VPN IP only (not 0.0.0.0)
+WEBSERVER_BIND_ADDRESS=<%= vpn_ip %>
+
+# Web server port (default 80)
+WEBSERVER_PORT=80

@@ -142,6 +142,25 @@ class profile::pihole_native (
       }
     }
 
+    # Configure pihole-FTL to bind web server only to VPN IP (not all interfaces)
+    # This prevents the Pi-hole web interface from being exposed to the internet
+    file { '/etc/pihole/pihole-FTL.conf':
+      ensure  => file,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      content => template('profile/pihole_native/pihole-FTL.conf.erb'),
+      require => File['/etc/pihole'],
+      notify  => Service['pihole-FTL'],
+    }
+
+    # Ensure pihole-FTL service is managed
+    service { 'pihole-FTL':
+      ensure  => running,
+      enable  => true,
+      require => File['/etc/pihole/pihole-FTL.conf'],
+    }
+
     # Configure Pi-hole DNS settings
     file { '/etc/dnsmasq.d/01-pihole.conf':
       ensure  => file,

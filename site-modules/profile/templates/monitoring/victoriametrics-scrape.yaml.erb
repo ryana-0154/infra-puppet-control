@@ -5,7 +5,8 @@
 
 global:
   scrape_interval: 15s
-  evaluation_interval: 15s
+  # Note: evaluation_interval is not used by VictoriaMetrics single-node
+  # (only relevant for Prometheus alerting/recording rules)
 
 scrape_configs:
   # Scrape VictoriaMetrics itself
@@ -22,22 +23,24 @@ scrape_configs:
 <%- end -%>
 
 <%- if @enable_blackbox -%>
-  - job_name: 'blackbox'
-    metrics_path: /probe
-    params:
-      module: [http_2xx]  # Look for a HTTP 200 response.
-    static_configs:
-      - targets:
-        - http://prometheus.io    # Target to probe with http.
-        - https://prometheus.io   # Target to probe with https.
-        - http://example.com:8080 # Target to probe with http on port 8080.
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: __param_target
-      - source_labels: [__param_target]
-        target_label: instance
-      - target_label: __address__
-        replacement: <%= @monitoring_ip %>:9115  # The blackbox exporter's real hostname:port.
+  # Blackbox exporter for HTTP/HTTPS probing
+  # To enable monitoring, uncomment and configure targets below:
+  #
+  # - job_name: 'blackbox'
+  #   metrics_path: /probe
+  #   params:
+  #     module: [http_2xx]
+  #   static_configs:
+  #     - targets:
+  #       - https://your-domain.com
+  #       - http://10.10.10.1  # Pi-hole web interface
+  #   relabel_configs:
+  #     - source_labels: [__address__]
+  #       target_label: __param_target
+  #     - source_labels: [__param_target]
+  #       target_label: instance
+  #     - target_label: __address__
+  #       replacement: <%= @monitoring_ip %>:9115
 <%- end -%>
 
 <%- if @enable_pihole_exporter -%>
