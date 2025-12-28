@@ -73,7 +73,15 @@ describe 'profile::wireguard' do
         }
 
         context 'with manage_ufw enabled' do
-          it { is_expected.to contain_class('ufw') }
+          it {
+            is_expected.to contain_class('ufw').with(
+              default_input_policy: 'deny',
+              default_output_policy: 'allow',
+              default_forward_policy: 'deny',
+              default_application_policy: 'skip'
+            )
+          }
+
           it { is_expected.to contain_ufw_rule('allow wireguard port 51820') }
           it { is_expected.to contain_ufw_rule('allow DNS from VPN network') }
           it { is_expected.to contain_ufw_rule('allow HTTP from VPN network') }
