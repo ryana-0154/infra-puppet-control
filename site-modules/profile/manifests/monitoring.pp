@@ -18,16 +18,16 @@
 #   File mode for the monitoring directory
 # @param monitoring_ip
 #   IP address services will bind to
-# @param prometheus_port
-#   Port for Prometheus web interface
+# @param victoriametrics_port
+#   Port for VictoriaMetrics web interface
 # @param grafana_port
 #   Port for Grafana web interface
 # @param blackbox_port
 #   Port for Blackbox Exporter
 # @param pihole_exporter_port
 #   Port for PiHole Exporter
-# @param enable_prometheus
-#   Whether to enable Prometheus service
+# @param enable_victoriametrics
+#   Whether to enable VictoriaMetrics service
 # @param enable_grafana
 #   Whether to enable Grafana service
 # @param enable_loki
@@ -52,8 +52,8 @@
 #   Whether to enable Nginx reverse proxy for SSO
 # @param enable_redis
 #   Whether to enable Redis for Authelia session storage
-# @param prometheus_image
-#   Docker image for Prometheus
+# @param victoriametrics_image
+#   Docker image for VictoriaMetrics
 # @param grafana_image
 #   Docker image for Grafana
 # @param loki_image
@@ -153,7 +153,7 @@ class profile::monitoring (
   String[1]                      $monitoring_ip             = '10.10.10.1',
 
   # Service ports
-  Integer[1,65535]               $prometheus_port           = 9090,
+  Integer[1,65535]               $victoriametrics_port      = 8428,
   Integer[1,65535]               $grafana_port              = 3000,
   Integer[1,65535]               $blackbox_port             = 9115,
   Integer[1,65535]               $pihole_exporter_port      = 9617,
@@ -161,7 +161,7 @@ class profile::monitoring (
   Integer[1,65535]               $unbound_exporter_port     = 9167,
 
   # Service enable/disable flags
-  Boolean                        $enable_prometheus         = true,
+  Boolean                        $enable_victoriametrics    = true,
   Boolean                        $enable_grafana            = true,
   Boolean                        $enable_loki               = true,
   Boolean                        $enable_promtail           = true,
@@ -178,7 +178,7 @@ class profile::monitoring (
   Boolean                        $enable_redis              = false,
 
   # Image versions
-  String[1]                      $prometheus_image          = 'prom/prometheus:latest',
+  String[1]                      $victoriametrics_image     = 'victoriametrics/victoria-metrics:latest',
   String[1]                      $grafana_image             = 'grafana/grafana:latest',
   String[1]                      $loki_image                = 'grafana/loki:3.1.1',
   String[1]                      $promtail_image            = 'grafana/promtail:3.1.1',
@@ -305,10 +305,10 @@ class profile::monitoring (
     }
 
     # Create configuration files for services
-    if $enable_prometheus {
-      file { "${monitoring_dir}/prometheus.yaml":
+    if $enable_victoriametrics {
+      file { "${monitoring_dir}/victoriametrics-scrape.yaml":
         ensure  => file,
-        content => template('profile/monitoring/prometheus.yaml.erb'),
+        content => template('profile/monitoring/victoriametrics-scrape.yaml.erb'),
         group   => $monitoring_dir_group,
         mode    => '0644',
         owner   => $monitoring_dir_owner,
@@ -501,8 +501,8 @@ class profile::monitoring (
     # Restart containers when configuration changes
     # Build subscribe array based on enabled services
     $base_subscribe = [File["${monitoring_dir}/docker-compose.yaml"]]
-    $prometheus_subscribe = $enable_prometheus ? {
-      true    => [File["${monitoring_dir}/prometheus.yaml"]],
+    $victoriametrics_subscribe = $enable_victoriametrics ? {
+      true    => [File["${monitoring_dir}/victoriametrics-scrape.yaml"]],
       default => [],
     }
     $loki_subscribe = $enable_loki ? {
@@ -540,7 +540,7 @@ class profile::monitoring (
       default => [],
     }
 
-    $all_subscribe = $base_subscribe + $prometheus_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe + $external_dashboards_subscribe
+    $all_subscribe = $base_subscribe + $victoriametrics_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe + $external_dashboards_subscribe
 
     exec { 'restart-monitoring-stack':
       command     => 'docker compose up -d --force-recreate',

@@ -22,11 +22,11 @@ datasources:
           url: "$${__value.raw}"
     version: 1
 <%- end -%>
-<%- if @enable_prometheus -%>
-  - name: Prometheus
+<%- if @enable_victoriametrics -%>
+  - name: VictoriaMetrics
     type: prometheus
     access: proxy
-    url: http://<%= @monitoring_ip %>:<%= @prometheus_port %>
+    url: http://<%= @monitoring_ip %>:<%= @victoriametrics_port %>
     isDefault: true
     editable: true
     jsonData:
