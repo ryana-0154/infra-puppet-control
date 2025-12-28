@@ -61,7 +61,8 @@ class profile::unattended_upgrades (
   Boolean                  $automatic_reboot                = false,
   String[1]                $automatic_reboot_time           = '02:00',
 ) {
-  if $manage_unattended_upgrades {
+  # unattended-upgrades is only supported on Debian-based systems
+  if $manage_unattended_upgrades and $facts['os']['family'] == 'Debian' {
     # Ensure unattended-upgrades package is installed
     package { 'unattended-upgrades':
       ensure => installed,
