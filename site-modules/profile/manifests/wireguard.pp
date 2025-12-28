@@ -177,6 +177,15 @@ class profile::wireguard (
       }
     }
 
+    # Clean up orphaned WireGuard interface if service is not running
+    # This handles cases where previous runs left the interface in a broken state
+    exec { "cleanup-orphaned-${interface_name}":
+      command => "/usr/bin/ip link delete ${interface_name}",
+      onlyif  => "/usr/bin/ip link show ${interface_name} 2>/dev/null",
+      unless  => "/usr/bin/systemctl is-active wg-quick@${interface_name}",
+      before  => Service["wg-quick@${interface_name}"],
+    }
+
     # Enable and start WireGuard service
     service { "wg-quick@${interface_name}":
       ensure     => running,
