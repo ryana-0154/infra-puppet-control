@@ -122,10 +122,15 @@ class profile::wireguard (
 
     # Manage UFW firewall rules for WireGuard
     if $manage_ufw {
-      # Include UFW (ufw module handles package installation)
-      include ufw
+      # Configure UFW with default deny policy
+      class { 'ufw':
+        default_input_policy       => 'deny',
+        default_output_policy      => 'allow',
+        default_forward_policy     => 'deny',
+        default_application_policy => 'skip',
+      }
 
-      # Allow WireGuard port
+      # Allow WireGuard port from anywhere (UDP)
       ufw_rule { "allow wireguard port ${listen_port}":
         action       => 'allow',
         to_ports_app => $listen_port,
@@ -133,7 +138,23 @@ class profile::wireguard (
         require      => Class['ufw'],
       }
 
-      # Allow DNS from VPN network
+      # Get SSH port from hiera
+      $ssh_port = lookup('profile::ssh_hardening::ssh_port', Optional[Integer], 'first', undef)
+
+      # Allow SSH from anywhere (required for remote access)
+      if $ssh_port {
+        ufw_rule { "allow SSH port ${ssh_port}":
+          action       => 'allow',
+          to_ports_app => $ssh_port,
+          proto        => 'tcp',
+          require      => Class['ufw'],
+        }
+      }
+
+      # ONLY allow VPN network access to internal services
+      # All other traffic will be denied by default policy
+
+      # Allow DNS from VPN network ONLY
       ufw_rule { 'allow DNS from VPN network':
         action       => 'allow',
         from_addr    => $vpn_network,
