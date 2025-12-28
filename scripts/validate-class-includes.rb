@@ -120,7 +120,16 @@ puts
 
 # Define search paths
 site_modules = ['site-modules/profile', 'site-modules/role']
-external_modules = Dir.glob('spec/fixtures/modules/*').select { |f| File.directory?(f) }
+
+# Look for modules in both spec/fixtures (testing) and modules/ (deployment)
+external_modules = if File.directory?('spec/fixtures/modules')
+                     Dir.glob('spec/fixtures/modules/*').select { |f| File.directory?(f) }
+                   elsif File.directory?('modules')
+                     Dir.glob('modules/*').select { |f| File.directory?(f) }
+                   else
+                     []
+                   end
+
 all_paths = site_modules + external_modules
 
 puts "Searching for class definitions in #{all_paths.size} modules..."
