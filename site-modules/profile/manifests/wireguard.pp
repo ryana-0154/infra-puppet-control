@@ -122,7 +122,7 @@ class profile::wireguard (
 
     # Manage UFW firewall rules for WireGuard
     if $manage_ufw {
-      # Ensure UFW is installed and running
+      # Include UFW (ufw module handles package installation)
       include ufw
 
       # Allow WireGuard port
@@ -130,6 +130,7 @@ class profile::wireguard (
         action       => 'allow',
         to_ports_app => $listen_port,
         proto        => 'udp',
+        require      => Class['ufw'],
       }
 
       # Allow DNS from VPN network
@@ -138,6 +139,7 @@ class profile::wireguard (
         from_addr    => $vpn_network,
         to_ports_app => 53,
         proto        => 'any',
+        require      => Class['ufw'],
       }
 
       # Allow HTTP from VPN network (for Pi-hole admin)
@@ -146,6 +148,7 @@ class profile::wireguard (
         from_addr    => $vpn_network,
         to_ports_app => 80,
         proto        => 'tcp',
+        require      => Class['ufw'],
       }
 
       # Allow HTTPS from VPN network
@@ -154,6 +157,7 @@ class profile::wireguard (
         from_addr    => $vpn_network,
         to_ports_app => 443,
         proto        => 'tcp',
+        require      => Class['ufw'],
       }
 
       # UFW route rule for VPN traffic forwarding
@@ -161,6 +165,7 @@ class profile::wireguard (
         action        => 'allow',
         interface_in  => $interface_name,
         interface_out => $external_interface,
+        require       => Class['ufw'],
       }
 
       # UFW route rule for VPN-to-VPN traffic
@@ -168,6 +173,7 @@ class profile::wireguard (
         action        => 'allow',
         interface_in  => $interface_name,
         interface_out => $interface_name,
+        require       => Class['ufw'],
       }
     }
 
