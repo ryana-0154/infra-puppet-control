@@ -96,8 +96,24 @@ fi
 
 print_success "Modules deployed successfully"
 
+# Validate deprecated/removed functions
+print_header "Step 2: Validate Puppet Functions"
+print_info "Checking for deprecated or removed Puppet functions..."
+
+if [ -f "scripts/validate-deprecated-functions.rb" ]; then
+    if ruby scripts/validate-deprecated-functions.rb; then
+        print_success "No removed Puppet functions found"
+    else
+        print_failure "Function validation failed"
+        echo "This catches issues like using has_key() which was removed in Puppet 6."
+        exit 1
+    fi
+else
+    print_info "Skipping function validation (validate-deprecated-functions.rb not found)"
+fi
+
 # Validate class includes
-print_header "Step 2: Validate Class Includes"
+print_header "Step 3: Validate Class Includes"
 print_info "Checking that all included classes actually exist..."
 
 if [ -f "scripts/validate-class-includes.rb" ]; then
@@ -116,7 +132,7 @@ fi
 TEST_DIR=$(mktemp -d)
 trap "rm -rf $TEST_DIR" EXIT
 
-print_header "Step 3: Test Catalog Compilation"
+print_header "Step 4: Test Catalog Compilation"
 
 # Find all profiles
 PROFILES=$(find site-modules/profile/manifests -name '*.pp' -not -name 'init.pp' -type f)
@@ -163,7 +179,7 @@ EOF
 done
 
 # Test roles too
-print_header "Step 4: Test Roles"
+print_header "Step 5: Test Roles"
 
 ROLES=$(find site-modules/role/manifests -name '*.pp' -not -name 'init.pp' -type f)
 
@@ -201,7 +217,7 @@ EOF
 done
 
 # Test common profile combinations
-print_header "Step 5: Test Profile Combinations"
+print_header "Step 6: Test Profile Combinations"
 print_info "Testing common profile combinations to catch resource contention..."
 
 FAILED_COMBINATIONS=()

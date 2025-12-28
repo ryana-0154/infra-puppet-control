@@ -109,9 +109,27 @@ end
 
 Test files mirror manifest paths: `site-modules/profile/manifests/base.pp` → `site-modules/profile/spec/classes/base_spec.rb`
 
-**Limitations**: Unit tests don't validate that included classes actually exist in their modules.
+**Limitations**: Unit tests don't validate that included classes actually exist in their modules, or that deprecated functions have been removed.
 
-### 2. Class Include Validation
+### 2. Deprecated Function Validation
+
+Validates that manifests don't use Puppet functions that were removed in Puppet 6+.
+
+```bash
+bundle exec rake validate_functions
+```
+
+This catches issues like:
+- `has_key($hash, 'key')` → Removed in Puppet 6, use `'key' in $hash`
+- `validate_string($var)` → Removed in Puppet 6, use `String` data type
+- `is_array($var)` → Removed in Puppet 6, use `$var =~ Array`
+- `hiera('key')` → Deprecated, use `lookup('key')`
+
+**How it works**: Scans all manifests for function calls matching a list of removed/deprecated Puppet functions and reports errors for removed functions, warnings for deprecated ones.
+
+**This would have caught**: The `has_key()` function error that caused production catalog compilation failure.
+
+### 3. Class Include Validation
 
 Validates that all `include`, `require`, and `contain` statements reference classes that actually exist.
 
@@ -126,7 +144,7 @@ This catches issues like:
 
 **How it works**: Scans all manifests to find class definitions, then validates all include/require/contain statements against the list of defined classes.
 
-### 3. Catalog Compilation Tests
+### 4. Catalog Compilation Tests
 
 Actually compiles Puppet catalogs with all module dependencies loaded. This catches:
 - Missing class definitions
@@ -140,7 +158,7 @@ bundle exec rake acceptance
 
 **Why this matters**: Unit tests mock dependencies; catalog compilation tests use real modules and actually build the catalog Puppet would apply.
 
-### 4. Deployment Simulation
+### 5. Deployment Simulation
 
 Full end-to-end test that simulates what happens during r10k deployment:
 
@@ -150,11 +168,15 @@ Full end-to-end test that simulates what happens during r10k deployment:
 
 This runs:
 1. **Module deployment** - Installs all modules from Puppetfile
-2. **Class validation** - Verifies all included classes exist
-3. **Catalog compilation** - Compiles catalogs for each profile and role
-4. **Profile combinations** - Tests common profile combinations for resource conflicts
+2. **Function validation** - Checks for removed/deprecated Puppet functions
+3. **Class validation** - Verifies all included classes exist
+4. **Catalog compilation** - Compiles catalogs for each profile and role
+5. **Role compilation** - Compiles catalogs for each role
+6. **Profile combinations** - Tests common profile combinations for resource conflicts
 
-**This would have caught**: The `apt::unattended_upgrades` error because Step 2 validates class existence before attempting catalog compilation.
+**This would have caught**:
+- The `has_key()` error → Step 2 validates functions before compilation
+- The `apt::unattended_upgrades` error → Step 3 validates class existence before compilation
 
 ## Encrypted Data (eyaml)
 

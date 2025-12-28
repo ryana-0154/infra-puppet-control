@@ -185,7 +185,7 @@ class profile::wireguard (
 
     # Store peer preshared keys
     $peers.each |$peer_name, $peer_config| {
-      if has_key($peer_config, 'preshared_key') {
+      if 'preshared_key' in $peer_config {
         file { "/etc/wireguard/clients/${peer_name}.psk":
           ensure  => file,
           owner   => 'root',
