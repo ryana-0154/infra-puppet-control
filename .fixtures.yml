@@ -28,7 +28,5 @@ fixtures:
       repo: "saz/ssh"
     vcsrepo:
       repo: "puppetlabs/vcsrepo"
-    apt:
-      repo: "puppetlabs/apt"
     fail2ban:
       repo: "puppet/fail2ban"

@@ -1,0 +1,44 @@
+// Unattended-Upgrades Configuration
+// Managed by Puppet - DO NOT EDIT MANUALLY
+
+// Allowed origins for automatic upgrades
+Unattended-Upgrade::Allowed-Origins {
+<%- @origins.each do |origin| -%>
+  "<%= origin %>";
+<%- end -%>
+};
+
+// Package blacklist - packages to never auto-upgrade
+Unattended-Upgrade::Package-Blacklist {
+<%- @blacklist.each do |pkg| -%>
+  "<%= pkg %>";
+<%- end -%>
+};
+
+// Automatically fix dpkg interruptions
+Unattended-Upgrade::AutoFixInterruptedDpkg "<%= @auto_fix_interrupted_dpkg %>";
+
+// Minimal steps to install updates
+Unattended-Upgrade::MinimalSteps "true";
+
+<%- if @mail_only_on_error -%>
+// Mail settings - only on error
+Unattended-Upgrade::Mail "<%= @email %>";
+Unattended-Upgrade::MailOnlyOnError "true";
+<%- elsif @email -%>
+// Mail settings - send for all upgrades
+Unattended-Upgrade::Mail "<%= @email %>";
+Unattended-Upgrade::MailOnlyOnError "false";
+<%- end -%>
+
+// Remove unused kernel packages
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "<%= @remove_unused_kernel_packages %>";
+
+// Remove unused dependencies
+Unattended-Upgrade::Remove-Unused-Dependencies "<%= @remove_unused_dependencies %>";
+
+// Automatic reboot settings
+Unattended-Upgrade::Automatic-Reboot "<%= @automatic_reboot %>";
+<%- if @automatic_reboot -%>
+Unattended-Upgrade::Automatic-Reboot-Time "<%= @automatic_reboot_time %>";
+<%- end -%>

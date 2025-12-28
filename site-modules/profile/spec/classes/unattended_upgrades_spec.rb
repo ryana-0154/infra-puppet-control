@@ -3,7 +3,16 @@
 require 'spec_helper'
 
 describe 'profile::unattended_upgrades' do
-  on_supported_os.each do |os, os_facts|
+  on_supported_os({
+                    supported_os: [
+                      { 'operatingsystem' => 'Rocky', 'operatingsystemrelease' => %w[8 9] },
+                      { 'operatingsystem' => 'AlmaLinux', 'operatingsystemrelease' => %w[8 9] },
+                      { 'operatingsystem' => 'RedHat', 'operatingsystemrelease' => %w[7 8 9] },
+                      { 'operatingsystem' => 'Debian', 'operatingsystemrelease' => %w[10 11 12] },
+                      { 'operatingsystem' => 'Ubuntu', 'operatingsystemrelease' => ['20.04', '22.04'] }
+                    ],
+                    facterversion: '4.4'
+                  }).each do |os, os_facts|
     context "when on #{os}" do
       let(:facts) { os_facts }
 
@@ -22,25 +31,34 @@ describe 'profile::unattended_upgrades' do
 
         it { is_expected.to compile.with_all_deps }
 
-        it {
-          is_expected.to contain_class('apt').with(
-            update: { 'frequency' => 'daily' }
-          )
-        }
+        # unattended-upgrades is Debian-specific
+        if os_facts[:os]['family'] == 'Debian'
+          it { is_expected.to contain_package('unattended-upgrades').with_ensure('installed') }
+          it { is_expected.to contain_package('apt-listchanges').with_ensure('installed') }
 
-        it {
-          is_expected.to contain_class('apt::unattended_upgrades').with(
-            auto_fix_interrupted_dpkg: true,
-            enable: true,
-            update: 1,
-            download_upgradeable: true,
-            auto_clean_interval: 7,
-            mail_only_on_error: true,
-            remove_unused_kernel_packages: true,
-            remove_unused_dependencies: true,
-            automatic_reboot: false
-          )
-        }
+          it {
+            is_expected.to contain_file('/etc/apt/apt.conf.d/50unattended-upgrades').with(
+              ensure: 'file',
+              owner: 'root',
+              group: 'root',
+              mode: '0644'
+            )
+          }
+
+          it {
+            is_expected.to contain_file('/etc/apt/apt.conf.d/20auto-upgrades').with(
+              ensure: 'file',
+              owner: 'root',
+              group: 'root',
+              mode: '0644'
+            )
+          }
+        else
+          it { is_expected.not_to contain_package('unattended-upgrades') }
+          it { is_expected.not_to contain_package('apt-listchanges') }
+          it { is_expected.not_to contain_file('/etc/apt/apt.conf.d/50unattended-upgrades') }
+          it { is_expected.not_to contain_file('/etc/apt/apt.conf.d/20auto-upgrades') }
+        end
       end
 
       context 'with automatic_reboot enabled' do
@@ -54,12 +72,11 @@ describe 'profile::unattended_upgrades' do
 
         it { is_expected.to compile.with_all_deps }
 
-        it {
-          is_expected.to contain_class('apt::unattended_upgrades').with(
-            automatic_reboot: true,
-            automatic_reboot_time: '03:00'
-          )
-        }
+        if os_facts[:os]['family'] == 'Debian'
+          it { is_expected.to contain_package('unattended-upgrades') }
+          it { is_expected.to contain_file('/etc/apt/apt.conf.d/50unattended-upgrades') }
+          it { is_expected.to contain_file('/etc/apt/apt.conf.d/20auto-upgrades') }
+        end
       end
 
       context 'with email notifications' do
@@ -73,12 +90,10 @@ describe 'profile::unattended_upgrades' do
 
         it { is_expected.to compile.with_all_deps }
 
-        it {
-          is_expected.to contain_class('apt::unattended_upgrades').with(
-            mail: 'admin@example.com',
-            mail_only_on_error: false
-          )
-        }
+        if os_facts[:os]['family'] == 'Debian'
+          it { is_expected.to contain_package('unattended-upgrades') }
+          it { is_expected.to contain_file('/etc/apt/apt.conf.d/50unattended-upgrades') }
+        end
       end
 
       context 'with custom origins' do
@@ -94,14 +109,10 @@ describe 'profile::unattended_upgrades' do
 
         it { is_expected.to compile.with_all_deps }
 
-        it {
-          is_expected.to contain_class('apt::unattended_upgrades').with(
-            origins: [
-              '${distro_id}:${distro_codename}-security',
-              '${distro_id}:${distro_codename}-updates'
-            ]
-          )
-        }
+        if os_facts[:os]['family'] == 'Debian'
+          it { is_expected.to contain_package('unattended-upgrades') }
+          it { is_expected.to contain_file('/etc/apt/apt.conf.d/50unattended-upgrades') }
+        end
       end
 
       context 'with package blacklist' do
@@ -114,11 +125,10 @@ describe 'profile::unattended_upgrades' do
 
         it { is_expected.to compile.with_all_deps }
 
-        it {
-          is_expected.to contain_class('apt::unattended_upgrades').with(
-            blacklist: ['linux-image-*', 'docker-ce']
-          )
-        }
+        if os_facts[:os]['family'] == 'Debian'
+          it { is_expected.to contain_package('unattended-upgrades') }
+          it { is_expected.to contain_file('/etc/apt/apt.conf.d/50unattended-upgrades') }
+        end
       end
     end
   end

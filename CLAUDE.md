@@ -82,7 +82,17 @@ This is a Puppet control repository using the **roles and profiles** pattern:
 3. Profiles use Hiera for configuration values via `lookup()`
 4. Profiles compose Forge modules and declare resources
 
-## Testing Patterns
+## Testing Strategy
+
+This repository employs multiple layers of testing to catch different types of issues:
+
+### 1. Unit Tests (rspec-puppet)
+
+Fast, isolated tests that verify individual classes compile and contain expected resources.
+
+```bash
+bundle exec rake spec
+```
 
 Unit tests use rspec-puppet with `on_supported_os` for cross-platform testing:
 
@@ -98,6 +108,53 @@ end
 ```
 
 Test files mirror manifest paths: `site-modules/profile/manifests/base.pp` → `site-modules/profile/spec/classes/base_spec.rb`
+
+**Limitations**: Unit tests don't validate that included classes actually exist in their modules.
+
+### 2. Class Include Validation
+
+Validates that all `include`, `require`, and `contain` statements reference classes that actually exist.
+
+```bash
+bundle exec rake validate_class_includes
+```
+
+This catches issues like:
+- Including `apt::unattended_upgrades` when it doesn't exist in puppetlabs-apt
+- Typos in class names
+- Missing module dependencies
+
+**How it works**: Scans all manifests to find class definitions, then validates all include/require/contain statements against the list of defined classes.
+
+### 3. Catalog Compilation Tests
+
+Actually compiles Puppet catalogs with all module dependencies loaded. This catches:
+- Missing class definitions
+- Invalid parameters
+- Resource type mismatches
+- Dependency cycles
+
+```bash
+bundle exec rake acceptance
+```
+
+**Why this matters**: Unit tests mock dependencies; catalog compilation tests use real modules and actually build the catalog Puppet would apply.
+
+### 4. Deployment Simulation
+
+Full end-to-end test that simulates what happens during r10k deployment:
+
+```bash
+./scripts/simulate-deployment.sh
+```
+
+This runs:
+1. **Module deployment** - Installs all modules from Puppetfile
+2. **Class validation** - Verifies all included classes exist
+3. **Catalog compilation** - Compiles catalogs for each profile and role
+4. **Profile combinations** - Tests common profile combinations for resource conflicts
+
+**This would have caught**: The `apt::unattended_upgrades` error because Step 2 validates class existence before attempting catalog compilation.
 
 ## Encrypted Data (eyaml)
 
