@@ -154,13 +154,6 @@ class profile::pihole_native (
       notify  => Service['pihole-FTL'],
     }
 
-    # Ensure pihole-FTL service is managed
-    service { 'pihole-FTL':
-      ensure  => running,
-      enable  => true,
-      require => File['/etc/pihole/pihole-FTL.conf'],
-    }
-
     # Configure Pi-hole DNS settings
     file { '/etc/dnsmasq.d/01-pihole.conf':
       ensure  => file,
@@ -182,7 +175,10 @@ class profile::pihole_native (
     service { 'pihole-FTL':
       ensure  => running,
       enable  => true,
-      require => File['/etc/pihole/setupVars.conf'],
+      require => [
+        File['/etc/pihole/setupVars.conf'],
+        File['/etc/pihole/pihole-FTL.conf'],
+      ],
     }
   }
 }
