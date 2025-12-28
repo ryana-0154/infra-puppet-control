@@ -4,6 +4,21 @@
 profile::base::manage_firewall: true
 profile::base::manage_logrotate: true
 profile::base::manage_otel_collector: true
+profile::base::manage_unattended_upgrades: true
+profile::base::manage_ssh_hardening: true
+
+# Unattended Upgrades Configuration (Automatic Security Updates)
+# As mentioned in the guide prerequisites
+profile::unattended_upgrades::manage_unattended_upgrades: true
+profile::unattended_upgrades::enable_auto_updates: true
+profile::unattended_upgrades::update_interval: 1  # Check daily
+profile::unattended_upgrades::download_upgradeable: true
+profile::unattended_upgrades::auto_clean_interval: 7
+profile::unattended_upgrades::remove_unused_kernel_packages: true
+profile::unattended_upgrades::remove_unused_dependencies: true
+profile::unattended_upgrades::automatic_reboot: true
+profile::unattended_upgrades::mail_only_on_error: false
+profile::unattended_upgrades::email: 'ENC[PKCS7,MIIBiQYJKoZIhvcNAQcDoIIBejCCAXYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEARrEKpDEHq9ozL8F9K5sE5MB9+YLnC6WCe//Z4KAaxMB9qwzBPquTC7UTkBnHutzWv7xdgVK430Ewd4Q28WafhOJjmpu3pfHCo3UXljigdPIrP1t+EWGfdv/PFkfsrnHPIsqm+Zpjx73/+/nUj8rYjOolevc0HSQalcxn/NMlqA6u5KUGh+PrnfBY3VxCEgovY5IG5hiy7FwELwQ4aWo1LBerI+mFZxDwR3UKf1vSpAjbGoEdmq6y/rbT5DEqPlFe4eQ1y1kCkJjmD8S5s2SD9buYTKVhRWj9JskRjegA53k9S/FOWXSSVAMiZzsHaqX+P95niykge7rAiCUkBQI9nzBMBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBC3TCkeYr21XEFU5ak+RgwlgCDDb+giGosV4aQqNhMbfQIWsUmN6r/9IdB/aU0beRw79A==]'  # Optional: Set email for notifications
 
 # Unbound DNS resolver configuration
 profile::unbound::manage_unbound: true
@@ -26,6 +41,8 @@ profile::monitoring::prometheus_port: 9090
 profile::monitoring::grafana_port: 3000
 profile::monitoring::blackbox_port: 9115
 profile::monitoring::pihole_exporter_port: 9617
+profile::monitoring::wireguard_exporter_port: 9586
+profile::monitoring::unbound_exporter_port: 9167
 
 # Enable/disable services
 profile::monitoring::enable_prometheus: true
@@ -36,6 +53,15 @@ profile::monitoring::enable_pihole_exporter: true  # Disable if no PiHole
 profile::monitoring::enable_blackbox: true
 profile::monitoring::enable_node_exporter: true
 profile::monitoring::enable_wg_portal: true  # Disable if no WireGuard
+profile::monitoring::enable_wireguard_exporter: true  # WireGuard metrics
+profile::monitoring::enable_unbound_exporter: true    # Unbound DNS metrics
+
+# WireGuard exporter configuration
+profile::monitoring::wireguard_config_path: '/etc/wireguard'
+
+# Unbound exporter configuration
+profile::monitoring::unbound_host: '127.0.0.1'
+profile::monitoring::unbound_control_port: 8953
 
 # PiHole configuration (if enabled)
 profile::monitoring::pihole_hostname: '10.10.10.1'
@@ -98,6 +124,21 @@ profile::otel_collector::otel_prometheus_port: 8889
 profile::otel_collector::enable_grafana_dashboards: true
 profile::otel_collector::otel_collector_image: 'otel/opentelemetry-collector-contrib:0.91.0'
 
+# SSH Hardening Configuration
+# Disable password auth, use custom port, and other security hardening
+profile::ssh_hardening::manage_ssh: true
+profile::ssh_hardening::ssh_port: ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEADK1MNVCcoO7uMEuEJ929Z99H5a7Uk33oq6oJeGHY7wPqPIXiTWc8+9OYycZJ8o9jwO7rgByPgVa9hPLqyJy14iZsqD6yrdQg7oMu6/TdRR7Drijzwj3gCisD1MM5KqirKkjRQDoYwDIktQZsyFWGapEHT8GH9Z+NjtPRc+JnSPDYzZw5U6xetabpr2hzeWQxK9CFO3j5nISuBS7HCEI7RavHyqGBfYg2o0XYjSEhK/o7IZEasNTPezH8j11iUuwNBoVNKdv2MtP+VD9xLvjVPIEk1pKNIIlYI38szUWwEsPf/w4zrRcDgo5mI5HmLktO+/77ZUqQobccLWi3fAjypTA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCDQGleTWNzrKusDA8unOEsgBBMTOSgimO1W9INOd+tiuED]
+profile::ssh_hardening::permit_root_login: 'prohibit-password'
+profile::ssh_hardening::password_authentication: 'no'  # Key-based auth only
+profile::ssh_hardening::pubkey_authentication: 'yes'
+profile::ssh_hardening::challenge_response_authentication: 'no'
+profile::ssh_hardening::x11_forwarding: 'no'
+profile::ssh_hardening::max_auth_tries: 3
+profile::ssh_hardening::client_alive_interval: 300  # 5 minutes
+profile::ssh_hardening::client_alive_count_max: 3
+profile::ssh_hardening::log_level: 'VERBOSE'  # Extra logging for security
+profile::ssh_hardening::use_dns: 'no'  # Performance improvement
+
 # Firewall configuration for VPS
 profile::firewall::ssh_source:
   - '0.0.0.0/0'  # Allow SSH from anywhere (consider restricting to your IP ranges)
@@ -141,3 +182,86 @@ profile::monitoring::grafana_plugins:
   - grafana-piechart-panel
   - grafana-clock-panel
   - grafana-worldmap-panel
+
+# ============================================================================
+# WireGuard VPN Configuration
+# ============================================================================
+# Based on: https://psyonik.tech/posts/a-guide-for-wireguard-vpn-setup-with-pi-hole-adblock-and-unbound-dns/
+#
+# IMPORTANT: Before enabling, you must generate and encrypt WireGuard keys:
+#
+# 1. Generate server keys:
+#    wg genkey | tee server.key | wg pubkey > server.pub
+#
+# 2. Generate client keys (repeat for each client):
+#    wg genkey | tee homeserver.key | wg pubkey > homeserver.pub
+#    wg genpsk > homeserver.psk
+#
+# 3. Encrypt the server private key with eyaml:
+#    eyaml encrypt -s "$(cat server.key)"
+#
+# 4. Replace PLACEHOLDER values below with encrypted keys
+#
+# 5. Determine your external interface:
+#    ip route list default
+#    (usually eth0, ens3, or similar)
+#
+profile::wireguard::manage_wireguard: true
+profile::wireguard::vpn_network: '10.10.10.0/24'
+profile::wireguard::vpn_server_ip: '10.10.10.1'
+profile::wireguard::external_interface: 'eth0'  # VERIFY: Check with 'ip route list default'
+profile::wireguard::listen_port: 51820
+profile::wireguard::enable_nat: true
+profile::wireguard::enable_ip_forward: true
+profile::wireguard::manage_ufw: true
+
+profile::wireguard::server_private_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEALqxRgspHM7e2xL+KUMamyRP783by5MEb6m71SaCptqMoSx1vBCwcdxXrePRypJu/zGvzhQKwgl1CWsxoRYegJSfrW62WJprFMH9sj5B8G+r7/xmD/HUoQh/2bKfHeMaL5m87CNGIM1FZktf2mE4RZ+6xCj/fGEj/4W82W/iopL4ihQ855ziL0EXlN5yvUlkzNDaUYrPQ2V2MwLAPDcA21g1wAnLglPsshRCtfssqCL5x+oh5N/RwHs23p3czQ9W7AN3xCovqwKXrCvKmPnHUCoYLC/iGb5iYwTR5GJ4jnLu8i9bsf6WNhNsABErLYwIW1OnXtdKN2KYagRMCuLsTpDBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDgelDwkbbHcFfyxEDd8nvggDAB64Pml2k1PgkkS2MdldwQ+ohZnVw7N4anUamtcSEhBBmllFab7wOArjzWXkpjsOA=]'
+
+# WireGuard Peers (VPN Clients)
+# Generate keys for each client and encrypt the preshared keys
+profile::wireguard::peers:
+  desktop:
+    public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAprGgRFn4Zcm+EzbS+lMlqVf1lAxaPpmX+BqHOx3tzBYbAMgtag5f2aSjEV50xU/KaNAKYUD2cHJEAhBKtt/JxVcT+vqSm2b6yBmEr35s4GpJj0JmDAdSeQtJCqyGKuv6cUqcSi3fqrAiDne/0MdQe26EPr1l3uKRFOvHoxFRiLNMMt0wc4J+Aqsk2oVVy2ZzarEE8NupBhP0pZw16mJX9ELZNQzOShFWlmoeKGTY0Qj1czlc3Uk707Oo3Wl+2tsnU/jeu1dyLRw98UlShkvm00PmjqvxUZJ6A1hOO7kMsbt/ouFrUpQcipvs5lfM9+cklMpgK+BpLsvpA2perwgoFDBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBAY6Agq7uzyZccZV9niXop7gDCnqAiSYp0e6ypA0wyogP7G35al+EiFRACDZ4MdfCNQ2zdKDBjyQd2zPKXKZZKU07o=]'
+    preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAr5OY+1R6UavwFraUm/UWuyMWdQ3P2aMXO9B4K16YbApO3ortOY2WT6IPawaHNIF5yaLLqlTpk6TMH2WBsgvCjirTdPdcneYW/GQff8A4HQYOdop1WAMxvKxjj0LD7Mw0IHDimWoxuiV1AWMGsQAzM+6yOwGrdVAB/F6GaWRdoH7vceBA80fK7aWVe0/Qrp1RqIqD0RZV5gUP4krpE5rr2fnnEqkGhYnevYGZPZ3L+13jOr9WZOuM1WwIp+Jo7+juazWERFKC2Odk+d6hJFX20l3eYyltGWUt67obPZVrOoqWZ2BuGcegzEAjCIobrQiAcRb2T4EUUw90Vg9acpX/6jBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBAy6axJh9SIwfaKxf56yRojgDBbzJhdo/i7gNUWeXslV4ZILntN3lXIZFoAZVFZzM6vHmjybzs04O57+t2ww57dNeg=]'
+    allowed_ips: '0.0.0.0/0'
+  mob:
+    public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAwj0d1kPXO/0fAzanp0OLWggPB5KtlCvsHyzRWMvpM3N9i8gB/Nuc8fG2PB6sPFMJKkCQdFk263IZD9l9ck16cqRIcpS58zgp/dkXRAR0WOm7OZG1lo81agdW2f5B0pmJPgrk3CcrvrtkoC+3hYCxE5sq2zb0h+ZWv7/IcxsBT93DUSjQXGMejGZp3wsOQRs3ZinosL2BL8aFp2YxqDnNUdkqijKVDiQCFIZCDlog3hJrPNqa9O8P+FDlXT13e6BEfaZJIp77PSs2G14upvgq0ZvhWGZp5EVJuyZbxuyDsqmo7Dlen1mre7qnqDlHMvdsJq/nNVvLo5BbfnARoemIPTBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBIf7bQbVL31AIxZk0nBt11gDAOI24lc1kddj32qAEXBqhcaiVPBCLEjhn3K9QthJFJ460gyqWL3KC5buR/yMymC3c=]'
+    preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAazi9ERjchhYIrlenB31//dlICB7fMeE/Y5RCJfa+8ohKaLUqZG51yaetaRcPGm8H2aKXMfRFX61H/2MwEMtpUZgR43yYealLVJcrk8Q1Qm0A0XKinx2rItkNUoX5cvilrHQYMobZ/I2ztRLtkYO/HX0lG93Wj3O3xTDv0UU7tptD9VoVbVrK1NrzH+wV1ZQTUMY6yY+UZkJ99UxD/oshya5pzRuPQmjbBDxXffF8+LxXGlh5G33dNLlZ4miKES5eRhSHC5aiTOsK00u1H/amM/C6awRvVxKNbJnrNId7j0z6RlvXUhN/AdunfTKxiQOVi1+mfiHKSH/3mvAESeBOMDBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCJ9hZYpJzF6DxXOcEdePItgDCwMsNZW7rF7MYw9y9uaCb1tkol4aLpqkiXwAH3Dwz3W7dW64MVW6PFfR526eN5Xj8=]'
+    allowed_ips: '0.0.0.0/0'
+  udr:
+    public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAQt+O/sVleWGcMYKmnFiCkRXFCnbMyGnO2Qt87RDilHtSMGaiq3/tc2lmqRDSisCgdw8YjULXphfxJsRErYoJEJPlvh3JT5JmeO1im77d1Ha5ptEZinuqjGdXhfoEmS3WtAX1gX3RNWR/NkqNl2E6oLD3GIS8+GItx0vqD00J5j6vXhQaqQAqF7a1Szyhg3TGq7BEnJvvEN4jAvPE/z3LtdJWU04MXYWLODdz1vw/Tz/S2dnjckr3IucVzqxBuTYLnAOYLPwZ+rQ3xLhSoUZWZSkXrgZHVDGXpG+bWX9yfeVml4SVAnooB3iexhnic/q87mLR7d1u3LjH2rzFKyde6zBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBB3DD4n0mxH/UZxYnNc64engDAyLqgZrkF8zdt0uK2h87hFYIkTPBMkqakU7+ApS1VAwQ7y+v3uwLUSTnlfHiqSoCo=]'
+    preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAvMfqOTYAIUmwEyJE+AKTg2TqmS3UWljT2Xvtm/EJHQEM3YkUyD8vygs6PQnfLaYHJ15cCNVXhCEfc5wbNHSk+H/jzAgAxRA07EmG3BsG6X1PYYsFh1eLQD8ttybQ45DlMmNIZLgatDvCcQtQGOepcXl50srtMl8w84BFxlkAz2PF18o0v/22gIJxQ/sHFpwTgG8MbVIDm2F64xSLEpTj0DHSI2GrXWx4W/B1KCmGMzoOWe6LZjzyh3X9G+V0HbzrMrMCOGLArDh84i5Pz8bXjnzr4K9p4H/uVHE2Dk74/vGuEHEHD0vTqN8I8NZQdu5OhwlVA7iIg6MyCZ8hSj3vOjBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBA2o7bC1OARCQWy353mAUcOgDA/K15T5cSAuyeiy0oi35WZGE5r6o34bAE5AGKMDhqp53yHGyA3Teg3h9ThHBsD9jc=]'
+    allowed_ips: '0.0.0.0/0'
+
+# ============================================================================
+# Pi-hole Native Installation Configuration
+# ============================================================================
+# Native Pi-hole installation (not Docker-based) for network-wide ad blocking
+#
+# Puppet will automatically install Pi-hole if not present (idempotent)
+#
+profile::pihole_native::manage_pihole: true
+profile::pihole_native::install_pihole: true
+profile::pihole_native::pihole_interface: 'wg0'
+profile::pihole_native::pihole_ipv4_address: '10.10.10.1/24'
+
+# REQUIRED: Set a secure password and encrypt with eyaml
+profile::pihole_native::pihole_webpassword: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAhQEC0uzDiu6Hi40tYToJQw2cJ4iOY6afssakMfB74W6cTwBPbVCDbDvdZUdhT2rhhVhtbqH+AG6smHdkhM5TbrWNiyQkryYf9ajf7OEKgQh/QRZvnkIn7WgvKbApkZXrYcOz0Nk8N9kc0x9FxuZuY+bIKhGYYEUnTVqakeAwjzqr5FJsZpH4EEpa+012Tgvbbh0OPA+sGmjffc3IR8Sv/Nej5upn2ef/769nGl/LBSiLPgppjQatworDIkJ9/J1EzEsUeXL2Qo6KPUKruCAjBUAYXUdkdgSM+UQSJKN5B9Blm4BxQ5+wFOt+DQUhIKcAG7dEkfcPZHTkxMgae1MXjTA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCOBM/lDdp39fRSSbgLslpVgBBG1Rx+O1AwP39C/Fh8JWDa]'
+
+# Upstream DNS servers (uses Unbound recursive DNS)
+profile::pihole_native::upstream_dns_servers:
+  - '127.0.0.1#5353'
+
+# DNS Query Logging
+profile::pihole_native::query_logging: true
+profile::pihole_native::install_web_interface: true
+profile::pihole_native::install_web_server: true
+profile::pihole_native::blocking_enabled: true
+profile::pihole_native::dnsmasq_listening: 'bind'
+
+# Local DNS Records for Internal Services
+# As per guide: home.server for local LAN access, travel.server for remote VPN access
+profile::pihole_native::local_dns_records:
+  'vps.ra-home.co.uk': '10.10.10.1'
+  'pi.ra-home.co.uk': '10.10.10.5'
+  'pi.local': '192.168.1.22'

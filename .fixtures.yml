@@ -16,3 +16,19 @@ fixtures:
       repo: "puppet/logrotate"
     systemd:
       repo: "puppet/systemd"
+    augeasproviders_core:
+      repo: "puppet/augeasproviders_core"
+    augeasproviders_sysctl:
+      repo: "puppet/augeasproviders_sysctl"
+    ufw:
+      repo: "kogitoapp/ufw"
+    resource_api:
+      repo: "puppetlabs/resource_api"
+    ssh:
+      repo: "saz/ssh"
+    vcsrepo:
+      repo: "puppetlabs/vcsrepo"
+    apt:
+      repo: "puppetlabs/apt"
+    fail2ban:
+      repo: "puppet/fail2ban"

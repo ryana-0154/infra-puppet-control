@@ -1,0 +1,8 @@
+# Pi-hole Custom Local DNS Records
+# Managed by Puppet - DO NOT EDIT MANUALLY
+#
+# Format: IP_ADDRESS HOSTNAME
+
+<% @local_dns_records.each do |hostname, ip| -%>
+<%= ip %> <%= hostname %>
+<% end -%>

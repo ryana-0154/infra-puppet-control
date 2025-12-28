@@ -13,16 +13,22 @@
 #   Whether to manage OpenTelemetry Collector
 # @param manage_fail2ban
 #   Whether to manage fail2ban intrusion prevention
+# @param manage_unattended_upgrades
+#   Whether to manage automatic security updates
+# @param manage_ssh_hardening
+#   Whether to manage SSH server security configuration
 #
 # @example
 #   include profile::base
 #
 class profile::base (
-  Boolean $manage_ntp            = true,
-  Boolean $manage_firewall       = true,
-  Boolean $manage_logrotate      = true,
-  Boolean $manage_otel_collector = false,
-  Boolean $manage_fail2ban       = false,
+  Boolean $manage_ntp                 = true,
+  Boolean $manage_firewall            = true,
+  Boolean $manage_logrotate           = true,
+  Boolean $manage_otel_collector      = false,
+  Boolean $manage_fail2ban            = false,
+  Boolean $manage_unattended_upgrades = false,
+  Boolean $manage_ssh_hardening       = false,
 ) {
   # NTP configuration
   if $manage_ntp {
@@ -46,6 +52,16 @@ class profile::base (
   # Fail2ban intrusion prevention
   if $manage_fail2ban {
     include profile::fail2ban
+  }
+
+  # Unattended upgrades for automatic security updates
+  if $manage_unattended_upgrades {
+    include profile::unattended_upgrades
+  }
+
+  # SSH server hardening
+  if $manage_ssh_hardening {
+    include profile::ssh_hardening
   }
 
   # Basic package management

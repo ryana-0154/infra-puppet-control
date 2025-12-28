@@ -1,0 +1,49 @@
+# Pi-hole Setup Variables
+# Managed by Puppet - DO NOT EDIT MANUALLY
+
+# Interface to listen on
+PIHOLE_INTERFACE=<%= @pihole_interface %>
+
+# IPv4 address
+IPV4_ADDRESS=<%= @pihole_ipv4_address %>
+
+# IPv6 support (disabled for VPN setup)
+IPV6_ADDRESS=
+
+# Upstream DNS servers
+<% @upstream_dns_servers.each_with_index do |dns, index| -%>
+PIHOLE_DNS_<%= index + 1 %>=<%= dns %>
+<% end -%>
+
+# Query logging
+QUERY_LOGGING=<%= @query_logging ? 'true' : 'false' %>
+
+# Install web interface
+INSTALL_WEB_INTERFACE=<%= @install_web_interface ? 'true' : 'false' %>
+
+# Install web server
+INSTALL_WEB_SERVER=<%= @install_web_server ? 'true' : 'false' %>
+
+# DNS port
+PIHOLE_DNS_PORT=<%= @pihole_dns_port %>
+
+# Blocking status
+BLOCKING_ENABLED=<%= @blocking_enabled ? 'true' : 'false' %>
+
+# DNSMasq listening mode
+DNSMASQ_LISTENING=<%= @dnsmasq_listening %>
+
+# Cache size
+CACHE_SIZE=10000
+
+# DNS bogus private ranges
+DNS_BOGUS_PRIV=false
+
+# DNS DNSSEC validation
+DNSSEC=false
+
+# Conditional forwarding (disabled)
+CONDITIONAL_FORWARDING=false
+
+# Web admin privacy mode
+WEBUIBOXEDLAYOUT=traditional

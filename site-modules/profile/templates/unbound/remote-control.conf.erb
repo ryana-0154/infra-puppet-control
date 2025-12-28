@@ -1,5 +1,10 @@
 remote-control:
-  control-enable: yes
-  # by default the control interface is is 127.0.0.1 and ::1 and port 8953
-  # it is possible to use a unix socket too
-  control-interface: /run/unbound.ctl
+  control-enable: <%= @enable_remote_control ? 'yes' : 'no' %>
+<%- if @enable_remote_control -%>
+  # Control interface for remote management and metrics collection
+  # Using TCP on localhost for Prometheus exporter access
+  control-interface: <%= @remote_control_interface %>
+  control-port: <%= @remote_control_port %>
+  # Allow localhost access without certificates for local exporters
+  control-use-cert: no
+<%- end -%>
