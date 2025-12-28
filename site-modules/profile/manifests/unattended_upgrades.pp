@@ -62,27 +62,34 @@ class profile::unattended_upgrades (
   String[1]                $automatic_reboot_time           = '02:00',
 ) {
   if $manage_unattended_upgrades {
-    # Use the apt module to configure unattended-upgrades
-    class { 'apt':
-      update => {
-        frequency => 'daily',
-      },
+    # Ensure unattended-upgrades package is installed
+    package { 'unattended-upgrades':
+      ensure => installed,
     }
 
-    class { 'apt::unattended_upgrades':
-      auto_fix_interrupted_dpkg     => $auto_fix_interrupted_dpkg,
-      enable                        => $enable_auto_updates,
-      update                        => $update_interval,
-      download_upgradeable          => $download_upgradeable,
-      auto_clean_interval           => $auto_clean_interval,
-      origins                       => $origins,
-      blacklist                     => $blacklist,
-      mail                          => $email,
-      mail_only_on_error            => $mail_only_on_error,
-      remove_unused_kernel_packages => $remove_unused_kernel_packages,
-      remove_unused_dependencies    => $remove_unused_dependencies,
-      automatic_reboot              => $automatic_reboot,
-      automatic_reboot_time         => $automatic_reboot_time,
+    # Install apt-listchanges for upgrade notifications
+    package { 'apt-listchanges':
+      ensure => installed,
+    }
+
+    # Configure automatic upgrades
+    file { '/etc/apt/apt.conf.d/50unattended-upgrades':
+      ensure  => file,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      content => template('profile/unattended_upgrades/50unattended-upgrades.erb'),
+      require => Package['unattended-upgrades'],
+    }
+
+    # Enable automatic updates
+    file { '/etc/apt/apt.conf.d/20auto-upgrades':
+      ensure  => file,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      content => template('profile/unattended_upgrades/20auto-upgrades.erb'),
+      require => Package['unattended-upgrades'],
     }
   }
 }
