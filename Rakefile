@@ -41,13 +41,18 @@ task :validate_class_includes do
   sh 'ruby scripts/validate-class-includes.rb'
 end
 
+desc 'Validate no deprecated/removed Puppet functions are used'
+task :validate_functions do
+  sh 'ruby scripts/validate-deprecated-functions.rb'
+end
+
 desc 'Run catalog compilation acceptance tests'
 task :acceptance do
   sh 'bundle exec rspec spec/acceptance'
 end
 
 desc 'Run all tests'
-task test: %i[lint_all check_coverage spec validate_class_includes]
+task test: %i[lint_all check_coverage spec validate_class_includes validate_functions]
 
 desc 'Validate manifests, templates, and ruby files'
 task validate: %i[syntax validate_templates]
