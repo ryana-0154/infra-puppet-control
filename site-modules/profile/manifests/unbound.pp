@@ -40,6 +40,12 @@
 #   Whether to enable query/reply logging
 # @param verbosity
 #   Logging verbosity level (0-5)
+# @param enable_remote_control
+#   Whether to enable remote control interface (for metrics exporters)
+# @param remote_control_interface
+#   Interface for remote control (127.0.0.1 for TCP, /run/unbound.ctl for Unix socket)
+# @param remote_control_port
+#   Port for remote control when using TCP (default: 8953)
 #
 # @example Basic usage
 #   include profile::unbound
@@ -73,6 +79,9 @@ class profile::unbound (
   Array[String[1]]         $private_addresses   = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
   Boolean                  $enable_logging      = true,
   Integer[0,5]             $verbosity           = 1,
+  Boolean                  $enable_remote_control    = true,
+  String[1]                $remote_control_interface = '127.0.0.1',
+  Integer[1,65535]         $remote_control_port      = 8953,
 ) {
   if $manage_unbound {
     # Install Unbound package

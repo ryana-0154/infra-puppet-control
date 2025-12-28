@@ -49,3 +49,21 @@ scrape_configs:
     static_configs:
       - targets: ['<%= @monitoring_ip %>:<%= @pihole_exporter_port %>']
 <%- end -%>
+
+<%- if @enable_wireguard_exporter -%>
+  - job_name: 'wireguard'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['<%= @monitoring_ip %>:<%= @wireguard_exporter_port %>']
+        labels:
+          instance: 'wireguard'
+<%- end -%>
+
+<%- if @enable_unbound_exporter -%>
+  - job_name: 'unbound'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['<%= @monitoring_ip %>:<%= @unbound_exporter_port %>']
+        labels:
+          instance: 'unbound'
+<%- end -%>

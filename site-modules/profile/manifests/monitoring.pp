@@ -42,6 +42,10 @@
 #   Whether to enable Node Exporter service
 # @param enable_wg_portal
 #   Whether to enable WireGuard Portal service
+# @param enable_wireguard_exporter
+#   Whether to enable WireGuard Prometheus exporter
+# @param enable_unbound_exporter
+#   Whether to enable Unbound Prometheus exporter
 # @param enable_authelia
 #   Whether to enable Authelia SSO
 # @param enable_nginx_proxy
@@ -64,6 +68,10 @@
 #   Docker image for Node Exporter
 # @param wg_portal_image
 #   Docker image for WireGuard Portal
+# @param wireguard_exporter_image
+#   Docker image for WireGuard Prometheus exporter
+# @param unbound_exporter_image
+#   Docker image for Unbound Prometheus exporter
 # @param authelia_image
 #   Docker image for Authelia
 # @param nginx_image
@@ -116,6 +124,12 @@
 #   Whether to automatically pull latest dashboard changes on each Puppet run
 # @param grafana_plugins
 #   Array of Grafana plugin IDs to install (e.g., ['grafana-piechart-panel', 'grafana-clock-panel'])
+# @param wireguard_config_path
+#   Path to WireGuard configuration directory for the exporter
+# @param unbound_host
+#   Hostname/IP where Unbound is running
+# @param unbound_control_port
+#   Port for Unbound control interface
 #
 # @example Basic usage
 #   include profile::monitoring
@@ -143,6 +157,8 @@ class profile::monitoring (
   Integer[1,65535]               $grafana_port              = 3000,
   Integer[1,65535]               $blackbox_port             = 9115,
   Integer[1,65535]               $pihole_exporter_port      = 9617,
+  Integer[1,65535]               $wireguard_exporter_port   = 9586,
+  Integer[1,65535]               $unbound_exporter_port     = 9167,
 
   # Service enable/disable flags
   Boolean                        $enable_prometheus         = true,
@@ -153,6 +169,8 @@ class profile::monitoring (
   Boolean                        $enable_blackbox           = true,
   Boolean                        $enable_node_exporter      = true,
   Boolean                        $enable_wg_portal          = true,
+  Boolean                        $enable_wireguard_exporter = true,
+  Boolean                        $enable_unbound_exporter   = true,
 
   # SSO/Authentication
   Boolean                        $enable_authelia           = false,
@@ -168,6 +186,8 @@ class profile::monitoring (
   String[1]                      $blackbox_image            = 'prom/blackbox-exporter:latest',
   String[1]                      $node_exporter_image       = 'quay.io/prometheus/node-exporter:latest',
   String[1]                      $wg_portal_image           = 'wgportal/wg-portal:v2',
+  String[1]                      $wireguard_exporter_image  = 'mindflavor/prometheus-wireguard-exporter:latest',
+  String[1]                      $unbound_exporter_image    = 'kumina/unbound-exporter:latest',
 
   # SSO images
   String[1]                      $authelia_image            = 'authelia/authelia:4.38',
@@ -207,6 +227,13 @@ class profile::monitoring (
   Boolean                        $enable_embedded_dashboards = true,
   Boolean                        $dashboard_auto_update     = false,
   Array[String[1]]               $grafana_plugins           = [],
+
+  # WireGuard exporter configuration
+  Stdlib::Absolutepath           $wireguard_config_path     = '/etc/wireguard',
+
+  # Unbound exporter configuration
+  String[1]                      $unbound_host              = '127.0.0.1',
+  Integer[1,65535]               $unbound_control_port      = 8953,
 ) {
   # Validate SSO parameters when Authelia is enabled
   if $enable_authelia {

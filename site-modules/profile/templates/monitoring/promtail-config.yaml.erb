@@ -459,3 +459,22 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: package_management
       __path__: /var/log/unattended-upgrades/unattended-upgrades.log
+
+# WireGuard VPN logs (via systemd journal)
+- job_name: wireguard
+  journal:
+    max_age: 12h
+    labels:
+      job: wireguard
+      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      log_type: vpn
+  relabel_configs:
+    - source_labels: ['__journal__systemd_unit']
+      regex: 'wg-quick@.*\.service'
+      action: keep
+    - source_labels: ['__journal__systemd_unit']
+      target_label: 'unit'
+    - source_labels: ['__journal_priority']
+      target_label: 'priority'
+    - source_labels: ['__journal__hostname']
+      target_label: 'nodename'

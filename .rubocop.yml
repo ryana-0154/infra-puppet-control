@@ -33,10 +33,13 @@ RSpec/DescribeClass:
   Enabled: false
 
 RSpec/ExampleLength:
-  Max: 10
+  Max: 15
 
 RSpec/MultipleExpectations:
   Max: 5
+
+RSpec/NestedGroups:
+  Max: 4
 
 RSpec/ImplicitSubject:
   Enabled: false

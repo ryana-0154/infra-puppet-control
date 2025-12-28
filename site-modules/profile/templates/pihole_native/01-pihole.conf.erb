@@ -1,0 +1,32 @@
+# Pi-hole DNSMasq Configuration
+# Managed by Puppet - DO NOT EDIT MANUALLY
+
+# Listen on specific interface
+interface=<%= @pihole_interface %>
+
+# Bind to interface
+bind-interfaces
+
+# DNS port
+port=<%= @pihole_dns_port %>
+
+# Cache size
+cache-size=10000
+
+# Never forward plain names
+domain-needed
+
+# Never forward addresses in non-routed address spaces
+bogus-priv
+
+# Use upstream servers from setupVars
+<% @upstream_dns_servers.each do |dns| -%>
+server=<%= dns %>
+<% end -%>
+
+# Local domain for VPN
+local=/vpn/
+domain=vpn
+
+# Expand hosts file entries
+expand-hosts
