@@ -1,7 +1,7 @@
 ---
 # Node-specific configuration for vps.ra-home.co.uk
 
-profile::base::manage_firewall: true
+profile::base::manage_firewall: false  # Disabled - using UFW via profile::wireguard instead
 profile::base::manage_logrotate: true
 profile::base::manage_otel_collector: true
 profile::base::manage_unattended_upgrades: true
