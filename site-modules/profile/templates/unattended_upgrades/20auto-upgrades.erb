@@ -1,0 +1,14 @@
+// Auto-Upgrade Configuration
+// Managed by Puppet - DO NOT EDIT MANUALLY
+
+// Enable automatic package list updates
+APT::Periodic::Update-Package-Lists "<%= @enable_auto_updates ? @update_interval : '0' %>";
+
+// Enable automatic downloads of upgradeable packages
+APT::Periodic::Download-Upgradeable-Packages "<%= @download_upgradeable ? '1' : '0' %>";
+
+// Enable automatic installation of updates
+APT::Periodic::Unattended-Upgrade "<%= @enable_auto_updates ? '1' : '0' %>";
+
+// Clean downloaded packages
+APT::Periodic::AutocleanInterval "<%= @auto_clean_interval %>";

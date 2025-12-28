@@ -36,8 +36,18 @@ end
 desc 'Run all linting tasks'
 task lint_all: %i[lint rubocop syntax]
 
+desc 'Validate that all included classes exist'
+task :validate_class_includes do
+  sh 'ruby scripts/validate-class-includes.rb'
+end
+
+desc 'Run catalog compilation acceptance tests'
+task :acceptance do
+  sh 'bundle exec rspec spec/acceptance'
+end
+
 desc 'Run all tests'
-task test: %i[lint_all check_coverage spec]
+task test: %i[lint_all check_coverage spec validate_class_includes]
 
 desc 'Validate manifests, templates, and ruby files'
 task validate: %i[syntax validate_templates]

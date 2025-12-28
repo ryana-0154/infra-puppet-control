@@ -96,11 +96,27 @@ fi
 
 print_success "Modules deployed successfully"
 
+# Validate class includes
+print_header "Step 2: Validate Class Includes"
+print_info "Checking that all included classes actually exist..."
+
+if [ -f "scripts/validate-class-includes.rb" ]; then
+    if ruby scripts/validate-class-includes.rb; then
+        print_success "All included classes are defined"
+    else
+        print_failure "Class validation failed"
+        echo "This catches issues like including classes that don't exist in their modules."
+        exit 1
+    fi
+else
+    print_info "Skipping class validation (validate-class-includes.rb not found)"
+fi
+
 # Create a temporary directory for test manifests
 TEST_DIR=$(mktemp -d)
 trap "rm -rf $TEST_DIR" EXIT
 
-print_header "Step 2: Test Catalog Compilation"
+print_header "Step 3: Test Catalog Compilation"
 
 # Find all profiles
 PROFILES=$(find site-modules/profile/manifests -name '*.pp' -not -name 'init.pp' -type f)
@@ -147,7 +163,7 @@ EOF
 done
 
 # Test roles too
-print_header "Step 3: Test Roles"
+print_header "Step 4: Test Roles"
 
 ROLES=$(find site-modules/role/manifests -name '*.pp' -not -name 'init.pp' -type f)
 
@@ -185,7 +201,7 @@ EOF
 done
 
 # Test common profile combinations
-print_header "Step 4: Test Profile Combinations"
+print_header "Step 5: Test Profile Combinations"
 print_info "Testing common profile combinations to catch resource contention..."
 
 FAILED_COMBINATIONS=()
