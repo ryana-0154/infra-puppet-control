@@ -52,11 +52,11 @@ class profile::foreman (
   String[1]                            $foreman_version        = 'nightly',
   String[1]                            $server_fqdn            = $facts['networking']['fqdn'],
   String[1]                            $admin_username         = 'admin',
-  Sensitive[String[1]]                 $admin_password         = Sensitive('changeme'),
+  Variant[String[1], Sensitive[String[1]]] $admin_password     = Sensitive('changeme'),
   String[1]                            $db_host                = 'localhost',
   String[1]                            $db_database            = 'foreman',
   String[1]                            $db_username            = 'foreman',
-  Sensitive[String[1]]                 $db_password            = Sensitive('changeme'),
+  Variant[String[1], Sensitive[String[1]]] $db_password        = Sensitive('changeme'),
   Boolean                              $enable_puppetserver    = true,
   Boolean                              $enable_enc             = true,
   Boolean                              $enable_reports         = true,
@@ -67,11 +67,25 @@ class profile::foreman (
   Optional[Stdlib::Absolutepath]       $server_ssl_key         = undef,
 ) {
   if $manage_foreman {
-    # Validate required Sensitive parameters aren't default values
-    if $admin_password.unwrap == 'changeme' {
+    # Handle both plain strings (from eyaml) and Sensitive types
+    # eyaml-encrypted values come back as plain strings, so wrap them
+    $admin_password_sensitive = $admin_password ? {
+      Sensitive => $admin_password,
+      default   => Sensitive($admin_password),
+    }
+    $db_password_sensitive = $db_password ? {
+      Sensitive => $db_password,
+      default   => Sensitive($db_password),
+    }
+
+    # Validate required passwords aren't default values
+    $admin_pass_unwrapped = $admin_password_sensitive.unwrap
+    $db_pass_unwrapped = $db_password_sensitive.unwrap
+
+    if $admin_pass_unwrapped == 'changeme' {
       fail('profile::foreman::admin_password must be set to a secure value and encrypted with eyaml')
     }
-    if $db_password.unwrap == 'changeme' {
+    if $db_pass_unwrapped == 'changeme' {
       fail('profile::foreman::db_password must be set to match the PostgreSQL user password')
     }
 
@@ -83,13 +97,13 @@ class profile::foreman (
       foreman_url          => "https://${server_fqdn}",
       servername           => $server_fqdn,
       admin_username       => $admin_username,
-      admin_password       => $admin_password.unwrap,
+      admin_password       => $admin_pass_unwrapped,
       db_manage            => false,  # We manage PostgreSQL via profile::postgresql
       db_type              => 'postgresql',
       db_host              => $db_host,
       db_database          => $db_database,
       db_username          => $db_username,
-      db_password          => $db_password.unwrap,
+      db_password          => $db_pass_unwrapped,
       configure_epel_repo  => false,  # Already configured above
       initial_organization => $initial_organization['name'],
       initial_location     => $initial_location['name'],
