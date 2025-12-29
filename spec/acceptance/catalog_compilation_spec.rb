@@ -9,7 +9,7 @@ require 'puppet'
 # - Invalid class includes
 # - Module dependency problems
 # - Resource type mismatches
-# rubocop:disable RSpec/BeforeAfterAll, RSpec/ContextWording
+# rubocop:disable RSpec/BeforeAfterAll
 describe 'Catalog Compilation Acceptance Tests' do
   before(:all) do
     # Ensure modules are installed
@@ -122,4 +122,4 @@ describe 'Catalog Compilation Acceptance Tests' do
     end
   end
 end
-# rubocop:enable RSpec/BeforeAfterAll, RSpec/ContextWording
+# rubocop:enable RSpec/BeforeAfterAll
