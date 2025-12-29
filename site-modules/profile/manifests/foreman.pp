@@ -113,9 +113,7 @@ class profile::foreman (
 
     # Configure Puppet Server integration if enabled
     if $enable_puppetserver {
-      class { 'foreman::plugin::puppet':
-        ensure => 'installed',
-      }
+      include foreman::plugin::puppet
 
       # Note: ENC and report processor configuration is handled
       # by the main foreman class parameters above (enc => true, reports => true)
