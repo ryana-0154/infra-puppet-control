@@ -61,8 +61,6 @@ class profile::postgresql (
       port                       => $port,
       ip_mask_deny_postgres_user => '0.0.0.0/32',  # Deny postgres user from network
       ip_mask_allow_all_users    => '0.0.0.0/32',  # Control via pg_hba_rule instead
-      encoding                   => 'UTF8',
-      locale                     => 'en_US.UTF-8',
     }
 
     # Configure pg_hba for md5 authentication on local connections
