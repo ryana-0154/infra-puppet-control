@@ -156,74 +156,9 @@ class profile::wireguard (
         }
       }
 
-      # CRITICAL: Docker with network_mode: "host" bypasses UFW
-      # We must explicitly deny monitoring ports from internet
-      # These services bind to monitoring_ip but Docker host networking
-      # can still expose them on all interfaces
-
-      # Block HTTP/HTTPS from internet (Pi-hole, monitoring web UIs - VPN only)
-      ufw_rule { 'deny HTTP from internet':
-        action       => 'deny',
-        direction    => 'in',
-        to_ports_app => 80,
-        proto        => 'tcp',
-        require      => Class['ufw'],
-      }
-
-      ufw_rule { 'deny HTTPS from internet':
-        action       => 'deny',
-        direction    => 'in',
-        to_ports_app => 443,
-        proto        => 'tcp',
-        require      => Class['ufw'],
-      }
-
-      # Block Grafana from internet (VPN only)
-      ufw_rule { 'deny Grafana from internet':
-        action       => 'deny',
-        direction    => 'in',
-        to_ports_app => 3000,
-        proto        => 'tcp',
-        require      => Class['ufw'],
-      }
-
-      # Block VictoriaMetrics from internet (VPN only)
-      ufw_rule { 'deny VictoriaMetrics from internet':
-        action       => 'deny',
-        direction    => 'in',
-        to_ports_app => 8428,
-        proto        => 'tcp',
-        require      => Class['ufw'],
-      }
-
-      # Block OTEL Collector from internet (VPN only)
-      ufw_rule { 'deny OTEL from internet':
-        action       => 'deny',
-        direction    => 'in',
-        to_ports_app => '4317:4318',
-        proto        => 'tcp',
-        require      => Class['ufw'],
-      }
-
-      ufw_rule { 'deny OTEL Prometheus from internet':
-        action       => 'deny',
-        direction    => 'in',
-        to_ports_app => 8889,
-        proto        => 'tcp',
-        require      => Class['ufw'],
-      }
-
-      # Block all Prometheus exporters from internet (VPN only)
-      ufw_rule { 'deny exporters from internet':
-        action       => 'deny',
-        direction    => 'in',
-        to_ports_app => '9100:9999',
-        proto        => 'tcp',
-        require      => Class['ufw'],
-      }
-
-      # ONLY allow VPN network access to internal services
-      # All other traffic will be denied by default policy
+      # IMPORTANT: UFW processes rules in order!
+      # ALLOW rules from VPN must come BEFORE DENY rules from internet
+      # Otherwise "deny from anywhere" matches VPN traffic first
 
       # Allow DNS from VPN network ONLY
       ufw_rule { 'allow DNS from VPN network':
@@ -291,6 +226,73 @@ class profile::wireguard (
       ufw_rule { 'allow exporters from VPN network':
         action       => 'allow',
         from_addr    => $vpn_network,
+        to_ports_app => '9100:9999',
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
+      # DENY rules come AFTER ALLOW rules for proper UFW rule ordering
+      # CRITICAL: Docker with network_mode: "host" bypasses UFW
+      # We must explicitly deny monitoring ports from internet
+      # These services bind to monitoring_ip but Docker host networking
+      # can still expose them on all interfaces
+
+      # Block HTTP/HTTPS from internet (Pi-hole, monitoring web UIs - VPN only)
+      ufw_rule { 'deny HTTP from internet':
+        action       => 'deny',
+        direction    => 'in',
+        to_ports_app => 80,
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
+      ufw_rule { 'deny HTTPS from internet':
+        action       => 'deny',
+        direction    => 'in',
+        to_ports_app => 443,
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
+      # Block Grafana from internet (VPN only)
+      ufw_rule { 'deny Grafana from internet':
+        action       => 'deny',
+        direction    => 'in',
+        to_ports_app => 3000,
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
+      # Block VictoriaMetrics from internet (VPN only)
+      ufw_rule { 'deny VictoriaMetrics from internet':
+        action       => 'deny',
+        direction    => 'in',
+        to_ports_app => 8428,
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
+      # Block OTEL Collector from internet (VPN only)
+      ufw_rule { 'deny OTEL from internet':
+        action       => 'deny',
+        direction    => 'in',
+        to_ports_app => '4317:4318',
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
+      ufw_rule { 'deny OTEL Prometheus from internet':
+        action       => 'deny',
+        direction    => 'in',
+        to_ports_app => 8889,
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
+      # Block all Prometheus exporters from internet (VPN only)
+      ufw_rule { 'deny exporters from internet':
+        action       => 'deny',
+        direction    => 'in',
         to_ports_app => '9100:9999',
         proto        => 'tcp',
         require      => Class['ufw'],

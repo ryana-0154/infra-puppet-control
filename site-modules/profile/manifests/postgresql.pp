@@ -57,13 +57,21 @@ class profile::postgresql (
   if $manage_postgresql {
     # Main PostgreSQL server class
     class { 'postgresql::server':
-      postgres_password          => undef,  # Disable default postgres user password
-      ipv4acl                   => ['local all all md5'],  # Require password authentication
-      listen_addresses          => $listen_addresses,
-      port                      => $port,
-      manage_package_repo       => $manage_package_repo,
-      postgres_version          => $postgres_version,
-      datadir                   => $data_dir,
+      listen_addresses           => $listen_addresses,
+      port                       => $port,
+      ip_mask_deny_postgres_user => '0.0.0.0/32',  # Deny postgres user from network
+      ip_mask_allow_all_users    => '0.0.0.0/32',  # Control via pg_hba_rule instead
+      encoding                   => 'UTF8',
+      locale                     => 'en_US.UTF-8',
+    }
+
+    # Configure pg_hba for md5 authentication on local connections
+    postgresql::server::pg_hba_rule { 'local access with md5':
+      type        => 'local',
+      database    => 'all',
+      user        => 'all',
+      auth_method => 'md5',
+      order       => '001',
     }
 
     # Create databases from Hiera
