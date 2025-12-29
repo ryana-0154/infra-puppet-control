@@ -86,6 +86,12 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: configuration_management
       __path__: /var/log/puppetlabs/puppet/*.log
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<timestamp>\S+ \S+) (?P<level>DEBUG|INFO|NOTICE|WARNING|ERROR|CRITICAL|ALERT|EMERG) \[(?P<component>[^\]]+)\] (?P<message>.*)'
+    - labels:
+        level:
+        component:
 
 # Nginx access logs
 - job_name: nginx_access
