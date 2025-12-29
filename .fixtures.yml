@@ -30,3 +30,26 @@ fixtures:
       repo: "puppetlabs/vcsrepo"
     fail2ban:
       repo: "puppet/fail2ban"
+    postgresql:
+      repo: "puppetlabs/postgresql"
+      ref: "10.5.0"
+    foreman:
+      repo: "theforeman/foreman"
+      ref: "26.2.1"
+    foreman_proxy:
+      repo: "theforeman/foreman_proxy"
+      ref: "26.0.0"
+    puppet:
+      repo: "theforeman/puppet"
+      ref: "20.1.0"
+    apt:
+      repo: "puppetlabs/apt"
+      ref: "9.4.0"
+    extlib:
+      repo: "puppet/extlib"
+      ref: "7.1.0"
+    dns:
+      repo: "theforeman/dns"
+      ref: "11.0.0"
+    inifile:
+      repo: "puppetlabs/inifile"
