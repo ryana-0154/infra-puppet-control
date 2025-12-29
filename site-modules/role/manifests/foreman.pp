@@ -20,4 +20,12 @@ class role::foreman {
   include profile::postgresql
   include profile::foreman
   include profile::foreman_proxy
+
+  # Explicit ordering to ensure proper dependency chain
+  # PostgreSQL must be running before Foreman installs
+  # Foreman must be available before Smart Proxy registers
+  Class['profile::base']
+    -> Class['profile::postgresql']
+    -> Class['profile::foreman']
+    -> Class['profile::foreman_proxy']
 }

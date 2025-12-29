@@ -58,7 +58,7 @@ class profile::postgresql (
     # Main PostgreSQL server class
     class { 'postgresql::server':
       postgres_password          => undef,  # Disable default postgres user password
-      ipv4acl                   => ['local all all trust'],
+      ipv4acl                   => ['local all all md5'],  # Require password authentication
       listen_addresses          => $listen_addresses,
       port                      => $port,
       manage_package_repo       => $manage_package_repo,

@@ -14,8 +14,10 @@ pwgen -s 32 1 | eyaml encrypt -s
 ```
 
 Replace `CHANGEME_GENERATE_WITH_EYAML` in:
-- `profile::postgresql::database_users.foreman.password_hash`
+- `profile::postgresql::database_users.foreman.password` (plaintext password, PostgreSQL will hash it)
 - `profile::foreman::db_password` (use the SAME encrypted value)
+
+**Important**: Both must use the **same** encrypted plaintext password. PostgreSQL will automatically hash the password when creating the user.
 
 ### 2. Foreman Admin Password
 

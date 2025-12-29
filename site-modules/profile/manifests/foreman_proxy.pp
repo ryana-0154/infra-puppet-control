@@ -93,11 +93,7 @@ class profile::foreman_proxy (
       dns_ttl               => $dns_ttl,
     }
 
-    # Ensure Smart Proxy service is running
-    service { 'foreman-proxy':
-      ensure  => running,
-      enable  => true,
-      require => Class['foreman_proxy'],
-    }
+    # Note: Service management is handled by the foreman_proxy class itself
+    # No need to declare service resource here
   }
 }

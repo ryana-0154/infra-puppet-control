@@ -112,26 +112,12 @@ class profile::foreman (
         ensure => 'installed',
       }
 
-      # Configure Puppet Server ENC integration
-      if $enable_enc {
-        class { 'foreman::puppetmaster':
-          enc_api       => true,
-          enc_ssl_ca    => pick($server_ssl_ca, '/etc/puppetlabs/puppet/ssl/certs/ca.pem'),
-          enc_ssl_cert  => pick($server_ssl_cert, "/etc/puppetlabs/puppet/ssl/certs/${server_fqdn}.pem"),
-          enc_ssl_key   => pick($server_ssl_key, "/etc/puppetlabs/puppet/ssl/private_keys/${server_fqdn}.pem"),
-          reports       => $enable_reports,
-          puppet_home   => '/etc/puppetlabs/puppet',
-          puppet_etcdir => '/etc/puppetlabs/puppet',
-          require       => Class['foreman'],
-        }
-      }
+      # Note: ENC and report processor configuration is handled
+      # by the main foreman class parameters above (enc => true, reports => true)
+      # The theforeman-foreman module does not provide a foreman::puppetmaster class
     }
 
-    # Ensure Foreman service is running
-    service { 'foreman':
-      ensure  => running,
-      enable  => true,
-      require => Class['foreman'],
-    }
+    # Note: Service management is handled by the foreman class itself
+    # No need to declare service resource here
   }
 }
