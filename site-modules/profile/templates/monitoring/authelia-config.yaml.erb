@@ -77,6 +77,7 @@ session:
   cookies:
     - name: authelia_session
       domain: <%= @domain_name %>
+      authelia_url: https://auth.<%= @domain_name %>
       same_site: lax
       expiration: 1h
       inactivity: 5m
