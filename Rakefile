@@ -51,8 +51,13 @@ task :acceptance do
   sh 'bundle exec rspec spec/acceptance'
 end
 
+desc 'Validate Rocky Linux 9 compatibility'
+task :rocky9_validation do
+  sh 'bundle exec rspec spec/integration/rocky9_deployment_spec.rb --format documentation'
+end
+
 desc 'Run all tests'
-task test: %i[lint_all check_coverage spec validate_class_includes validate_functions]
+task test: %i[lint_all check_coverage spec validate_class_includes validate_functions rocky9_validation]
 
 desc 'Validate manifests, templates, and ruby files'
 task validate: %i[syntax validate_templates]
