@@ -145,9 +145,8 @@ services:
     <<: *host
     container_name: unbound-exporter
     command:
-      - unbound-exporter
       - -unbound.host
-      - <%= @unbound_host %>:<%= @unbound_control_port %>
+      - tcp://<%= @unbound_host %>:<%= @unbound_control_port %>
       - -web.listen-address
       - <%= @monitoring_ip %>:<%= @unbound_exporter_port %>
 <%- end -%>
