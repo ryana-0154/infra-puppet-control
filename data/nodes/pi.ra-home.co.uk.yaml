@@ -1,0 +1,86 @@
+---
+# Node-specific configuration for pi.ra-home.co.uk (Foreman ENC server)
+
+# Base profile settings
+profile::base::manage_firewall: true
+profile::base::manage_logrotate: true
+profile::base::manage_unattended_upgrades: true
+profile::base::manage_ssh_hardening: true
+
+# PostgreSQL Database Configuration
+profile::postgresql::manage_postgresql: true
+profile::postgresql::postgres_version: '13'
+profile::postgresql::listen_addresses: 'localhost'
+profile::postgresql::port: 5432
+profile::postgresql::manage_firewall: false  # localhost only, no external access
+profile::postgresql::databases:
+  foreman:
+    owner: foreman
+    encoding: UTF8
+    locale: en_US.UTF-8
+profile::postgresql::database_users:
+  foreman:
+    password_hash: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Generate with: pwgen -s 32 1 | eyaml encrypt -s
+profile::postgresql::database_grants:
+  foreman_db_access:
+    privilege: ALL
+    db: foreman
+    role: foreman
+
+# Foreman Server Configuration
+profile::foreman::manage_foreman: true
+profile::foreman::foreman_version: '3.7'  # Latest stable
+profile::foreman::server_fqdn: 'pi.ra-home.co.uk'
+profile::foreman::admin_username: 'admin'
+profile::foreman::admin_password: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Generate with: pwgen -s 24 1 | eyaml encrypt -s
+profile::foreman::db_host: 'localhost'
+profile::foreman::db_database: 'foreman'
+profile::foreman::db_username: 'foreman'
+profile::foreman::db_password: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Same as database user password
+profile::foreman::enable_puppetserver: true
+profile::foreman::enable_enc: true
+profile::foreman::enable_reports: true
+profile::foreman::configure_epel_repo: true
+profile::foreman::initial_organization:
+  name: 'RA Home'
+  description: 'Home Infrastructure'
+profile::foreman::initial_location:
+  name: 'Home Network'
+  description: 'Home network infrastructure'
+
+# Foreman Smart Proxy Configuration
+profile::foreman_proxy::manage_proxy: true
+profile::foreman_proxy::foreman_base_url: 'https://pi.ra-home.co.uk'
+profile::foreman_proxy::register_in_foreman: true
+profile::foreman_proxy::manage_dns: true
+profile::foreman_proxy::dns_provider: 'nsupdate'
+profile::foreman_proxy::dns_server: '127.0.0.1'
+profile::foreman_proxy::dns_ttl: 86400
+profile::foreman_proxy::manage_dhcp: false
+profile::foreman_proxy::manage_tftp: false
+profile::foreman_proxy::manage_puppet: true
+profile::foreman_proxy::oauth_consumer_key: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Generate with: uuidgen | eyaml encrypt -s
+profile::foreman_proxy::oauth_consumer_secret: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Generate with: uuidgen | eyaml encrypt -s
+
+# Firewall Rules (WireGuard VPN access only)
+profile::firewall::custom_rules:
+  foreman_https:
+    port: 443
+    proto: tcp
+    source: '10.10.10.0/24'
+    jump: accept
+  foreman_http:
+    port: 80
+    proto: tcp
+    source: '10.10.10.0/24'
+    jump: accept
+  puppetserver:
+    port: 8140
+    proto: tcp
+    source: '10.10.10.0/24'
+    jump: accept
+  foreman_proxy:
+    port: 8443
+    proto: tcp
+    source: '10.10.10.0/24'
+    jump: accept
