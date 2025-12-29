@@ -20,7 +20,7 @@ profile::postgresql::databases:
     locale: en_US.UTF-8
 profile::postgresql::database_users:
   foreman:
-    password_hash: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Generate with: pwgen -s 32 1 | eyaml encrypt -s
+    password_hash: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEARTA3cU6AmDX8cbahBhJV1zMqgNL+A//t3NxF2H2u57p87RyBbC6DdR9YX/PtccMcRRCZcb78dU7HrU2Wxw3bojwJDzMYoeTqz4vPcOFG0J01H5IyVKlsHr0Bbi2NudOROQiQduqIVmE83odjhtOJGUQUAblE5uXD+mBQ7e61no5ihnDx7zGNKqf/L+JLYJ6+CkXkBnwZZf+rAvsapdFiCe4YOtb+Vcls875H8FlP/3TLC2MeHk0nM6/ep/cYuaSWKtgj0ABZnMLxJ5FflQ4KxH+vsu9Ju7ga3ND58DkXH6y4nach5NGFjuIltiA/dxUHi4sqgIQhqgMDa6iMZhM+ijA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCdjc/UFCM6RgIfHirj4fUvgBAv+qlb8A2mKqX+ccylLEzP]'
 profile::postgresql::database_grants:
   foreman_db_access:
     privilege: ALL
@@ -32,11 +32,11 @@ profile::foreman::manage_foreman: true
 profile::foreman::foreman_version: '3.7'  # Latest stable
 profile::foreman::server_fqdn: 'pi.ra-home.co.uk'
 profile::foreman::admin_username: 'admin'
-profile::foreman::admin_password: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Generate with: pwgen -s 24 1 | eyaml encrypt -s
+profile::foreman::admin_password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAeQlPpKiNWrDsnk0BePZS9Kjn/6tjQdVgdAPRXIkVgqk0XXiocmYYmnMVH70j682PnhIhudLD2MBTcOVjJH+jJyTZcXtqcyVjhzuGHk3g5PZVeZnkWt11QwYWs30/o+yihOmL81DlnLDc9nbI8S61HDsDMC3SxmZD7nClr/Wh8/7oyRUpbfO+dSVmtPF0JnC0TxIsThAoVm2A+GRK3IczD+1pw9RU/NWnsqKLSf68LcN9Q/PcShXJwNBe9c1JYPZj+rz86RgiAF3piF1R8dkbOEvsJLHMaFXW5tC9mQ8plnmmJpKFqGIJxf+uGpZqMh9LLUt28SfBzwrVCdjjrVtv9TA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBA8uEmF1dGYV87X5QY2JRP5gBD2Wp7ua7VTHY2+aAGm65dO]'
 profile::foreman::db_host: 'localhost'
 profile::foreman::db_database: 'foreman'
 profile::foreman::db_username: 'foreman'
-profile::foreman::db_password: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Same as database user password
+profile::foreman::db_password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEARTA3cU6AmDX8cbahBhJV1zMqgNL+A//t3NxF2H2u57p87RyBbC6DdR9YX/PtccMcRRCZcb78dU7HrU2Wxw3bojwJDzMYoeTqz4vPcOFG0J01H5IyVKlsHr0Bbi2NudOROQiQduqIVmE83odjhtOJGUQUAblE5uXD+mBQ7e61no5ihnDx7zGNKqf/L+JLYJ6+CkXkBnwZZf+rAvsapdFiCe4YOtb+Vcls875H8FlP/3TLC2MeHk0nM6/ep/cYuaSWKtgj0ABZnMLxJ5FflQ4KxH+vsu9Ju7ga3ND58DkXH6y4nach5NGFjuIltiA/dxUHi4sqgIQhqgMDa6iMZhM+ijA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCdjc/UFCM6RgIfHirj4fUvgBAv+qlb8A2mKqX+ccylLEzP]'
 profile::foreman::enable_puppetserver: true
 profile::foreman::enable_enc: true
 profile::foreman::enable_reports: true
@@ -59,8 +59,8 @@ profile::foreman_proxy::dns_ttl: 86400
 profile::foreman_proxy::manage_dhcp: false
 profile::foreman_proxy::manage_tftp: false
 profile::foreman_proxy::manage_puppet: true
-profile::foreman_proxy::oauth_consumer_key: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Generate with: uuidgen | eyaml encrypt -s
-profile::foreman_proxy::oauth_consumer_secret: 'CHANGEME_GENERATE_WITH_EYAML'  # TODO: Generate with: uuidgen | eyaml encrypt -s
+profile::foreman_proxy::oauth_consumer_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAntTkBqQjaUJkm/3p3A3NiScKjPlJ89O2mIVFCoOH1/lFipfN6Ipquuhuv9PlBnUbpnxFwUpgPkJwzty6DDpRVqcDT4YTX08+XkSI+L2VKREuyHPOruXt51AUEW4A2O1Wqlbqs9Mtr9WDUEjzTkV5A9iqFbxyLcfEdBfOivwkZzEydXZq+zr0eLDbeS77zFRvNCmQiWn3ttD5CPDRdxhp9KA7fcBI3ka5d5v2fKmRjT9l8MtllI/pSLJbDgRp1ZpwNs0j7kYDtpc1MosDt+MX7arftzQfGXFkFW1YJH+QQcIFpvX8NI5e+2xr8HBS7XeFmRIqQBRO0XbTfjzJQGUiYTBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDN1CYuWIZ+v0udQZtvBJhPgDByiHEXqtiKmRsPm6NhSLg/v5DciU771zNHldNVXGyM70QQEZbO+svjin0r7L892fg=]'
+profile::foreman_proxy::oauth_consumer_secret: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAQCowLV52BnM9HCW8D7WmA+uS8merzjw9xeqV0GS4gIUMzaNrSkOf//ry+BISu5yMn/McLr8+4V+Gw7Ergiu+cw7nrNXaH75bB04aEBri8DldnUUjeNUHplMv+hP54ARqRQa7iMXQQ0f4IOayD3np21pTrvDCTJy3fnyhaBRZ6zuFIzVMzr2CHMJGPmR414AJGuX0i+aUXDrU9/HWrsQZbmkEX0uRs7L/QbabTCIHJjcWnEzTAsVDkeGDDpJ25TwyicTh0XdQEXf17sOIP6PwKNP1ZbkyEXQ6VWyByVCmcMknSUgg5uL6h3g09kKUFlmjSr8M8dY6qWiaO1dXfdcAiDBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDEKPQXuGrea3T9olL65EAIgDC8pnm9dSPudaeRNvO+dYYiA8qEyR6QsD/7dT4Eag3cNvhgluzDoCmzminGFTSTBMY=]'
 
 # Firewall Rules (WireGuard VPN access only)
 profile::firewall::custom_rules:
