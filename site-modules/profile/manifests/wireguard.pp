@@ -290,10 +290,20 @@ class profile::wireguard (
       }
 
       # Block all Prometheus exporters from internet (VPN only)
+      # Note: This also blocks Authelia (port 9091) from internet
       ufw_rule { 'deny exporters from internet':
         action       => 'deny',
         direction    => 'in',
         to_ports_app => '9100:9999',
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
+      # Block Redis from internet (used by Authelia for sessions, localhost only)
+      ufw_rule { 'deny Redis from internet':
+        action       => 'deny',
+        direction    => 'in',
+        to_ports_app => 6379,
         proto        => 'tcp',
         require      => Class['ufw'],
       }
