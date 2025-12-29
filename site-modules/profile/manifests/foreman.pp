@@ -94,23 +94,21 @@ class profile::foreman (
 
     # Main Foreman class
     class { 'foreman':
-      foreman_url          => "https://${server_fqdn}",
-      servername           => $server_fqdn,
-      admin_username       => $admin_username,
-      admin_password       => $admin_pass_unwrapped,
-      db_manage            => false,  # We manage PostgreSQL via profile::postgresql
-      db_type              => 'postgresql',
-      db_host              => $db_host,
-      db_database          => $db_database,
-      db_username          => $db_username,
-      db_password          => $db_pass_unwrapped,
-      configure_epel_repo  => false,  # Already configured above
-      initial_organization => $initial_organization['name'],
-      initial_location     => $initial_location['name'],
-      server_ssl_ca        => pick($server_ssl_ca, '/etc/puppetlabs/puppet/ssl/certs/ca.pem'),
-      server_ssl_cert      => pick($server_ssl_cert, "/etc/puppetlabs/puppet/ssl/certs/${server_fqdn}.pem"),
-      server_ssl_key       => pick($server_ssl_key, "/etc/puppetlabs/puppet/ssl/private_keys/${server_fqdn}.pem"),
-      require              => Class['postgresql::server'],
+      foreman_url            => "https://${server_fqdn}",
+      servername             => $server_fqdn,
+      initial_admin_username => $admin_username,
+      initial_admin_password => $admin_pass_unwrapped,
+      db_manage              => false,  # We manage PostgreSQL via profile::postgresql
+      db_host                => $db_host,
+      db_database            => $db_database,
+      db_username            => $db_username,
+      db_password            => $db_pass_unwrapped,
+      initial_organization   => $initial_organization['name'],
+      initial_location       => $initial_location['name'],
+      server_ssl_ca          => pick($server_ssl_ca, '/etc/puppetlabs/puppet/ssl/certs/ca.pem'),
+      server_ssl_cert        => pick($server_ssl_cert, "/etc/puppetlabs/puppet/ssl/certs/${server_fqdn}.pem"),
+      server_ssl_key         => pick($server_ssl_key, "/etc/puppetlabs/puppet/ssl/private_keys/${server_fqdn}.pem"),
+      require                => Class['postgresql::server'],
     }
 
     # Configure Puppet Server integration if enabled
