@@ -29,6 +29,19 @@ mod 'kogitoapp-ufw', '1.0.3'  # For UFW-based profiles (WireGuard)
 mod 'puppet-augeasproviders_sysctl', '3.3.0'
 mod 'puppet-augeasproviders_core', '4.2.0'
 
+# Database management
+mod 'puppetlabs-postgresql', '10.5.0'
+
+# Foreman ENC and management
+mod 'theforeman-foreman', '26.2.1'
+mod 'theforeman-foreman_proxy', '26.0.0'
+mod 'theforeman-puppet', '20.1.0'
+
+# Foreman dependencies
+mod 'puppetlabs-apt', '9.4.0'
+mod 'puppet-extlib', '7.1.0'
+mod 'theforeman-dns', '11.0.0'
+
 # Git-based modules (examples)
 # mod 'custom_module',
 #   :git => 'https://github.com/org/custom_module.git',
