@@ -12,9 +12,9 @@ RSpec.configure do |c|
       'family' => 'RedHat',
       'name' => 'Rocky',
       'release' => {
-        'major' => '8',
-        'minor' => '9',
-        'full' => '8.9'
+        'major' => '9',
+        'minor' => '3',
+        'full' => '9.3'
       }
     },
     networking: {
@@ -24,14 +24,18 @@ RSpec.configure do |c|
       'ip' => '192.168.1.10'
     },
     kernel: 'Linux',
-    kernelversion: '5.4.0',
+    kernelversion: '5.14.0',
     architecture: 'x86_64',
     operatingsystem: 'Rocky',
-    operatingsystemrelease: '8.9',
+    operatingsystemrelease: '9.3',
     osfamily: 'RedHat',
     path: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
   }
   c.hiera_config = File.expand_path(File.join(__FILE__, '..', 'fixtures', 'hiera.yaml'))
+
+  # Set Facter version for fact generation
+  # This determines which version of Facter facts are used in on_supported_os
+  c.default_facter_version = '4.5.2'
 end
 
 # Add site-modules to the module path
