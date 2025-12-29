@@ -28,8 +28,6 @@
 #   Whether to enable External Node Classifier functionality (default: true)
 # @param enable_reports
 #   Whether to enable Puppet report processing (default: true)
-# @param configure_epel_repo
-#   Whether to configure EPEL repository (needed on RHEL-family) (default: true)
 # @param initial_organization
 #   Hash defining the initial organization { name => 'Org Name', description => '...' }
 # @param initial_location
@@ -62,9 +60,8 @@ class profile::foreman (
   Boolean                              $enable_puppetserver    = true,
   Boolean                              $enable_enc             = true,
   Boolean                              $enable_reports         = true,
-  Boolean                              $configure_epel_repo    = true,
-  Hash[String[1], String[1]]           $initial_organization   = { 'name' => 'Default Organization', 'description' => '' },
-  Hash[String[1], String[1]]           $initial_location       = { 'name' => 'Default Location', 'description' => '' },
+  Hash[String[1], String]              $initial_organization   = { 'name' => 'Default Organization', 'description' => '' },
+  Hash[String[1], String]              $initial_location       = { 'name' => 'Default Location', 'description' => '' },
   Optional[Stdlib::Absolutepath]       $server_ssl_ca          = undef,
   Optional[Stdlib::Absolutepath]       $server_ssl_cert        = undef,
   Optional[Stdlib::Absolutepath]       $server_ssl_key         = undef,
@@ -78,12 +75,8 @@ class profile::foreman (
       fail('profile::foreman::db_password must be set to match the PostgreSQL user password')
     }
 
-    # Configure EPEL repository (required for RHEL-family systems)
-    if $configure_epel_repo and $facts['os']['family'] == 'RedHat' {
-      class { 'foreman::repos':
-        repo => 'stable',
-      }
-    }
+    # Note: EPEL repository configuration is handled automatically by the
+    # theforeman-foreman module when needed on RHEL-family systems
 
     # Main Foreman class
     class { 'foreman':

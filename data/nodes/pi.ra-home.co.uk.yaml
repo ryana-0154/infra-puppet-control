@@ -40,7 +40,6 @@ profile::foreman::db_password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxgg
 profile::foreman::enable_puppetserver: true
 profile::foreman::enable_enc: true
 profile::foreman::enable_reports: true
-profile::foreman::configure_epel_repo: true
 profile::foreman::initial_organization:
   name: 'RA Home'
   description: 'Home Infrastructure'
