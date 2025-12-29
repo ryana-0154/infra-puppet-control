@@ -66,19 +66,22 @@ class profile::pihole_native (
     ensure_packages(['curl'])
 
     # Create Pi-hole configuration directory
+    # Note: Pi-hole expects this directory to be owned by pihole:pihole
+    # Setting to root:root causes a race condition where Pi-hole FTL changes it back
     file { '/etc/pihole':
       ensure  => directory,
-      owner   => 'root',
-      group   => 'root',
+      owner   => 'pihole',
+      group   => 'pihole',
       mode    => '0755',
       require => Package['curl'],
     }
 
     # Create setupVars.conf for automated installation
+    # Note: Pi-hole FTL manages this file and expects pihole:pihole ownership
     file { '/etc/pihole/setupVars.conf':
       ensure  => file,
-      owner   => 'root',
-      group   => 'root',
+      owner   => 'pihole',
+      group   => 'pihole',
       mode    => '0644',
       content => template('profile/pihole_native/setupVars.conf.erb'),
       require => File['/etc/pihole'],
@@ -118,11 +121,12 @@ class profile::pihole_native (
         }
 
         # Create flag file to prevent password reset on every Puppet run
+        # Note: Use pihole:pihole ownership to match Pi-hole's expectations
         file { '/etc/pihole/.password_set':
           ensure  => file,
-          owner   => 'root',
-          group   => 'root',
-          mode    => '0600',
+          owner   => 'pihole',
+          group   => 'pihole',
+          mode    => '0640',
           content => "Password set by Puppet at ${facts['timestamp']}\n",
           require => Exec['set-pihole-password'],
         }
@@ -130,11 +134,12 @@ class profile::pihole_native (
     }
 
     # Configure local DNS records in custom.list
+    # Note: Pi-hole FTL manages this file and expects pihole:pihole ownership
     if !empty($local_dns_records) {
       file { '/etc/pihole/custom.list':
         ensure  => file,
-        owner   => 'root',
-        group   => 'root',
+        owner   => 'pihole',
+        group   => 'pihole',
         mode    => '0644',
         content => template('profile/pihole_native/custom.list.erb'),
         require => File['/etc/pihole'],
@@ -144,10 +149,11 @@ class profile::pihole_native (
 
     # Configure pihole-FTL to bind web server only to VPN IP (not all interfaces)
     # This prevents the Pi-hole web interface from being exposed to the internet
+    # Note: Pi-hole FTL manages this file and expects pihole:pihole ownership
     file { '/etc/pihole/pihole-FTL.conf':
       ensure  => file,
-      owner   => 'root',
-      group   => 'root',
+      owner   => 'pihole',
+      group   => 'pihole',
       mode    => '0644',
       content => template('profile/pihole_native/pihole-FTL.conf.erb'),
       require => File['/etc/pihole'],
