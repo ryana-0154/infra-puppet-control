@@ -145,6 +145,7 @@ services:
     <<: *host
     container_name: unbound-exporter
     command:
+      - ./unbound_exporter
       - -unbound.host
       - tcp://<%= @unbound_host %>:<%= @unbound_control_port %>
       - -web.listen-address
