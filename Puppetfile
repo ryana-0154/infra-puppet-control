@@ -41,8 +41,12 @@ mod 'theforeman-puppet', '20.1.0'
 mod 'puppetlabs-apt', '9.4.0'
 mod 'puppet-extlib', '7.1.0'
 mod 'theforeman-dns', '11.0.0'
+mod 'theforeman-dhcp', '9.1.0'
+mod 'theforeman-tftp', '9.1.0'
 mod 'puppet-redis', '11.1.0'
 mod 'puppetlabs-apache', '12.3.0'
+mod 'richardc-datacat', '0.6.2'
+mod 'puppet-mosquitto', '2.0.0'
 
 # Git-based modules (examples)
 # mod 'custom_module',
