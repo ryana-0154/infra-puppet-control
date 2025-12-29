@@ -33,8 +33,8 @@ RSpec.configure do |c|
   }
   c.hiera_config = File.expand_path(File.join(__FILE__, '..', 'fixtures', 'hiera.yaml'))
 
-  # Explicitly add Rocky Linux to the supported OS list for testing
-  # This ensures on_supported_os includes Rocky in addition to RedHat
+  # Set Facter version for fact generation
+  # This determines which version of Facter facts are used in on_supported_os
   c.default_facter_version = '4.5.2'
 end
 

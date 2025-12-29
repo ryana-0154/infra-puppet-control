@@ -27,8 +27,8 @@ describe 'profile::pihole_native' do
         it {
           is_expected.to contain_file('/etc/pihole').with(
             ensure: 'directory',
-            owner: 'root',
-            group: 'root',
+            owner: 'pihole',
+            group: 'pihole',
             mode: '0755'
           )
         }
@@ -36,8 +36,8 @@ describe 'profile::pihole_native' do
         it {
           is_expected.to contain_file('/etc/pihole/setupVars.conf').with(
             ensure: 'file',
-            owner: 'root',
-            group: 'root',
+            owner: 'pihole',
+            group: 'pihole',
             mode: '0644'
           )
         }
@@ -47,6 +47,15 @@ describe 'profile::pihole_native' do
             ensure: 'file',
             owner: 'root',
             group: 'root',
+            mode: '0644'
+          )
+        }
+
+        it {
+          is_expected.to contain_file('/etc/pihole/pihole-FTL.conf').with(
+            ensure: 'file',
+            owner: 'pihole',
+            group: 'pihole',
             mode: '0644'
           )
         }
@@ -73,7 +82,10 @@ describe 'profile::pihole_native' do
 
           it {
             is_expected.to contain_file('/etc/pihole/.password_set').with(
-              ensure: 'file'
+              ensure: 'file',
+              owner: 'pihole',
+              group: 'pihole',
+              mode: '0640'
             )
           }
         end
@@ -102,8 +114,8 @@ describe 'profile::pihole_native' do
           it {
             is_expected.to contain_file('/etc/pihole/custom.list').with(
               ensure: 'file',
-              owner: 'root',
-              group: 'root',
+              owner: 'pihole',
+              group: 'pihole',
               mode: '0644'
             )
           }
