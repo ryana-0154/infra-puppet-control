@@ -43,12 +43,19 @@ describe 'Rocky Linux 9 Deployment Validation' do
   describe 'Profile catalog compilation on Rocky 9' do
     %w[
       profile::base
-      profile::wireguard
-      profile::pihole_native
-      profile::unbound
+      profile::dotfiles
+      profile::fail2ban
+      profile::firewall
+      profile::logrotate
       profile::monitoring
+      profile::otel_collector
+      profile::pihole
+      profile::pihole_native
       profile::ssh_hardening
       profile::unattended_upgrades
+      profile::unbound
+      profile::webserver
+      profile::wireguard
     ].each do |profile_class|
       describe profile_class do
         it 'compiles on Rocky 9' do
@@ -69,7 +76,9 @@ describe 'Rocky Linux 9 Deployment Validation' do
   describe 'Role catalog compilation on Rocky 9' do
     %w[
       role::base
+      role::vpn_gateway
       role::vps
+      role::webserver
     ].each do |role_class|
       describe role_class do
         it 'compiles on Rocky 9' do
