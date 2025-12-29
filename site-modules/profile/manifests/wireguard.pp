@@ -222,6 +222,15 @@ class profile::wireguard (
         require      => Class['ufw'],
       }
 
+      # Allow Authelia from VPN network
+      ufw_rule { 'allow Authelia from VPN network':
+        action       => 'allow',
+        from_addr    => $vpn_network,
+        to_ports_app => 9091,
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
       # Allow all Prometheus exporters from VPN network
       ufw_rule { 'allow exporters from VPN network':
         action       => 'allow',
@@ -289,8 +298,16 @@ class profile::wireguard (
         require      => Class['ufw'],
       }
 
+      # Block Authelia from internet (VPN only)
+      ufw_rule { 'deny Authelia from internet':
+        action       => 'deny',
+        direction    => 'in',
+        to_ports_app => 9091,
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
       # Block all Prometheus exporters from internet (VPN only)
-      # Note: This also blocks Authelia (port 9091) from internet
       ufw_rule { 'deny exporters from internet':
         action       => 'deny',
         direction    => 'in',

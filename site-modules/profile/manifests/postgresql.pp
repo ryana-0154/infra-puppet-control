@@ -76,8 +76,17 @@ class profile::postgresql (
 
     # Create databases from Hiera
     $databases.each |String $db_name, Hash $db_config| {
+      # Transform 'owner' to 'user' for postgresql::server::db compatibility
+      $db_params = $db_config.map |$key, $value| {
+        if $key == 'owner' {
+          ['user', $value]
+        } else {
+          [$key, $value]
+        }
+      }
+
       postgresql::server::db { $db_name:
-        *       => $db_config,
+        *       => Hash($db_params),
         require => Class['postgresql::server'],
       }
     }
