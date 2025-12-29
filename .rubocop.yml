@@ -44,6 +44,9 @@ RSpec/NestedGroups:
 RSpec/ImplicitSubject:
   Enabled: false
 
+RSpec/ContextWording:
+  Enabled: false
+
 # Disable cops that don't apply to Puppet/rspec-puppet testing
 # These are loaded by rubocop-rspec but cause crashes or warnings
 Capybara:
