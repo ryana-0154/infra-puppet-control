@@ -96,7 +96,7 @@ class profile::postgresql (
       # Transform 'password' to 'password_hash' for postgresql::server::role compatibility
       $user_params = $user_config.map |$key, $value| {
         if $key == 'password' {
-          ['password_hash', postgresql_password($username, $value)]
+          ['password_hash', postgresql::postgresql_password($username, $value)]
         } else {
           [$key, $value]
         }
