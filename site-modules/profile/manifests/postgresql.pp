@@ -93,8 +93,17 @@ class profile::postgresql (
 
     # Create database users from Hiera
     $database_users.each |String $username, Hash $user_config| {
+      # Transform 'password' to 'password_hash' for postgresql::server::role compatibility
+      $user_params = $user_config.map |$key, $value| {
+        if $key == 'password' {
+          ['password_hash', postgresql_password($username, $value)]
+        } else {
+          [$key, $value]
+        }
+      }
+
       postgresql::server::role { $username:
-        *       => $user_config,
+        *       => Hash($user_params),
         require => Class['postgresql::server'],
       }
     }
