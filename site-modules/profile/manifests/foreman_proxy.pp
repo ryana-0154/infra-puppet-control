@@ -44,28 +44,42 @@
 #   profile::foreman_proxy::oauth_consumer_secret: 'ENC[PKCS7,...]'
 #
 class profile::foreman_proxy (
-  Boolean                         $manage_proxy           = false,
-  Stdlib::HTTPUrl                 $foreman_base_url       = "https://${facts['networking']['fqdn']}",
-  Boolean                         $register_in_foreman    = true,
-  Boolean                         $manage_dns             = false,
-  String[1]                       $dns_provider           = 'nsupdate',
-  Stdlib::IP::Address             $dns_server             = '127.0.0.1',
-  Integer[1]                      $dns_ttl                = 86400,
-  Boolean                         $manage_dhcp            = false,
-  Boolean                         $manage_tftp            = false,
-  Boolean                         $manage_puppet          = true,
-  Sensitive[String[1]]            $oauth_consumer_key     = Sensitive('changeme'),
-  Sensitive[String[1]]            $oauth_consumer_secret  = Sensitive('changeme'),
-  Optional[Stdlib::Absolutepath]  $proxy_ssl_ca           = undef,
-  Optional[Stdlib::Absolutepath]  $proxy_ssl_cert         = undef,
-  Optional[Stdlib::Absolutepath]  $proxy_ssl_key          = undef,
+  Boolean                                      $manage_proxy           = false,
+  Stdlib::HTTPUrl                              $foreman_base_url       = "https://${facts['networking']['fqdn']}",
+  Boolean                                      $register_in_foreman    = true,
+  Boolean                                      $manage_dns             = false,
+  String[1]                                    $dns_provider           = 'nsupdate',
+  Stdlib::IP::Address                          $dns_server             = '127.0.0.1',
+  Integer[1]                                   $dns_ttl                = 86400,
+  Boolean                                      $manage_dhcp            = false,
+  Boolean                                      $manage_tftp            = false,
+  Boolean                                      $manage_puppet          = true,
+  Variant[String[1], Sensitive[String[1]]]    $oauth_consumer_key     = Sensitive('changeme'),
+  Variant[String[1], Sensitive[String[1]]]    $oauth_consumer_secret  = Sensitive('changeme'),
+  Optional[Stdlib::Absolutepath]               $proxy_ssl_ca           = undef,
+  Optional[Stdlib::Absolutepath]               $proxy_ssl_cert         = undef,
+  Optional[Stdlib::Absolutepath]               $proxy_ssl_key          = undef,
 ) {
   if $manage_proxy {
+    # Handle both plain strings (from eyaml) and Sensitive types
+    # eyaml-encrypted values come back as plain strings, so wrap them
+    $oauth_consumer_key_sensitive = $oauth_consumer_key ? {
+      Sensitive => $oauth_consumer_key,
+      default   => Sensitive($oauth_consumer_key),
+    }
+    $oauth_consumer_secret_sensitive = $oauth_consumer_secret ? {
+      Sensitive => $oauth_consumer_secret,
+      default   => Sensitive($oauth_consumer_secret),
+    }
+
     # Validate required OAuth credentials
-    if $oauth_consumer_key.unwrap == 'changeme' {
+    $consumer_key_unwrapped = $oauth_consumer_key_sensitive.unwrap
+    $consumer_secret_unwrapped = $oauth_consumer_secret_sensitive.unwrap
+
+    if $consumer_key_unwrapped == 'changeme' {
       fail('profile::foreman_proxy::oauth_consumer_key must be set and encrypted with eyaml')
     }
-    if $oauth_consumer_secret.unwrap == 'changeme' {
+    if $consumer_secret_unwrapped == 'changeme' {
       fail('profile::foreman_proxy::oauth_consumer_secret must be set and encrypted with eyaml')
     }
 
@@ -75,8 +89,8 @@ class profile::foreman_proxy (
       registered_name       => $facts['networking']['fqdn'],
       registered_proxy_url  => "https://${facts['networking']['fqdn']}:8443",
       oauth_effective_user  => 'admin',
-      oauth_consumer_key    => $oauth_consumer_key.unwrap,
-      oauth_consumer_secret => $oauth_consumer_secret.unwrap,
+      oauth_consumer_key    => $consumer_key_unwrapped,
+      oauth_consumer_secret => $consumer_secret_unwrapped,
       ssl_ca                => pick($proxy_ssl_ca, '/etc/puppetlabs/puppet/ssl/certs/ca.pem'),
       ssl_cert              => pick($proxy_ssl_cert, "/etc/puppetlabs/puppet/ssl/certs/${facts['networking']['fqdn']}.pem"),
       ssl_key               => pick($proxy_ssl_key, "/etc/puppetlabs/puppet/ssl/private_keys/${facts['networking']['fqdn']}.pem"),
