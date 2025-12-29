@@ -3,7 +3,7 @@
 # node definitions or include statements for classification
 
 # Pi node - Foreman ENC server
-node 'pi.ra-home.co.uk' {
+node 'puppet.pi' {
   include role::foreman
 }
 
