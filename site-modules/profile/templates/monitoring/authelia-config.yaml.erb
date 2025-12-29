@@ -4,8 +4,7 @@
 theme: dark
 
 server:
-  host: 0.0.0.0
-  port: 9091
+  address: 'tcp://0.0.0.0:9091'
 
 log:
   level: info
@@ -36,7 +35,7 @@ duo_api:
 # Authentication backend
 authentication_backend:
   password_reset:
-    disable: false
+    disable: true  # Disabled for home lab - enable if needed
   refresh_interval: 5m
   file:
     path: /config/users.yaml
@@ -49,6 +48,11 @@ authentication_backend:
         parallelism: 4
         key_length: 32
         salt_length: 16
+
+# Identity validation (password reset)
+identity_validation:
+  reset_password:
+    jwt_secret: <%= @authelia_jwt_secret %>
 
 # Access control rules
 access_control:
@@ -70,7 +74,8 @@ access_control:
 # Session configuration
 session:
   name: authelia_session
-  domain: <%= @domain_name %>
+  domains:
+    - <%= @domain_name %>
   same_site: lax
   secret: <%= @authelia_session_secret %>
   expiration: 1h
@@ -117,7 +122,7 @@ identity_providers:
 <%- if @enable_grafana -%>
       - id: grafana
         description: Grafana
-        secret: <%= @grafana_oidc_secret %>
+        client_secret: <%= @grafana_oidc_secret %>
         public: false
         authorization_policy: two_factor
         redirect_uris:
