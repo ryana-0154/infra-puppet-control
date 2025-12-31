@@ -187,7 +187,7 @@ class profile::monitoring (
   String[1]                      $node_exporter_image       = 'quay.io/prometheus/node-exporter:latest',
   String[1]                      $wg_portal_image           = 'wgportal/wg-portal:v2',
   String[1]                      $wireguard_exporter_image  = 'mindflavor/prometheus-wireguard-exporter:latest',
-  String[1]                      $unbound_exporter_image    = 'egguy/unbound-prometheus-exporter:latest',
+  String[1]                      $unbound_exporter_image    = 'kumina/unbound-exporter:latest',
 
   # SSO images
   String[1]                      $authelia_image            = 'authelia/authelia:4.38',
