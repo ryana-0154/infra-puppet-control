@@ -146,10 +146,6 @@ services:
     container_name: unbound-exporter
     command:
       - ./unbound_exporter
-      - -unbound.ca
-      - ""
-      - -unbound.cert
-      - ""
       - -unbound.host
       - unix:///run/unbound.ctl
       - -web.listen-address
