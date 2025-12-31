@@ -133,6 +133,9 @@ services:
     container_name: wireguard-exporter
     cap_add:
       - NET_ADMIN
+    command:
+      - --prepend_sudo
+      - "false"
     environment:
       - PROMETHEUS_METRICS_ADDR=<%= @monitoring_ip %>:<%= @wireguard_exporter_port %>
     volumes:
