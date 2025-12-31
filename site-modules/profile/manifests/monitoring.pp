@@ -543,7 +543,7 @@ class profile::monitoring (
     $all_subscribe = $base_subscribe + $victoriametrics_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe + $external_dashboards_subscribe
 
     exec { 'restart-monitoring-stack':
-      command     => 'docker compose up -d --force-recreate',
+      command     => 'docker compose up -d --force-recreate --remove-orphans',
       cwd         => $monitoring_dir,
       path        => ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/bin', '/sbin', '/snap/bin'],
       refreshonly => true,
