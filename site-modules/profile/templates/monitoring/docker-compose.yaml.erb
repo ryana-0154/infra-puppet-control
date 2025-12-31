@@ -145,7 +145,6 @@ services:
     <<: *host
     container_name: unbound-exporter
     command:
-      - ./unbound_exporter
       - -unbound.host
       - unix:///run/unbound.ctl
       - -web.listen-address
