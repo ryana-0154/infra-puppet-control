@@ -34,6 +34,33 @@ RSpec-Puppet Requirements:
   - If a test would fail, rewrite the module until everything passes.
   - Never hand back unvalidated, non-working code.
 
+Firewall Security Requirements (CRITICAL):
+- **You MUST proactively invoke the firewall-expert agent (see .clinerules/agents.md) BEFORE responding to the user whenever:**
+  - Modifying firewall rules in any file (wireguard.pp, firewall.pp, postgresql.pp, etc.)
+  - Adding or modifying `ufw_rule`, `ufw_route`, or firewall resources
+  - Adding new services that bind to network ports (Docker containers, daemons, etc.)
+  - Modifying Docker container network modes (especially `network_mode: "host"`)
+  - Changing VPN network configuration or NAT rules
+  - Modifying any service that listens on public interfaces
+  - **ANY change that could potentially affect network accessibility or security**
+- The firewall-expert agent will validate:
+  - UFW rule ordering (ALLOW rules MUST come before DENY rules)
+  - Docker host networking security (services with network_mode: "host")
+  - Defense-in-depth (application binding + firewall rules)
+  - SSH lockout risks
+  - Unintended service exposure
+- **If the firewall-expert agent reports CRITICAL issues, you MUST fix them before responding to the user.**
+- Even if a change seems unrelated to the firewall, analyze whether it could affect:
+  - Port bindings (new services, changed ports)
+  - Network interfaces (IP address changes, interface additions)
+  - Access control (authentication, authorization changes)
+- **Firewall misconfigurations can cause:**
+  - Complete loss of remote access (SSH lockout)
+  - Security breaches (unintended exposure to internet)
+  - Service downtime (legitimate traffic blocked)
+  - VPN access failures (rule ordering issues)
+- **This is MANDATORY and NON-NEGOTIABLE. Do not skip firewall validation.**
+
 Module Output Format — ALWAYS FOLLOW:
 1) Short reasoning/assumptions (max 3 sentences)
 2) Puppet code — separated by file path in fenced blocks:
