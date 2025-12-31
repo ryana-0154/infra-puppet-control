@@ -222,6 +222,15 @@ class profile::wireguard (
         require      => Class['ufw'],
       }
 
+      # Allow Prometheus from VPN network
+      ufw_rule { 'allow Prometheus from VPN network':
+        action       => 'allow',
+        from_addr    => $vpn_network,
+        to_ports_app => 9090,
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
       # Allow Authelia from VPN network
       ufw_rule { 'allow Authelia from VPN network':
         action       => 'allow',
@@ -294,6 +303,15 @@ class profile::wireguard (
         action       => 'deny',
         direction    => 'in',
         to_ports_app => 8889,
+        proto        => 'tcp',
+        require      => Class['ufw'],
+      }
+
+      # Block Prometheus from internet (VPN only)
+      ufw_rule { 'deny Prometheus from internet':
+        action       => 'deny',
+        direction    => 'in',
+        to_ports_app => 9090,
         proto        => 'tcp',
         require      => Class['ufw'],
       }
