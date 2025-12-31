@@ -144,13 +144,18 @@ services:
     image: <%= @unbound_exporter_image %>
     <<: *host
     container_name: unbound-exporter
-    environment:
-      - UNBOUND_HOST=tcp://<%= @unbound_host %>:<%= @unbound_control_port %>
-      - UNBOUND_USE_TLS=false
     command:
       - ./unbound_exporter
+      - -unbound.ca
+      - ""
+      - -unbound.cert
+      - ""
+      - -unbound.host
+      - unix:///run/unbound.ctl
       - -web.listen-address
       - <%= @monitoring_ip %>:<%= @unbound_exporter_port %>
+    volumes:
+      - /run/unbound.ctl:/run/unbound.ctl
 <%- end -%>
 
 <%- if @enable_wg_portal -%>

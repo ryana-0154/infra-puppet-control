@@ -2,9 +2,6 @@ remote-control:
   control-enable: <%= @enable_remote_control ? 'yes' : 'no' %>
 <%- if @enable_remote_control -%>
   # Control interface for remote management and metrics collection
-  # Using TCP on localhost for Prometheus exporter access
-  control-interface: <%= @remote_control_interface %>
-  control-port: <%= @remote_control_port %>
-  # Allow localhost access without certificates for local exporters
-  control-use-cert: no
+  # Using Unix socket for local Prometheus exporter access (no TLS needed)
+  control-interface: /run/unbound.ctl
 <%- end -%>
