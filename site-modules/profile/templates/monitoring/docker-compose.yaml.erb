@@ -150,6 +150,12 @@ services:
       - tcp://<%= @unbound_host %>:<%= @unbound_control_port %>
       - -web.listen-address
       - <%= @monitoring_ip %>:<%= @unbound_exporter_port %>
+      - -unbound.ca
+      - ""
+      - -unbound.cert
+      - ""
+      - -unbound.key
+      - ""
 <%- end -%>
 
 <%- if @enable_wg_portal -%>
