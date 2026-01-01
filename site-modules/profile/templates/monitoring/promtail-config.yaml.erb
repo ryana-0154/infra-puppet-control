@@ -26,6 +26,18 @@ scrape_configs:
       job: varlogs
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/*log
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<ts>\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}) (?P<host>\S+) (?P<program>\S+?)(?:\[(?P<pid>\d+)\])?: (?P<msg>.*)$'
+    - timestamp:
+        source: ts
+        format: 'Jan _2 15:04:05'
+        # timezone: UTC   # or your actual TZ if needed
+    - labels:
+        host:
+        program:
+    - output:
+        source: msg
 
 # Syslog
 - job_name: syslog
@@ -36,6 +48,18 @@ scrape_configs:
       job: syslog
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/syslog
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<ts>\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}) (?P<host>\S+) (?P<program>\S+?)(?:\[(?P<pid>\d+)\])?: (?P<msg>.*)$'
+    - timestamp:
+        source: ts
+        format: 'Jan _2 15:04:05'
+        # timezone: UTC   # or your actual TZ if needed
+    - labels:
+        host:
+        program:
+    - output:
+        source: msg
 
 # Authentication logs (Debian/Ubuntu)
 - job_name: auth
@@ -47,6 +71,18 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: authentication
       __path__: /var/log/auth.log
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<ts>\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}) (?P<host>\S+) (?P<program>\S+?)(?:\[(?P<pid>\d+)\])?: (?P<msg>.*)$'
+    - timestamp:
+        source: ts
+        format: 'Jan _2 15:04:05'
+        # timezone: UTC   # or your actual TZ if needed
+    - labels:
+        host:
+        program:
+    - output:
+        source: msg
 
 # Secure logs (RedHat/Rocky/AlmaLinux)
 - job_name: secure
@@ -58,6 +94,18 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: authentication
       __path__: /var/log/secure
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<ts>\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}) (?P<host>\S+) (?P<program>\S+?)(?:\[(?P<pid>\d+)\])?: (?P<msg>.*)$'
+    - timestamp:
+        source: ts
+        format: 'Jan _2 15:04:05'
+        # timezone: UTC   # or your actual TZ if needed
+    - labels:
+        host:
+        program:
+    - output:
+        source: msg
 
 # Fail2ban logs
 - job_name: fail2ban
@@ -70,11 +118,18 @@ scrape_configs:
       log_type: security
       __path__: /var/log/fail2ban.log
   pipeline_stages:
-    - regex:
-        expression: '(?P<timestamp>\S+ \S+) (?P<jail>\S+)\s+\[(?P<pid>\d+)\]: (?P<level>\S+)\s+(?P<message>.*)'
-    - labels:
-        jail:
-        level:
+  - regex:
+      expression: '^(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)\s+(?P<logger>\S+)\s+\[(?P<pid>\d+)\]:\s+(?P<level>\w+)\s+\[(?P<jail>\w+)\]\s+(?P<action>\w+)\s+(?P<ip>\S+).*'
+  - timestamp:
+      source: ts
+      format: '2006-01-02 15:04:05,000'
+  - labels:
+      jail:
+      level:
+      action:
+  - output:
+      source: ""
+
 
 # Puppet logs
 - job_name: puppet
@@ -88,10 +143,15 @@ scrape_configs:
       __path__: /var/log/puppetlabs/puppet/*.log
   pipeline_stages:
     - regex:
-        expression: '^(?P<timestamp>\S+ \S+) (?P<level>DEBUG|INFO|NOTICE|WARNING|ERROR|CRITICAL|ALERT|EMERG) \[(?P<component>[^\]]+)\] (?P<message>.*)'
+        expression: '^(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s+(?P<level>\w+)\s+\[(?P<component>[^\]]+)\]\s+(?P<msg>.*)$'
+    - timestamp:
+        source: ts
+        format: '2006-01-02T15:04:05.000Z'
     - labels:
         level:
         component:
+    - output:
+        source: msg
 
 # Nginx access logs
 - job_name: nginx_access
@@ -105,10 +165,15 @@ scrape_configs:
       __path__: /var/log/nginx/*access.log
   pipeline_stages:
     - regex:
-        expression: '^(?P<remote_addr>\S+) - (?P<remote_user>[^ ]*) \[(?P<time_local>.*)\] "(?P<method>[^ ]*) (?P<path>[^ ]*) (?P<protocol>[^ ]*)" (?P<status>[\d]+) (?P<body_bytes_sent>[\d]+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"'
+        expression: '^(?P<remote_addr>\S+) \S+ \S+ \[(?P<ts>[^\]]+)\] "(?P<method>\S+) (?P<path>[^"]*?) (?P<protocol>[^"]*?)" (?P<status>\d{3}) (?P<body_bytes_sent>\d+|-) "(?P<referrer>[^"]*)" "(?P<user_agent>[^"]*)"'
+    - timestamp:
+        source: ts
+        format: '02/Jan/2006:15:04:05 -0700'
     - labels:
-        method:
         status:
+        method:
+    - output:
+        source: path
 
 # Nginx error logs
 - job_name: nginx_error
@@ -122,9 +187,15 @@ scrape_configs:
       __path__: /var/log/nginx/*error.log
   pipeline_stages:
     - regex:
-        expression: '^(?P<timestamp>\S+ \S+) \[(?P<level>\w+)\] (?P<message>.*)'
+        expression: '^(?P<remote_addr>\S+) \S+ \S+ \[(?P<ts>[^\]]+)\] "(?P<method>\S+) (?P<path>[^"]*?) (?P<protocol>[^"]*?)" (?P<status>\d{3}) (?P<body_bytes_sent>\d+|-) "(?P<referrer>[^"]*)" "(?P<user_agent>[^"]*)"'
+    - timestamp:
+        source: ts
+        format: '02/Jan/2006:15:04:05 -0700'
     - labels:
-        level:
+        status:
+        method:
+    - output:
+        source: path
 
 # Apache access logs
 - job_name: apache_access
@@ -158,15 +229,17 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/lib/docker/containers/*/*log
   pipeline_stages:
+    - cri: {}
+    # If your app logs JSON inside "log", then:
     - json:
         expressions:
-          output: log
-          stream: stream
-          time: time
+          level: level
+          msg: msg
     - labels:
-        stream:
+        level:
     - output:
-        source: output
+        source: msg
+
 
 # Monitoring stack container logs (labeled specifically)
 <%- if @enable_prometheus -%>
@@ -419,6 +492,17 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: dns
       __path__: /var/log/pihole/pihole.log
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<ts>\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}) (?P<daemon>\S+)\[(?P<pid>\d+)\]: (?P<msg>.*)$'
+    - timestamp:
+        source: ts
+        format: 'Jan _2 15:04:05'
+    - labels:
+        daemon:
+    - output:
+        source: msg
+
 
 # Pi-hole FTL logs
 - job_name: pihole-ftl
@@ -430,6 +514,17 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: dns
       __path__: /var/log/pihole/FTL.log
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+)\s+(?P<level>\w+)\s+(?P<msg>.*)$'
+    - timestamp:
+        source: ts
+        format: '2006-01-02 15:04:05.000000'
+    - labels:
+        level:
+    - output:
+        source: msg
+
 
 # Kernel logs
 - job_name: kernel
@@ -441,6 +536,18 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: system
       __path__: /var/log/kern.log
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<ts>\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}) (?P<host>\S+) (?P<program>\S+?)(?:\[(?P<pid>\d+)\])?: (?P<msg>.*)$'
+    - timestamp:
+        source: ts
+        format: 'Jan _2 15:04:05'
+        # timezone: UTC   # or your actual TZ if needed
+    - labels:
+        host:
+        program:
+    - output:
+        source: msg
 
 # Cron logs
 - job_name: cron
@@ -452,6 +559,18 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: system
       __path__: /var/log/cron.log
+  pipeline_stages:
+    - regex:
+        expression: '^(?P<ts>\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}) (?P<host>\S+) (?P<program>\S+?)(?:\[(?P<pid>\d+)\])?: (?P<msg>.*)$'
+    - timestamp:
+        source: ts
+        format: 'Jan _2 15:04:05'
+        # timezone: UTC   # or your actual TZ if needed
+    - labels:
+        host:
+        program:
+    - output:
+        source: msg
 
 # APT/package management logs
 - job_name: apt
@@ -463,6 +582,17 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: package_management
       __path__: /var/log/apt/*.log
+  pipeline_stages:
+  - regex:
+      expression: '^(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (?P<action>\S+) (?P<msg>.*)$'
+  - timestamp:
+      source: ts
+      format: '2006-01-02 15:04:05'
+  - labels:
+      action:
+  - output:
+      source: msg
+
 
 # Unattended upgrades logs
 - job_name: unattended-upgrades
@@ -474,6 +604,17 @@ scrape_configs:
       host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
       log_type: package_management
       __path__: /var/log/unattended-upgrades/unattended-upgrades.log
+  pipeline_stages:
+  - regex:
+      expression: '^(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (?P<action>\S+) (?P<msg>.*)$'
+  - timestamp:
+      source: ts
+      format: '2006-01-02 15:04:05'
+  - labels:
+      action:
+  - output:
+      source: msg
+
 
 # WireGuard VPN logs (via systemd journal)
 - job_name: wireguard
