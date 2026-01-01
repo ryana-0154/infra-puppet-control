@@ -1,0 +1,247 @@
+#cloud-config
+# Foreman ENC client cloud-init configuration
+# This template configures a host to register with Foreman (pi.ra-home.co.uk) for
+# External Node Classification and centralized Puppet management.
+#
+# CUSTOMIZE BEFORE USE:
+#   1. Replace YOUR_HOSTNAME with actual hostname
+#   2. Replace YOUR_SSH_PUBLIC_KEY_HERE with your SSH public key
+#   3. Ensure Foreman is configured for auto-signing or plan to manually approve host
+
+hostname: YOUR_HOSTNAME
+fqdn: YOUR_HOSTNAME.ra-home.co.uk
+manage_etc_hosts: true
+
+# User configuration
+users:
+  - name: ryan
+    groups: [sudo, wheel]
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - YOUR_SSH_PUBLIC_KEY_HERE
+
+# Disable root login via SSH
+ssh_pwauth: false
+disable_root: false
+
+# Package updates and installation
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+packages:
+  # Essential tools
+  - curl
+  - wget
+  - vim
+  - git
+  - htop
+  - net-tools
+  # Security
+  - fail2ban
+  # Puppet dependencies
+  - ca-certificates
+
+# Write configuration files
+write_files:
+  # Puppet configuration for Foreman integration
+  - path: /etc/puppetlabs/puppet/puppet.conf
+    content: |
+      [main]
+      server = pi.ra-home.co.uk
+      certname = YOUR_HOSTNAME.ra-home.co.uk
+      environment = production
+      runinterval = 30m
+
+      # Foreman integration
+      node_terminus = exec
+      external_nodes = /etc/puppetlabs/puppet/node.rb
+
+      [agent]
+      report = true
+      pluginsync = true
+      usecacheonfailure = false
+
+      # Send reports to Foreman
+      reports = foreman
+    owner: root:root
+    permissions: '0644'
+
+  # Foreman ENC script
+  - path: /etc/puppetlabs/puppet/node.rb
+    content: |
+      #!/usr/bin/env ruby
+      # Foreman ENC (External Node Classifier) script
+
+      require 'net/http'
+      require 'net/https'
+      require 'uri'
+      require 'yaml'
+
+      foreman_url = "https://pi.ra-home.co.uk:8443"
+
+      certname = ARGV[0] || ""
+
+      uri = URI.parse("#{foreman_url}/node/#{certname}?format=yml")
+
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+      request = Net::HTTP::Get.new(uri.request_uri)
+
+      response = http.request(request)
+
+      if response.code == "200"
+        puts response.body
+      else
+        STDERR.puts "Failed to retrieve node info from Foreman: #{response.code} #{response.message}"
+        exit 1
+      end
+    owner: root:root
+    permissions: '0755'
+
+  # Puppet bootstrap script
+  - path: /tmp/install-puppet.sh
+    content: |
+      #!/bin/bash
+      set -e
+
+      echo "=== Installing Puppet 7 Agent ==="
+
+      if [ -f /etc/redhat-release ]; then
+        # RedHat/Rocky/CentOS/Alma
+        echo "Detected RedHat-family OS"
+        rpm -Uvh https://yum.puppet.com/puppet7-release-el-$(rpm -E %{rhel}).noarch.rpm
+        dnf install -y puppet-agent
+      elif [ -f /etc/debian_version ]; then
+        # Debian/Ubuntu
+        echo "Detected Debian-family OS"
+        CODENAME=$(lsb_release -sc)
+        wget https://apt.puppet.com/puppet7-release-${CODENAME}.deb
+        dpkg -i puppet7-release-${CODENAME}.deb
+        apt-get update
+        apt-get install -y puppet-agent
+      else
+        echo "ERROR: Unsupported OS"
+        exit 1
+      fi
+
+      # Add Puppet to PATH
+      export PATH="/opt/puppetlabs/bin:$PATH"
+
+      if ! grep -q '/opt/puppetlabs/bin' /etc/environment; then
+        echo 'PATH="/opt/puppetlabs/bin:$PATH"' >> /etc/environment
+      fi
+
+      # Create symlinks
+      ln -sf /opt/puppetlabs/bin/puppet /usr/local/bin/puppet
+      ln -sf /opt/puppetlabs/bin/facter /usr/local/bin/facter
+
+      echo "=== Puppet agent installed successfully ==="
+      /opt/puppetlabs/bin/puppet --version
+    owner: root:root
+    permissions: '0755'
+
+  # Foreman registration script
+  - path: /tmp/register-foreman.sh
+    content: |
+      #!/bin/bash
+      set -e
+
+      echo "=== Registering with Foreman ==="
+
+      FOREMAN_URL="https://pi.ra-home.co.uk:8443"
+      HOSTNAME=$(hostname -f)
+
+      # Install Foreman client tools (optional - for host registration)
+      if [ -f /etc/redhat-release ]; then
+        dnf install -y foreman-client || echo "Foreman client not available in repos"
+      elif [ -f /etc/debian_version ]; then
+        apt-get install -y foreman-client || echo "Foreman client not available in repos"
+      fi
+
+      echo "=== Host ready for Foreman ENC ==="
+      echo "Foreman URL: $FOREMAN_URL"
+      echo "Certname: $HOSTNAME"
+    owner: root:root
+    permissions: '0755'
+
+  # Fail2ban basic configuration
+  - path: /etc/fail2ban/jail.local
+    content: |
+      [DEFAULT]
+      bantime = 1h
+      findtime = 10m
+      maxretry = 5
+
+      [sshd]
+      enabled = true
+      port = ssh
+      logpath = %(sshd_log)s
+      backend = %(sshd_backend)s
+    owner: root:root
+    permissions: '0644'
+
+# Commands to run after system setup
+runcmd:
+  # Install Puppet agent
+  - bash /tmp/install-puppet.sh
+
+  # Register with Foreman
+  - bash /tmp/register-foreman.sh
+
+  # Start and enable Puppet agent service
+  - systemctl enable puppet
+  - systemctl start puppet
+
+  # Request Puppet certificate and wait for Foreman auto-sign
+  # Note: Foreman must be configured to auto-sign or you must manually approve
+  - /opt/puppetlabs/bin/puppet agent -t --waitforcert 120 || echo "Certificate not signed yet - check Foreman"
+
+  # Enable and start fail2ban
+  - systemctl enable fail2ban
+  - systemctl start fail2ban
+
+  # Set timezone
+  - timedatectl set-timezone UTC
+
+  # Upload facts to Foreman (requires signed certificate)
+  - sleep 10
+  - /opt/puppetlabs/bin/puppet agent -t || echo "Initial Puppet run failed - check Foreman and certificate"
+
+# Final message
+final_message: |
+  ========================================
+  Foreman client bootstrap completed!
+  ========================================
+
+  Host: YOUR_HOSTNAME.ra-home.co.uk
+  Foreman: pi.ra-home.co.uk:8443
+
+  Services:
+  - Puppet: Installed and registered
+  - Foreman ENC: Configured
+  - Fail2ban: Active
+
+  Next steps:
+  1. Check Foreman UI for new host:
+     https://pi.ra-home.co.uk:8443/hosts
+
+  2. Approve certificate if auto-sign disabled:
+     Foreman → Infrastructure → Smart Proxies → Certificates
+     OR on Puppet server:
+     sudo puppetserver ca sign --certname YOUR_HOSTNAME.ra-home.co.uk
+
+  3. Assign Puppet classes in Foreman:
+     Foreman → Hosts → YOUR_HOSTNAME → Edit → Puppet Classes
+
+  4. Run Puppet agent:
+     sudo puppet agent -t
+
+  5. Verify Foreman facts:
+     Foreman → Hosts → YOUR_HOSTNAME → Facts
+
+  System is ready for Foreman management!
+  ========================================

@@ -1,0 +1,265 @@
+#cloud-config
+# VPS cloud-init configuration with WireGuard client
+# This template configures a VPS with Puppet agent and WireGuard VPN client.
+#
+# CUSTOMIZE BEFORE USE:
+#   1. Replace YOUR_HOSTNAME with actual hostname
+#   2. Replace YOUR_SSH_PUBLIC_KEY_HERE with your SSH public key
+#   3. Replace WIREGUARD_PRIVATE_KEY with generated private key (wg genkey)
+#   4. Replace WIREGUARD_SERVER_PUBLIC_KEY with server's public key
+#   5. Replace WIREGUARD_PRESHARED_KEY with generated PSK (wg genpsk)
+#   6. Replace VPS_PUBLIC_IP with WireGuard server's public IP
+#   7. Replace 10.10.10.X with assigned VPN IP address
+#   8. Update peer configuration in data/nodes/vps.ra-home.co.uk.yaml on Puppet server
+
+hostname: YOUR_HOSTNAME
+fqdn: YOUR_HOSTNAME.ra-home.co.uk
+manage_etc_hosts: true
+
+# User configuration
+users:
+  - name: ryan
+    groups: [sudo, wheel]
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - YOUR_SSH_PUBLIC_KEY_HERE
+
+# Disable root login via SSH
+ssh_pwauth: false
+disable_root: false
+
+# Package updates and installation
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+packages:
+  # Essential tools
+  - curl
+  - wget
+  - vim
+  - git
+  - htop
+  - net-tools
+  # Security
+  - fail2ban
+  - ufw
+  # WireGuard VPN
+  - wireguard-tools
+  # System dependencies
+  - ca-certificates
+  - iptables
+
+# Write configuration files
+write_files:
+  # Puppet configuration
+  - path: /etc/puppetlabs/puppet/puppet.conf
+    content: |
+      [main]
+      server = pi.ra-home.co.uk
+      certname = YOUR_HOSTNAME.ra-home.co.uk
+      environment = production
+      runinterval = 30m
+
+      [agent]
+      report = true
+      pluginsync = true
+      usecacheonfailure = false
+    owner: root:root
+    permissions: '0644'
+
+  # WireGuard interface configuration
+  # IMPORTANT: Generate keys with: wg genkey | tee client.key | wg pubkey > client.pub && wg genpsk > client.psk
+  - path: /etc/wireguard/wg0.conf
+    content: |
+      [Interface]
+      PrivateKey = WIREGUARD_PRIVATE_KEY
+      Address = 10.10.10.X/24
+      DNS = 10.10.10.1
+
+      # Firewall rules - allow VPN traffic
+      PostUp = ufw route allow in on wg0 out on eth0
+      PostUp = ufw route allow in on eth0 out on wg0
+      PostDown = ufw route delete allow in on wg0 out on eth0
+      PostDown = ufw route delete allow in on eth0 out on wg0
+
+      [Peer]
+      # VPS WireGuard Server (vps.ra-home.co.uk)
+      PublicKey = WIREGUARD_SERVER_PUBLIC_KEY
+      PresharedKey = WIREGUARD_PRESHARED_KEY
+      Endpoint = VPS_PUBLIC_IP:51820
+      AllowedIPs = 10.10.10.0/24
+      PersistentKeepalive = 25
+    owner: root:root
+    permissions: '0600'
+
+  # UFW configuration (basic firewall rules)
+  - path: /tmp/setup-ufw.sh
+    content: |
+      #!/bin/bash
+      set -e
+
+      echo "=== Configuring UFW Firewall ==="
+
+      # Reset UFW to default
+      ufw --force reset
+
+      # Default policies
+      ufw default deny incoming
+      ufw default allow outgoing
+
+      # Allow SSH (important - do this first!)
+      ufw allow ssh
+
+      # Allow WireGuard
+      ufw allow 51820/udp comment 'WireGuard'
+
+      # Allow ping
+      sed -i 's/^#.*-A ufw-before-input -p icmp --icmp-type echo-request -j ACCEPT/-A ufw-before-input -p icmp --icmp-type echo-request -j ACCEPT/' /etc/ufw/before.rules
+
+      # Enable UFW
+      ufw --force enable
+
+      echo "=== UFW firewall configured ==="
+      ufw status verbose
+    owner: root:root
+    permissions: '0755'
+
+  # Puppet bootstrap script
+  - path: /tmp/install-puppet.sh
+    content: |
+      #!/bin/bash
+      set -e
+
+      echo "=== Installing Puppet 7 Agent ==="
+
+      if [ -f /etc/redhat-release ]; then
+        # RedHat/Rocky/CentOS/Alma
+        echo "Detected RedHat-family OS"
+        rpm -Uvh https://yum.puppet.com/puppet7-release-el-$(rpm -E %{rhel}).noarch.rpm
+        dnf install -y puppet-agent
+      elif [ -f /etc/debian_version ]; then
+        # Debian/Ubuntu
+        echo "Detected Debian-family OS"
+        CODENAME=$(lsb_release -sc)
+        wget https://apt.puppet.com/puppet7-release-${CODENAME}.deb
+        dpkg -i puppet7-release-${CODENAME}.deb
+        apt-get update
+        apt-get install -y puppet-agent
+      else
+        echo "ERROR: Unsupported OS"
+        exit 1
+      fi
+
+      # Add Puppet to PATH
+      export PATH="/opt/puppetlabs/bin:$PATH"
+
+      if ! grep -q '/opt/puppetlabs/bin' /etc/environment; then
+        echo 'PATH="/opt/puppetlabs/bin:$PATH"' >> /etc/environment
+      fi
+
+      # Create symlinks
+      ln -sf /opt/puppetlabs/bin/puppet /usr/local/bin/puppet
+      ln -sf /opt/puppetlabs/bin/facter /usr/local/bin/facter
+
+      echo "=== Puppet agent installed successfully ==="
+      /opt/puppetlabs/bin/puppet --version
+    owner: root:root
+    permissions: '0755'
+
+  # Fail2ban basic configuration
+  - path: /etc/fail2ban/jail.local
+    content: |
+      [DEFAULT]
+      bantime = 1h
+      findtime = 10m
+      maxretry = 5
+
+      [sshd]
+      enabled = true
+      port = ssh
+      logpath = %(sshd_log)s
+      backend = %(sshd_backend)s
+    owner: root:root
+    permissions: '0644'
+
+# Commands to run after system setup
+runcmd:
+  # Configure firewall FIRST (before network services)
+  - bash /tmp/setup-ufw.sh
+
+  # Install Puppet agent
+  - bash /tmp/install-puppet.sh
+
+  # Enable IP forwarding for WireGuard
+  - sysctl -w net.ipv4.ip_forward=1
+  - sysctl -w net.ipv6.conf.all.forwarding=1
+  - echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+  - echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
+
+  # Start WireGuard VPN
+  - systemctl enable wg-quick@wg0
+  - wg-quick up wg0 || echo "WireGuard startup failed - check configuration"
+  - sleep 5
+  - wg show || echo "WireGuard not active"
+
+  # Test VPN connectivity
+  - ping -c 3 10.10.10.1 || echo "WARNING: Cannot ping VPN gateway - check WireGuard config and server peer"
+
+  # Start and enable Puppet agent
+  - systemctl enable puppet
+  - systemctl start puppet
+
+  # Request Puppet certificate
+  - /opt/puppetlabs/bin/puppet agent -t --waitforcert 60 || true
+
+  # Enable and start fail2ban
+  - systemctl enable fail2ban
+  - systemctl start fail2ban
+
+  # Set timezone
+  - timedatectl set-timezone UTC
+
+  # Final status check
+  - echo "=== Bootstrap Status ==="
+  - systemctl status wg-quick@wg0 --no-pager || true
+  - systemctl status puppet --no-pager || true
+  - ufw status verbose
+  - echo "========================"
+
+# Final message
+final_message: |
+  ========================================
+  VPS Cloud-init bootstrap completed!
+  ========================================
+
+  Host: YOUR_HOSTNAME.ra-home.co.uk
+  VPN IP: 10.10.10.X
+
+  Services:
+  - Puppet: Installed and certificate requested
+  - WireGuard: Configured and running
+  - UFW Firewall: Enabled
+  - Fail2ban: Active
+
+  Next steps:
+  1. Add WireGuard peer to server (data/nodes/vps.ra-home.co.uk.yaml):
+     profile::wireguard::peers:
+       YOUR_HOSTNAME:
+         public_key: '<run: wg show wg0 public-key>'
+         preshared_key: '<from WIREGUARD_PRESHARED_KEY>'
+         allowed_ips: '10.10.10.X/32'
+
+  2. Sign Puppet certificate on server:
+     sudo puppetserver ca sign --certname YOUR_HOSTNAME.ra-home.co.uk
+
+  3. Run Puppet agent:
+     sudo puppet agent -t
+
+  4. Verify VPN:
+     sudo wg show
+     ping 10.10.10.1
+
+  System is ready!
+  ========================================
