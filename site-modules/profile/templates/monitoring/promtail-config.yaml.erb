@@ -395,10 +395,19 @@ scrape_configs:
       log_type: dns
       __path__: /var/log/unbound/unbound.log
   pipeline_stages:
-    - regex:
-        expression: '^\[(?P<timestamp>.*?)\] unbound\[(?P<pid>\d+):(?P<thread>\d+)\] (?P<level>\w+): (?P<message>.*)'
-    - labels:
-        level:
+    - match:
+        selector: '{job="unbound"} |~ " start | stopped |.*in-addr.arpa."'
+        action: drop
+    - match:
+        selector: '{job="unbound"} |= "reply:"'
+        stages:
+        - static_labels:
+            dns: reply
+    - match:
+        selector: '{job="unbound"} |~ "always_null|redirect |always_nxdomain"'
+        stages:
+        - static_labels:
+            dns: block
 
 # Pi-hole logs
 - job_name: pihole

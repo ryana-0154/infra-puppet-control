@@ -1,0 +1,7 @@
+# Ignore generated cloud-init configurations (may contain keys/secrets)
+generated/
+
+# Ignore any customized YAML files (keep only templates)
+*-customized.yaml
+*.bak
+*.tmp
