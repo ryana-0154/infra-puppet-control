@@ -40,7 +40,7 @@ profile::postgresql::database_grants:
 
 # Foreman Server Configuration
 profile::foreman::manage_foreman: true
-profile::foreman::foreman_version: '3.7'  # Latest stable
+profile::foreman::foreman_version: '3.12'  # Stable version with full Rocky Linux 9 support (EL9 support started in 3.11)
 profile::foreman::server_fqdn: 'foreman01.ra-home.co.uk'
 
 profile::foreman::admin_username: 'admin'

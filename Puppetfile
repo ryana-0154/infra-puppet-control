@@ -32,9 +32,10 @@ mod 'puppet-augeasproviders_core', '4.2.0'
 # Database management
 mod 'puppetlabs-postgresql', '10.5.0'
 
-# Foreman ENC and management
-mod 'theforeman-foreman', '26.2.1'
-mod 'theforeman-foreman_proxy', '26.0.0'
+# Foreman ENC and management (Rocky Linux 9 / EL9 compatible)
+# Module versions 28.x support Foreman 3.1+ on EL9
+mod 'theforeman-foreman', '28.1.0'
+mod 'theforeman-foreman_proxy', '28.1.0'
 mod 'theforeman-puppet', '20.1.0'
 
 # Foreman dependencies
