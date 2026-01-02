@@ -89,8 +89,10 @@ class profile::foreman (
       fail('profile::foreman::db_password must be set to match the PostgreSQL user password')
     }
 
-    # Note: EPEL repository configuration is handled automatically by the
-    # theforeman-foreman module when needed on RHEL-family systems
+    # Configure Foreman repository
+    class { 'foreman::repo':
+      repo => $foreman_version,
+    }
 
     # Main Foreman class
     class { 'foreman':
@@ -108,7 +110,7 @@ class profile::foreman (
       server_ssl_ca          => pick($server_ssl_ca, '/etc/puppetlabs/puppet/ssl/certs/ca.pem'),
       server_ssl_cert        => pick($server_ssl_cert, "/etc/puppetlabs/puppet/ssl/certs/${server_fqdn}.pem"),
       server_ssl_key         => pick($server_ssl_key, "/etc/puppetlabs/puppet/ssl/private_keys/${server_fqdn}.pem"),
-      require                => Class['postgresql::server'],
+      require                => [Class['foreman::repo'], Class['postgresql::server']],
     }
 
     # Configure Puppet Server integration if enabled
