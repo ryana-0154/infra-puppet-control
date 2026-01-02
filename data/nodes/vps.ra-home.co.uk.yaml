@@ -236,6 +236,10 @@ profile::wireguard::peers:
     public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEALiZag6hLXh085lgQ3DgHrezkRkKiSMJHVadxKP9elkkTz78OPDgIntIxEuPOJUrEM4AogtMU0izG3xcaIAj95j0vZIMDW8fGyoFBMCYaMz8iXVpPnx0+0OAsCoRkqCOIw2/MPlw7FJJLzba+OUykfAO4UeGVF3NV/ULQ2B9AMzXKKsNXBobZBz775oPR7Qf1LGcS9kohpkhae1Hj2i2lIfZpCUn+4RHlBMBv94TYBJXCVaOtIOk8mNf6IVd6+LNLbB9RIG005Q/DeG5RTStBibd06UfBhvyij83EphHhd27E1SeAdCLjd8uJvUz8w3jivKyXZDk7EcxSsUfWM67pajBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBACr3dLvGWe3dfOtWxyOG56gDDk9ZLAffvcQ6oHfe1WqJDudiC9lYume0cDTil9xbRgeTOc3AZXdq4ljwpZPoRu9sM=]'
     preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAcn47yR7vF4rQhDPMB8y4D9xHNxbFv7/6pvhMfzFcUrGfFAFTzzzHC0U6INUUhCFpJb10YRjHmGG53y9fESK1OQTHwxfgrSFikK5SjqLrx/jAUehot+lmPFrOd6ByaByf1idkiAdJrFM8zizu5ioToci6kt7Cpk/qKCF+6F/N26/zSEPu5VUgIHrs7pfDb3dlKexkzaStOaTHFS9/vb5wfm66O3Y4qz/rjGR0GHQ8hGbMftvZLdCasB/L2XkLwijf+iXorRcN1VQjyKdV4Rl3J+NvQ8oVrIVuH0XY/k+ePWRmQiYlWE9ZpGblN0xtUmejJfq3U5rcAaCj3xXSX4/ETjBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBNpwZuoUBJyUcfHgiNlju4gDBvTO0XhJVrySxBd1zNHA8TBxsQXXTFovCkb9qE0P7TgB5zZfN4AR0uMdH4DE/B6SQ=]'
     allowed_ips: '10.10.10.5/32'
+  foreman:
+    public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAeawHFQ0xlEa0n14JRGLbTLE2HAwaoKrC2LRLo/4pWuEaqUD+BfhZmmyWZ78kJU/kUFOJTgqJjB4BpDIYjRBjq1EVlXU7TmmHGx0M9FwFK3wwV8fsYP2Pqm971tmEhpUIZ6ejZQ+7piv5t20YARSvkE3x7unqB1kzfGqZYWLjfWRYTwLUW4Y1puH91EWNp83NJXz41+1DcpBW45qycUS0q46i8IUFG0dM8NcDL467oIfb9A4mpFoQatZhhHYI0Ndt0S2zZT7CMUwZj0nooA84pA6Tgl0MN9497MF8KnGifMQc/TOGRW4PkUDl8ZIAOznWfn6iM4PYla2xQpu50jS3cTBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDBpcsm8uie1Oxs1JCcgPZHgDCAzzgw35ZOR3BGNzOrlTr/Q3JiIpWBy/OX9JsdnCZLY1751zuYItrgNxQGXobwrKA=]'
+    preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAcn4UDH1TqZmKloa+2XJGT80Zig/hXcLbis65eRhfI6zdow2Zx7zc9OV6kqIoy7q1EgbsEjQofrYsFS+DdqkAccj+caO/BvDi06YXbZA4N+2iouNZNUjIhHYBTdQGvcW8mZxEZeMi1ER79UNJTQpj4a9zoHfd/+z9CZn6I/hbC85z1zS62+7Zn0pCiwZQHc5QYRRYsdHz4fYm6ZzEQzjub6csgf8EPJh+jH89Csg259/BR5oRmggDl3D7rJl27PVkmRQYnSgm005IGUC+/LDMnAdUzgnuLagQpflC0n4oMQutqswL+aDQcfVkKazvduIwNSnraGLkOf/pZOxHmdUQszBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBBUNxeY/eOGyqM9ycgMlwFgDCjcKodl4EjOGoh+8hftZjYtyN062BihwhABQlI1Nc+RZjbSlGpPSCaAvqKSnsmePU=]'
+    allowed_ips: '10.10.10.6/32'
 
 # ============================================================================
 # Pi-hole Native Installation Configuration
@@ -266,7 +270,8 @@ profile::pihole_native::dnsmasq_listening: 'bind'
 # Local DNS Records for Internal Services
 # As per guide: home.server for local LAN access, travel.server for remote VPN access
 profile::pihole_native::local_dns_records:
+  'pi.local': '192.168.1.22'
   'vps.ra-home.co.uk': '10.10.10.1'
   'pi.ra-home.co.uk': '10.10.10.5'
   'puppet.pi': '10.10.10.5'
-  'pi.local': '192.168.1.22'
+  'foreman.ra-home.co.uk': '10.10.10.6'

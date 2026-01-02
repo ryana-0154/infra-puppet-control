@@ -16,6 +16,40 @@ hostname: YOUR_HOSTNAME
 fqdn: YOUR_HOSTNAME.ra-home.co.uk
 manage_etc_hosts: true
 
+# Datasource configuration (NoCloud for bare metal/VM/local configs)
+datasource_list: [NoCloud, None]
+
+# Explicitly disable problematic cloud modules
+cloud_config_modules:
+  - migrator
+  - bootcmd
+  - write-files
+  - growpart
+  - resizefs
+  - disk_setup
+  - mounts
+  - set_hostname
+  - update_hostname
+  - update_etc_hosts
+  - ca-certs
+  - rsyslog
+  - users-groups
+  # REMOVED: disable-ec2-metadata (not needed for non-AWS)
+  - ssh
+
+cloud_final_modules:
+  - package-update-upgrade-install
+  - scripts-vendor
+  - scripts-per-once
+  - scripts-per-boot
+  - scripts-per-instance
+  - scripts-user
+  - ssh-authkey-fingerprints
+  - keys-to-console
+  - phone-home
+  - final-message
+  - power-state-change
+
 # User configuration
 users:
   - name: ryan
