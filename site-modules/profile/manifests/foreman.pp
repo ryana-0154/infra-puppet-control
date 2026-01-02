@@ -129,7 +129,6 @@ class profile::foreman (
         server_foreman_url    => "https://${server_fqdn}",
         server_reports        => 'foreman',
         server_external_nodes => $external_nodes_path,
-        require               => Class['foreman'],
       }
 
       # Install Foreman Puppet plugin for web UI integration
