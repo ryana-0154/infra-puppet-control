@@ -126,6 +126,7 @@ class profile::foreman (
       # Note: This node is ALSO an agent of pi.ra-home.co.uk
       class { 'puppet':
         server                => true,
+        server_ca             => false,  # pi.ra-home.co.uk is the CA, not this server
         server_foreman        => true,
         server_foreman_url    => "https://${server_fqdn}",
         server_reports        => 'foreman',
