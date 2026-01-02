@@ -24,13 +24,20 @@ describe 'profile::foreman' do
         it { is_expected.to compile.with_all_deps }
 
         it {
+          is_expected.to contain_class('foreman::repo').with(
+            repo: 'nightly'
+          )
+        }
+
+        it {
           is_expected.to contain_class('foreman').with(
-            db_type: 'postgresql',
             db_host: 'localhost',
             db_database: 'foreman',
             db_username: 'foreman'
           )
         }
+
+        it { is_expected.to contain_class('foreman::repo').that_comes_before('Class[foreman]') }
 
         # NOTE: Service management is handled by the foreman class itself
 
@@ -44,12 +51,19 @@ describe 'profile::foreman' do
           it { is_expected.to compile.and_raise_error(/admin_password must be set/) }
         end
 
-        context 'with custom server_fqdn' do
+        context 'with custom server_fqdn and foreman_version' do
           let(:params) do
             super().merge(
-              server_fqdn: 'foreman.example.com'
+              server_fqdn: 'foreman.example.com',
+              foreman_version: '3.12'
             )
           end
+
+          it {
+            is_expected.to contain_class('foreman::repo').with(
+              repo: '3.12'
+            )
+          }
 
           it {
             is_expected.to contain_class('foreman').with(
