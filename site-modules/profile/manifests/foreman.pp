@@ -139,6 +139,10 @@ class profile::foreman (
 
       # Install Foreman Puppet plugin for web UI integration
       include foreman::plugin::puppet
+
+      # Deploy Puppet control repository with r10k
+      # This ensures the Puppet Server has the latest code from Git
+      include profile::r10k
     }
 
     # Note: Service management is handled by the foreman class itself

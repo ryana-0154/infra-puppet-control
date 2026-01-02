@@ -1,0 +1,22 @@
+# r10k configuration managed by Puppet
+# Any manual changes will be overwritten
+
+---
+cachedir: '<%= @cachedir %>'
+
+sources:
+<% @sources.each do |source_name, source_config| -%>
+  <%= source_name %>:
+    remote: '<%= source_config['remote'] %>'
+    basedir: '<%= source_config['basedir'] %>'
+<% end -%>
+
+# Git settings
+git:
+  provider: 'rugged'
+  private_key: '/root/.ssh/id_rsa'
+
+# Deploy settings
+deploy:
+  purge_levels: ['deployment', 'puppetfile']
+  write_lock: false
