@@ -131,7 +131,7 @@ class profile::foreman (
         server_reports        => 'foreman',
         server_external_nodes => $external_nodes_path,
         # Don't manage agent settings - this is a compile master but still an agent of another server
-        client                => false,  # Don't manage agent configuration
+        agent                 => false,  # Don't manage agent configuration
       }
 
       # Install Foreman Puppet plugin for web UI integration
