@@ -67,7 +67,7 @@ profile::foreman::initial_location:
 # Foreman Smart Proxy Configuration
 profile::foreman_proxy::manage_proxy: true
 profile::foreman_proxy::foreman_base_url: 'https://foreman01.ra-home.co.uk'
-profile::foreman_proxy::register_in_foreman: true  # Foreman is now running
+profile::foreman_proxy::register_in_foreman: false  # Disabled until OAuth credentials are fixed
 profile::foreman_proxy::manage_dns: true
 profile::foreman_proxy::dns_provider: 'nsupdate'
 profile::foreman_proxy::dns_server: '127.0.0.1'
