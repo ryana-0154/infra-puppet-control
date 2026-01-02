@@ -110,6 +110,7 @@ class profile::foreman (
       server_ssl_ca          => pick($server_ssl_ca, '/etc/puppetlabs/puppet/ssl/certs/ca.pem'),
       server_ssl_cert        => pick($server_ssl_cert, "/etc/puppetlabs/puppet/ssl/certs/${server_fqdn}.pem"),
       server_ssl_key         => pick($server_ssl_key, "/etc/puppetlabs/puppet/ssl/private_keys/${server_fqdn}.pem"),
+      register_in_foreman    => false,  # Disable during initial install - enable after Foreman is running
       require                => [Class['foreman::repo'], Class['postgresql::server']],
     }
 
