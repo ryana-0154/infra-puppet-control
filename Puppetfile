@@ -37,6 +37,7 @@ mod 'puppetlabs-postgresql', '10.5.0'
 mod 'theforeman-foreman', '28.1.0'
 mod 'theforeman-foreman_proxy', '28.1.0'
 mod 'theforeman-puppet', '20.1.0'
+mod 'theforeman-puppetserver_foreman', '2.1.0'  # Required for Puppet Server + Foreman integration
 
 # Foreman dependencies
 mod 'puppetlabs-apt', '9.4.0'
