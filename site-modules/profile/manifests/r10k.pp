@@ -45,8 +45,10 @@ class profile::r10k (
 ) {
   if $manage_r10k {
     # Install r10k as a Puppet gem
+    # Use version 3.x for compatibility with Ruby 2.7 (Puppet on Rocky 9)
+    # r10k 4.x requires Ruby >= 3.1
     package { 'r10k':
-      ensure   => installed,
+      ensure   => '3.15.5',  # Last stable 3.x release compatible with Ruby 2.7
       provider => 'puppet_gem',
     }
 
