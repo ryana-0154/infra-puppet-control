@@ -1,4 +1,11 @@
 ---
+# DNS Configuration - Use internal Pi-hole/Unbound server
+profile::dns::manage_resolv: true
+profile::dns::nameservers:
+  - '10.10.10.1'
+profile::dns::search_domains:
+  - 'ra-home.co.uk'
+
 ntp::servers:
   - 0.uk.pool.ntp.org
   - 1.uk.pool.ntp.org

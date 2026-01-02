@@ -1,0 +1,14 @@
+# resolv.conf managed by Puppet
+# Any manual changes will be overwritten
+
+<% @search_domains.each do |domain| -%>
+search <%= domain %>
+<% end -%>
+
+<% @nameservers.each do |ns| -%>
+nameserver <%= ns %>
+<% end -%>
+
+<% @options.each do |opt| -%>
+options <%= opt %>
+<% end -%>
