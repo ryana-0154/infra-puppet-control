@@ -115,11 +115,25 @@ class profile::foreman (
 
     # Configure Puppet Server integration if enabled
     if $enable_puppetserver {
-      include foreman::plugin::puppet
+      # Determine external nodes script path if ENC is enabled
+      $external_nodes_path = $enable_enc ? {
+        true    => '/etc/puppetlabs/puppet/node.rb',
+        default => undef,
+      }
 
-      # Note: ENC and report processor configuration is handled
-      # by the main foreman class parameters above (enc => true, reports => true)
-      # The theforeman-foreman module does not provide a foreman::puppetmaster class
+      # Install and configure Puppet Server
+      # This creates the 'puppet' group that Foreman needs
+      class { 'puppet':
+        server                => true,
+        server_foreman_url    => "https://${server_fqdn}",
+        server_reports        => 'foreman',
+        server_enc            => $enable_enc,
+        server_external_nodes => $external_nodes_path,
+        require               => Class['foreman'],
+      }
+
+      # Install Foreman Puppet plugin for web UI integration
+      include foreman::plugin::puppet
     }
 
     # Note: Service management is handled by the foreman class itself
