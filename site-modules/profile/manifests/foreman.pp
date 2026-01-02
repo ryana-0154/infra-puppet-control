@@ -125,9 +125,9 @@ class profile::foreman (
       # This creates the 'puppet' group that Foreman needs
       class { 'puppet':
         server                => true,
+        server_foreman        => true,
         server_foreman_url    => "https://${server_fqdn}",
         server_reports        => 'foreman',
-        server_enc            => $enable_enc,
         server_external_nodes => $external_nodes_path,
         require               => Class['foreman'],
       }
