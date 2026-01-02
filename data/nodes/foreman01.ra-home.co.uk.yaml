@@ -8,6 +8,10 @@ profile::base::manage_logrotate: true
 profile::base::manage_unattended_upgrades: true
 profile::base::manage_ssh_hardening: true
 
+# Puppet Agent - Disabled because this node IS the Puppet Server
+# Puppet configuration is managed via profile::foreman instead
+profile::puppet_agent::manage_agent: false
+
 # PostgreSQL Database Configuration
 profile::postgresql::manage_postgresql: true
 profile::postgresql::postgres_version: '13'

@@ -6,6 +6,13 @@ profile::dns::nameservers:
 profile::dns::search_domains:
   - 'ra-home.co.uk'
 
+# Puppet Agent Configuration - Use foreman01 as Puppet Server
+profile::puppet_agent::manage_agent: true
+profile::puppet_agent::server_hostname: 'foreman01.ra-home.co.uk'
+profile::puppet_agent::ca_server: 'pi.ra-home.co.uk'
+profile::puppet_agent::runinterval: 1800  # 30 minutes
+profile::puppet_agent::environment: 'production'
+
 ntp::servers:
   - 0.uk.pool.ntp.org
   - 1.uk.pool.ntp.org

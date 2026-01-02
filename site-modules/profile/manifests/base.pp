@@ -33,6 +33,10 @@ class profile::base (
   # DNS configuration - always included for internal DNS resolution
   include profile::dns
 
+  # Puppet agent configuration - connects to Puppet Server
+  # Disabled on nodes that ARE the Puppet Server (e.g., foreman01)
+  include profile::puppet_agent
+
   # NTP configuration
   if $manage_ntp {
     include ntp
