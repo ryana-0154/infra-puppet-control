@@ -85,6 +85,14 @@ profile::foreman_proxy::manage_puppet: true
 profile::foreman_proxy::oauth_consumer_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAYKm1ymhvVqy36pLzOHe+jLQiL7eGWVA5w+8tetKrOpsLgT1tw6NbXMZpMtoaa1eGAvuWYAQRQqcIbxPkJ6Nn+DeIdy94j4HrkNJCclEwuMNMeCLbvyffpa8S+TVvpSrkOIn10l3bx05XlwMm0Lee+pq3UoFLFyqsILtuGYc8xbTbCZCj2znbzg4o6XC0bKkBOrM1GhgGrgMaze581XnYW5kCDGJRLl78IsNtt7PG/dPOecxCn8PWD5lBW8CETopLDyJ/TRnrquUWeXOB6+ceIBVBc0iuFJhuYZ9MREFrvPHRTeeR1V3vuwmIjGczh8sxu096C7uGsgRFV0+F9QEf3zBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDqgsfI/4E3qU+U3wof7/U6gDB45aYW10vrj5LFAmgJqC4nru8wTkcrmQyBjNfixdQATu7J5hMKKJ/F0KPCuCQuqAg=]'
 profile::foreman_proxy::oauth_consumer_secret: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAcrb0oXo/7oOBkHlGk8CGbb72WMh+QSBo2VMLkWuEePj/LntXbZGYzhAW0ASmhONDYCuYkufCrQlQCABh9830TyURt7ziw92Yjm+GK8Ny2/eNcEVq+BZ0PnR4ouGp9+xTyxwThhrbDBB4yg9uCTJL+W+hNEMHlQZGtDgiQI+b2eP8/wl7QMdfdB7BQRvOZYdE7DCiycZdLzYS0YtoZS0tOuO9wxNyaG4QFhC5LudguMnPje4LEUGD1FzlAST32emCS1N5BpYmvPHKZI+OTewjx7061tA/smSPLhlUgxgyeXydYzxblkiJn5MiVxkyp56w4KaYGYcPuWXJt4ZUBQ7GlDBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBMiCi/eOpt0rKjUY+FuzZXgDCuTGQRVVuj75PGmiRfCbmouSGnVHZSb1Cz4piUdJyNn6jjbGZaZFDuaZTh/tX/VPk=]'
 
+# R10k Configuration - Deploys Puppet control repository
+profile::r10k::manage_r10k: true
+profile::r10k::git_remote: 'https://github.com/ryana-0154/infra-puppet-control.git'
+profile::r10k::basedir: '/etc/puppetlabs/code/environments'
+profile::r10k::cachedir: '/var/cache/r10k'
+profile::r10k::auto_deploy: true  # Deploy on first run
+profile::r10k::manage_cron: false  # Manual deployments via Puppet runs for now
+
 # Firewall Rules (accessible from VPN network)
 profile::firewall::custom_rules:
   foreman_https:
