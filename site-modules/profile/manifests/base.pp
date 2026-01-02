@@ -30,6 +30,9 @@ class profile::base (
   Boolean $manage_unattended_upgrades = false,
   Boolean $manage_ssh_hardening       = false,
 ) {
+  # DNS configuration - always included for internal DNS resolution
+  include profile::dns
+
   # NTP configuration
   if $manage_ntp {
     include ntp
