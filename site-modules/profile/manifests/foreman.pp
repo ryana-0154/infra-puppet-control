@@ -123,12 +123,15 @@ class profile::foreman (
 
       # Install and configure Puppet Server
       # This creates the 'puppet' group that Foreman needs
+      # Note: This node is ALSO an agent of pi.ra-home.co.uk (don't change agent config)
       class { 'puppet':
         server                => true,
         server_foreman        => true,
         server_foreman_url    => "https://${server_fqdn}",
         server_reports        => 'foreman',
         server_external_nodes => $external_nodes_path,
+        # Don't manage agent settings - this is a compile master but still an agent of another server
+        client                => false,  # Don't manage agent configuration
       }
 
       # Install Foreman Puppet plugin for web UI integration
