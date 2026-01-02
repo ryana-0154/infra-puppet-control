@@ -2,14 +2,13 @@
 # This file is the main entry point for Puppet and should contain
 # node definitions or include statements for classification
 
-# Pi node - Foreman ENC server
-node 'pi.ra-home.co.uk' {
-  include role::foreman
-}
-
 # VPS nodes
 node 'vps.ra-home.co.uk' {
   include role::vps
+}
+
+node 'foreman01.ra-home.co.uk' {
+  include role::foreman
 }
 
 # Default node - applies to all nodes not explicitly matched
