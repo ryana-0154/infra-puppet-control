@@ -39,10 +39,9 @@ profile::postgresql::databases:
 profile::postgresql::database_users:
   foreman:
     password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEARTA3cU6AmDX8cbahBhJV1zMqgNL+A//t3NxF2H2u57p87RyBbC6DdR9YX/PtccMcRRCZcb78dU7HrU2Wxw3bojwJDzMYoeTqz4vPcOFG0J01H5IyVKlsHr0Bbi2NudOROQiQduqIVmE83odjhtOJGUQUAblE5uXD+mBQ7e61no5ihnDx7zGNKqf/L+JLYJ6+CkXkBnwZZf+rAvsapdFiCe4YOtb+Vcls875H8FlP/3TLC2MeHk0nM6/ep/cYuaSWKtgj0ABZnMLxJ5FflQ4KxH+vsu9Ju7ga3ND58DkXH6y4nach5NGFjuIltiA/dxUHi4sqgIQhqgMDa6iMZhM+ijA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCdjc/UFCM6RgIfHirj4fUvgBAv+qlb8A2mKqX+ccylLEzP]'
-  puppetdb:
-    password: 'CHpWKjD03UkYIaO2+wpOSbUN/3M4LrYYmE1DejGwYFA='
-  puppetdb-read:
-    password: 'CHpWKjD03UkYIaO2+wpOSbUN/3M4LrYYmE1DejGwYFA='
+  # PuppetDB passwords managed via Foreman parameters:
+  # profile::postgresql::database_users::puppetdb::password
+  # profile::postgresql::database_users::puppetdb-read::password
 
 profile::postgresql::database_grants:
   foreman_db_access:
