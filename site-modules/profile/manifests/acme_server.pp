@@ -30,34 +30,28 @@
 # @param renew_cron_hour
 #   Hour to run certificate renewal check (default: 2 = 2 AM)
 #
-# @example Basic usage via Hiera (staging)
-#   profile::acme_server::manage_acme: true
-#   profile::acme_server::use_staging: true
-#   profile::acme_server::contact_email: 'admin@ra-home.co.uk'
-#   profile::acme_server::profiles:
-#     cloudflare_dns01:
-#       challengetype: 'dns-01'
-#       hook: 'dns_cf'
-#       env:
-#         CF_Token: "%{lookup('acme::cloudflare_api_token')}"
+# @example Basic usage via Foreman ENC Smart Class Parameters
+#   Configure → Puppet Classes → profile::acme_server → Smart Class Parameters:
+#   - manage_acme: true
+#   - use_staging: true
+#   - contact_email: 'admin@ra-home.co.uk'
+#   - profiles: { cloudflare_dns01: { challengetype: 'dns-01', ... } }
 #
 # @example Production wildcard certificate
-#   profile::acme_server::use_staging: false
-#   profile::acme_server::certificates:
-#     wildcard_ra_home:
-#       use_profile: 'cloudflare_dns01'
-#       domain: '*.ra-home.co.uk'
-#       domain_alias: ['ra-home.co.uk']
+#   - use_staging: false
+#   - certificates: { wildcard_ra_home: { use_profile: 'cloudflare_dns01', ... } }
 #
-class profile::acme_server (
-  Boolean $manage_acme = false,
-  String[1] $acme_host = $facts['networking']['fqdn'],
-  Boolean $use_staging = false,
-  Optional[String[1]] $contact_email = undef,
-  Hash[String, Hash] $profiles = {},
-  Hash[String, Hash] $certificates = {},
-  Integer[0,23] $renew_cron_hour = 2,
-) {
+class profile::acme_server {
+  # Use lookup() to check both Hiera and Foreman ENC Smart Class Parameters
+  # lookup() will check in order: Hiera data, then environment/global scope
+  $manage_acme = lookup('profile::acme_server::manage_acme', Boolean, 'first', false)
+  $acme_host = lookup('profile::acme_server::acme_host', String[1], 'first', $facts['networking']['fqdn'])
+  $use_staging = lookup('profile::acme_server::use_staging', Boolean, 'first', false)
+  $contact_email = lookup('profile::acme_server::contact_email', Optional[String[1]], 'first', undef)
+  $profiles = lookup('profile::acme_server::profiles', Hash[String, Hash], 'first', {})
+  $certificates = lookup('profile::acme_server::certificates', Hash[String, Hash], 'first', {})
+  $renew_cron_hour = lookup('profile::acme_server::renew_cron_hour', Integer[0,23], 'first', 2)
+
   if $manage_acme {
     # Validate contact_email is provided for production
     if !$use_staging and !$contact_email {
@@ -78,7 +72,7 @@ class profile::acme_server (
       profiles  => $profiles,
     }
 
-    # Create certificate resources from Hiera
+    # Create certificate resources from configuration
     # Each certificate will be requested via acme.sh and made available
     # for deployment to nodes via exported resources
     $certificates.each |String $cert_name, Hash $cert_config| {
