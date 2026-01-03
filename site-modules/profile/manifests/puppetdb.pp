@@ -29,23 +29,25 @@
 # @param java_args
 #   JVM arguments for PuppetDB (memory tuning)
 #
-# @example Basic usage via Hiera
+# @example Basic usage via Hiera or Foreman ENC
 #   profile::puppetdb::manage_puppetdb: true
 #   profile::puppetdb::postgres_password: 'ENC[PKCS7,...]'
 #
-class profile::puppetdb (
-  Boolean $manage_puppetdb = false,
-  String[1] $postgres_host = 'localhost',
-  Integer[1024,65535] $postgres_port = 5432,
-  String[1] $postgres_database = 'puppetdb',
-  String[1] $postgres_username = 'puppetdb',
-  Sensitive[String[1]] $postgres_password = Sensitive('changeme'),
-  String[1] $puppetdb_version = 'installed',
-  Hash[String, Scalar] $java_args = {
+class profile::puppetdb {
+  # Use profile::param() to support both Hiera and Foreman ENC Smart Class Parameters
+  $manage_puppetdb = profile::param('profile::puppetdb::manage_puppetdb', Boolean, false)
+  $postgres_host = profile::param('profile::puppetdb::postgres_host', String[1], 'localhost')
+  $postgres_port = profile::param('profile::puppetdb::postgres_port', Integer[1024,65535], 5432)
+  $postgres_database = profile::param('profile::puppetdb::postgres_database', String[1], 'puppetdb')
+  $postgres_username = profile::param('profile::puppetdb::postgres_username', String[1], 'puppetdb')
+  $postgres_password_raw = profile::param('profile::puppetdb::postgres_password', String[1], 'changeme')
+  $postgres_password = Sensitive($postgres_password_raw)
+  $puppetdb_version = profile::param('profile::puppetdb::puppetdb_version', String[1], 'installed')
+  $java_args = profile::param('profile::puppetdb::java_args', Hash[String, Scalar], {
     '-Xmx' => '2g',  # 2GB max heap (adjust based on infrastructure size)
     '-Xms' => '1g',  # 1GB initial heap
-  },
-) {
+  })
+
   if $manage_puppetdb {
     # Install and configure PuppetDB
     class { 'puppetdb':
