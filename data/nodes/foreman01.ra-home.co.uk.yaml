@@ -116,6 +116,27 @@ profile::firewall::custom_rules:
     source: '10.10.10.0/24'
     jump: accept
 
-# ACME configuration is managed via Foreman ENC (not Hiera)
-# To configure: Foreman UI → Hosts → foreman01 → Parameters
-# Hiera would override ENC settings, so ACME config is intentionally not here
+# ACME (Let's Encrypt) Certificate Management
+# NOTE: Puppet uses data_binding_terminus=hiera, so ENC Smart Class Parameters
+# don't work for automatic parameter lookup. Must use Hiera instead.
+profile::acme_server::manage_acme: true
+profile::acme_server::use_staging: true
+profile::acme_server::contact_email: 'ryanalderton2@gmail.com'
+
+# Cloudflare DNS-01 challenge profile
+profile::acme_server::profiles:
+  cloudflare_dns01:
+    challengetype: 'dns-01'
+    hook: 'dns_cf'
+    env:
+      CF_Token: "%{lookup('acme::cloudflare_api_token')}"
+    options:
+      dnssleep: 120
+
+# Wildcard certificate for *.ra-home.co.uk
+profile::acme_server::certificates:
+  wildcard_ra_home:
+    use_profile: 'cloudflare_dns01'
+    domain: '*.ra-home.co.uk'
+    domain_alias:
+      - 'ra-home.co.uk'
