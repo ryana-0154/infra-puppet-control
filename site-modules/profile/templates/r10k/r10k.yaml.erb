@@ -11,12 +11,6 @@ sources:
     basedir: '<%= source_config['basedir'] %>'
 <% end -%>
 
-# Git settings
-git:
-  provider: 'rugged'
-  private_key: '/root/.ssh/id_rsa'
-
 # Deploy settings
 deploy:
-  purge_levels: ['deployment', 'puppetfile']
-  write_lock: false
+  purge_levels: ['deployment', 'environment', 'puppetfile']
