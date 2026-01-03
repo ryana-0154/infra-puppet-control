@@ -38,8 +38,8 @@ class profile::puppetdb {
   $manage_puppetdb = profile::param('profile::puppetdb::manage_puppetdb', Boolean, false)
   $postgres_host = profile::param('profile::puppetdb::postgres_host', String[1], 'localhost')
   $postgres_port_raw = profile::param('profile::puppetdb::postgres_port', Variant[String[1], Integer[1024,65535]], 5432)
-  # PuppetDB module expects port as Integer
-  $postgres_port = Integer($postgres_port_raw)
+  # PuppetDB module expects port as String (for scanf function)
+  $postgres_port = String($postgres_port_raw)
   $postgres_database = profile::param('profile::puppetdb::postgres_database', String[1], 'puppetdb')
   $postgres_username = profile::param('profile::puppetdb::postgres_username', String[1], 'puppetdb')
   $postgres_password_raw = profile::param('profile::puppetdb::postgres_password', String[1], 'changeme')
