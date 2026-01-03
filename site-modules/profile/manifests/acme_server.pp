@@ -58,17 +58,10 @@ class profile::acme_server {
       fail('profile::acme_server: contact_email is required when use_staging is false')
     }
 
-    # Determine CA URL based on staging flag
-    $ca_url = $use_staging ? {
-      true    => 'https://acme-staging-v02.api.letsencrypt.org/directory',
-      default => 'https://acme-v02.api.letsencrypt.org/directory',
-    }
-
     # Install acme.sh on Puppet Server
+    # The markt-acme module handles CA URL and email through certificate resources
     class { 'acme':
       acme_host => $acme_host,
-      ca_url    => $ca_url,
-      email     => $contact_email,
       profiles  => $profiles,
     }
 
@@ -76,8 +69,17 @@ class profile::acme_server {
     # Each certificate will be requested via acme.sh and made available
     # for deployment to nodes via exported resources
     $certificates.each |String $cert_name, Hash $cert_config| {
+      # Add CA and email to certificate config
+      $cert_config_full = $cert_config + {
+        'ca'    => $use_staging ? {
+          true    => 'letsencrypt_test',
+          default => 'letsencrypt',
+        },
+        'email' => $contact_email,
+      }
+
       acme::certificate { $cert_name:
-        * => $cert_config,
+        * => $cert_config_full,
       }
     }
 
