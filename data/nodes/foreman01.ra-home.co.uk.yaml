@@ -31,16 +31,63 @@ profile::postgresql::databases:
     owner: foreman
     encoding: UTF8
     locale: en_US.UTF-8
+  puppetdb:
+    owner: puppetdb
+    encoding: UTF8
+    locale: en_US.UTF-8
 
 profile::postgresql::database_users:
   foreman:
     password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEARTA3cU6AmDX8cbahBhJV1zMqgNL+A//t3NxF2H2u57p87RyBbC6DdR9YX/PtccMcRRCZcb78dU7HrU2Wxw3bojwJDzMYoeTqz4vPcOFG0J01H5IyVKlsHr0Bbi2NudOROQiQduqIVmE83odjhtOJGUQUAblE5uXD+mBQ7e61no5ihnDx7zGNKqf/L+JLYJ6+CkXkBnwZZf+rAvsapdFiCe4YOtb+Vcls875H8FlP/3TLC2MeHk0nM6/ep/cYuaSWKtgj0ABZnMLxJ5FflQ4KxH+vsu9Ju7ga3ND58DkXH6y4nach5NGFjuIltiA/dxUHi4sqgIQhqgMDa6iMZhM+ijA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCdjc/UFCM6RgIfHirj4fUvgBAv+qlb8A2mKqX+ccylLEzP]'
+  puppetdb:
+    password: 'CHpWKjD03UkYIaO2+wpOSbUN/3M4LrYYmE1DejGwYFA='
+  puppetdb-read:
+    password: 'CHpWKjD03UkYIaO2+wpOSbUN/3M4LrYYmE1DejGwYFA='
 
 profile::postgresql::database_grants:
   foreman_db_access:
     privilege: ALL
     db: foreman
     role: foreman
+  puppetdb_db_access:
+    privilege: ALL
+    db: puppetdb
+    role: puppetdb
+  puppetdb_read_db_access:
+    privilege: SELECT
+    db: puppetdb
+    role: puppetdb-read
+
+# pg_hba rules for TCP connections from localhost
+profile::postgresql::pg_hba_rules:
+  puppetdb_tcp_ipv4:
+    type: host
+    database: puppetdb
+    user: puppetdb
+    address: '127.0.0.1/32'
+    auth_method: md5
+    order: '100'
+  puppetdb_tcp_ipv6:
+    type: host
+    database: puppetdb
+    user: puppetdb
+    address: '::1/128'
+    auth_method: md5
+    order: '101'
+  puppetdb_read_tcp_ipv4:
+    type: host
+    database: puppetdb
+    user: puppetdb-read
+    address: '127.0.0.1/32'
+    auth_method: md5
+    order: '102'
+  puppetdb_read_tcp_ipv6:
+    type: host
+    database: puppetdb
+    user: puppetdb-read
+    address: '::1/128'
+    auth_method: md5
+    order: '103'
 
 # Foreman Server Configuration
 profile::foreman::manage_foreman: true
