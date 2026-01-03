@@ -5,7 +5,8 @@
 # - Foreman ENC Smart Class Parameters (top-scope variables)
 #
 # Puppet's automatic parameter lookup only uses Hiera when data_binding_terminus=hiera.
-# This function uses lookup() which can find both Hiera data AND ENC top-scope variables.
+# ENC parameters become top-scope variables like $::profile::example::param
+# This function checks both Hiera (via lookup) and top-scope (via getvar).
 #
 # @param key
 #   The parameter key to look up (e.g., 'profile::base::manage_firewall')
@@ -16,7 +17,7 @@
 # @param default
 #   The default value if the parameter is not found
 #
-# @return The parameter value from Hiera, ENC, or the default
+# @return The parameter value from Hiera, ENC top-scope, or the default
 #
 # @example Using in a profile class
 #   class profile::example {
@@ -29,10 +30,18 @@ function profile::param(
   Type $type,
   Any $default,
 ) >> Any {
-  # Use lookup() with 'first' merge strategy
-  # This will check in order:
-  # 1. Hiera data (if present)
-  # 2. Environment/global scope (where Foreman ENC parameters live)
-  # 3. Default value (if nothing found)
-  lookup($key, $type, 'first', $default)
+  # First, try to get the value from top-scope (where Foreman ENC parameters live)
+  # ENC parameters are available as $::key
+  $topscope_key = "::${key}"
+  $topscope_value = getvar($topscope_key)
+
+  # If found in top-scope and not undef, return it
+  if $topscope_value =~ NotUndef {
+    # Validate the type matches
+    assert_type($type, $topscope_value)
+    $topscope_value
+  } else {
+    # Fall back to Hiera lookup
+    lookup($key, $type, 'first', $default)
+  }
 }
