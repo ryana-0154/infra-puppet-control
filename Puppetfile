@@ -31,6 +31,13 @@ mod 'puppet-augeasproviders_core', '4.2.0'
 
 # Database management
 mod 'puppetlabs-postgresql', '10.5.0'
+mod 'puppetlabs-puppetdb', '8.1.0'  # PuppetDB for exported resources (required by ACME)
+
+# Certificate management (Let's Encrypt)
+mod 'markt-acme', '4.1.0'  # Let's Encrypt certificate automation
+mod 'markt-marktlib', :latest  # Required dependency for markt-acme
+mod 'puppet-openssl', '3.0.0'  # OpenSSL management for certificates
+mod 'puppetlabs-nginx', :latest  # Nginx web server for reverse proxy (deprecated but functional)
 
 # Foreman ENC and management (Rocky Linux 9 / EL9 compatible)
 # Module versions 28.x support Foreman 3.1+ on EL9
