@@ -115,3 +115,7 @@ profile::firewall::custom_rules:
     proto: tcp
     source: '10.10.10.0/24'
     jump: accept
+
+# ACME configuration is managed via Foreman ENC (not Hiera)
+# To configure: Foreman UI → Hosts → foreman01 → Parameters
+# Hiera would override ENC settings, so ACME config is intentionally not here
