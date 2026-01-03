@@ -39,9 +39,10 @@ profile::postgresql::databases:
 profile::postgresql::database_users:
   foreman:
     password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEARTA3cU6AmDX8cbahBhJV1zMqgNL+A//t3NxF2H2u57p87RyBbC6DdR9YX/PtccMcRRCZcb78dU7HrU2Wxw3bojwJDzMYoeTqz4vPcOFG0J01H5IyVKlsHr0Bbi2NudOROQiQduqIVmE83odjhtOJGUQUAblE5uXD+mBQ7e61no5ihnDx7zGNKqf/L+JLYJ6+CkXkBnwZZf+rAvsapdFiCe4YOtb+Vcls875H8FlP/3TLC2MeHk0nM6/ep/cYuaSWKtgj0ABZnMLxJ5FflQ4KxH+vsu9Ju7ga3ND58DkXH6y4nach5NGFjuIltiA/dxUHi4sqgIQhqgMDa6iMZhM+ijA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCdjc/UFCM6RgIfHirj4fUvgBAv+qlb8A2mKqX+ccylLEzP]'
-  # PuppetDB passwords managed via Foreman parameters:
-  # profile::postgresql::database_users::puppetdb::password
-  # profile::postgresql::database_users::puppetdb-read::password
+  puppetdb:
+    password: "%{lookup('profile::postgresql::database_users::puppetdb::password')}"
+  puppetdb-read:
+    password: "%{lookup('profile::postgresql::database_users::puppetdb-read::password')}"
 
 profile::postgresql::database_grants:
   foreman_db_access:
@@ -87,6 +88,14 @@ profile::postgresql::pg_hba_rules:
     address: '::1/128'
     auth_method: md5
     order: '103'
+
+# PuppetDB Configuration
+profile::puppetdb::manage_puppetdb: true
+profile::puppetdb::postgres_host: 'localhost'
+profile::puppetdb::postgres_port: 5432
+profile::puppetdb::postgres_database: 'puppetdb'
+profile::puppetdb::postgres_username: 'puppetdb'
+profile::puppetdb::postgres_password: "%{lookup('profile::postgresql::database_users::puppetdb::password')}"
 
 # Foreman Server Configuration
 profile::foreman::manage_foreman: true

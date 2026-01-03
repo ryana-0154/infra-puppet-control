@@ -25,7 +25,11 @@
 #   Hash of ACME challenge profiles (DNS-01, HTTP-01, etc.)
 #
 # @param certificates
-#   Hash of certificate requests to manage
+#   Hash of certificate requests to manage. Each certificate should specify:
+#   - domain: Primary domain (use space-separated string for SANs, e.g., 'example.com *.example.com')
+#   - use_profile: Name of the challenge profile to use (from profiles hash)
+#   - use_account: (Optional) Account name to use (defaults to 'default')
+#   Example: { wildcard_ra_home: { domain: '*.ra-home.co.uk ra-home.co.uk', use_profile: 'cloudflare_dns01' } }
 #
 # @param renew_cron_hour
 #   Hour to run certificate renewal check (default: 2 = 2 AM)
@@ -35,33 +39,46 @@
 #   - manage_acme: true
 #   - use_staging: true
 #   - contact_email: 'admin@ra-home.co.uk'
-#   - profiles: { cloudflare_dns01: { challengetype: 'dns-01', ... } }
+#   - profiles: { cloudflare_dns01: { challengetype: 'dns-01', options: { env: { CF_Token: 'xxx' } } } }
 #
 # @example Production wildcard certificate
 #   - use_staging: false
-#   - certificates: { wildcard_ra_home: { use_profile: 'cloudflare_dns01', ... } }
+#   - certificates: { wildcard_ra_home: { domain: '*.ra-home.co.uk ra-home.co.uk', use_profile: 'cloudflare_dns01' } }
 #
-class profile::acme_server {
-  # Use profile::param() helper to support both Hiera and Foreman ENC Smart Class Parameters
-  # This allows parameters to be set in either Hiera YAML files or Foreman UI
-  $manage_acme = profile::param('profile::acme_server::manage_acme', Boolean, false)
-  $acme_host = profile::param('profile::acme_server::acme_host', String[1], $facts['networking']['fqdn'])
-  $use_staging = profile::param('profile::acme_server::use_staging', Boolean, false)
-  $contact_email = profile::param('profile::acme_server::contact_email', Optional[String[1]], undef)
-  $profiles = profile::param('profile::acme_server::profiles', Hash[String, Hash], {})
-  $certificates = profile::param('profile::acme_server::certificates', Hash[String, Hash], {})
-  $renew_cron_hour = profile::param('profile::acme_server::renew_cron_hour', Integer[0,23], 2)
+class profile::acme_server (
+  Boolean $manage_acme = false,
+  String[1] $acme_host = $facts['networking']['fqdn'],
+  Boolean $use_staging = false,
+  Optional[String[1]] $contact_email = undef,
+  Hash[String, Hash] $profiles = {},
+  Hash[String, Hash] $certificates = {},
+  Integer[0,23] $renew_cron_hour = 2,
+) {
 
   if $manage_acme {
-    # Validate contact_email is provided for production
-    if !$use_staging and !$contact_email {
-      fail('profile::acme_server: contact_email is required when use_staging is false')
+    # Validate contact_email is provided
+    if !$contact_email {
+      fail('profile::acme_server: contact_email is required when manage_acme is true')
     }
 
-    # Install acme.sh on Puppet Server
-    # The markt-acme module handles CA URL and email through certificate resources
+    # Create ACME account for Let's Encrypt
+    # The markt-acme module requires accounts to be defined in the main acme class
+    # Certificates reference accounts via the use_account parameter
+    $account_name = 'default'
+    $accounts = {
+      $account_name => {
+        'email' => $contact_email,
+        'ca'    => $use_staging ? {
+          true    => 'letsencrypt_test',
+          default => 'letsencrypt',
+        },
+      }
+    }
+
+    # Install acme.sh on Puppet Server with account configuration
     class { 'acme':
       acme_host => $acme_host,
+      accounts  => $accounts,
       profiles  => $profiles,
     }
 
@@ -69,13 +86,10 @@ class profile::acme_server {
     # Each certificate will be requested via acme.sh and made available
     # for deployment to nodes via exported resources
     $certificates.each |String $cert_name, Hash $cert_config| {
-      # Add CA and email to certificate config
+      # Ensure use_account is set (default to 'default' account if not specified)
+      # The use_account parameter is required by acme::certificate
       $cert_config_full = $cert_config + {
-        'ca'    => $use_staging ? {
-          true    => 'letsencrypt_test',
-          default => 'letsencrypt',
-        },
-        'email' => $contact_email,
+        'use_account' => pick($cert_config['use_account'], $account_name),
       }
 
       acme::certificate { $cert_name:

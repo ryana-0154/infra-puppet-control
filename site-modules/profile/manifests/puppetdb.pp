@@ -33,31 +33,31 @@
 #   profile::puppetdb::manage_puppetdb: true
 #   profile::puppetdb::postgres_password: 'ENC[PKCS7,...]'
 #
-class profile::puppetdb {
-  # Use profile::param() to support both Hiera and Foreman ENC Smart Class Parameters
-  $manage_puppetdb = profile::param('profile::puppetdb::manage_puppetdb', Boolean, false)
-  $postgres_host = profile::param('profile::puppetdb::postgres_host', String[1], 'localhost')
-  $postgres_port_raw = profile::param('profile::puppetdb::postgres_port', Variant[String[1], Integer[1024,65535]], 5432)
-  # PuppetDB module expects port as String (for scanf function)
-  $postgres_port = String($postgres_port_raw)
-  $postgres_database = profile::param('profile::puppetdb::postgres_database', String[1], 'puppetdb')
-  $postgres_username = profile::param('profile::puppetdb::postgres_username', String[1], 'puppetdb')
-  $postgres_password_raw = profile::param('profile::puppetdb::postgres_password', String[1], 'changeme')
-  $postgres_password = Sensitive($postgres_password_raw)
-  $puppetdb_version = profile::param('profile::puppetdb::puppetdb_version', String[1], 'installed')
-  $java_args = profile::param('profile::puppetdb::java_args', Hash[String, Scalar], {
+class profile::puppetdb (
+  Boolean $manage_puppetdb = false,
+  String[1] $postgres_host = 'localhost',
+  Variant[String[1], Integer[1024,65535]] $postgres_port = 5432,
+  String[1] $postgres_database = 'puppetdb',
+  String[1] $postgres_username = 'puppetdb',
+  String[1] $postgres_password = 'changeme',
+  String[1] $puppetdb_version = 'installed',
+  Hash[String, Scalar] $java_args = {
     '-Xmx' => '2g',  # 2GB max heap (adjust based on infrastructure size)
     '-Xms' => '1g',  # 1GB initial heap
-  })
+  },
+) {
+  # PuppetDB module expects port as String (for scanf function)
+  $postgres_port_str = String($postgres_port)
+  $postgres_password_sensitive = Sensitive($postgres_password)
 
   if $manage_puppetdb {
     # Install and configure PuppetDB
     class { 'puppetdb':
       database_host     => $postgres_host,
-      database_port     => $postgres_port,
+      database_port     => $postgres_port_str,
       database_name     => $postgres_database,
       database_username => $postgres_username,
-      database_password => $postgres_password.unwrap,
+      database_password => $postgres_password_sensitive.unwrap,
       java_args         => $java_args,
       manage_dbserver   => false,  # PostgreSQL managed by profile::postgresql
     }
