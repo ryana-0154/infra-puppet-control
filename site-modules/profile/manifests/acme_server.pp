@@ -42,15 +42,15 @@
 #   - certificates: { wildcard_ra_home: { use_profile: 'cloudflare_dns01', ... } }
 #
 class profile::acme_server {
-  # Use lookup() to check both Hiera and Foreman ENC Smart Class Parameters
-  # lookup() will check in order: Hiera data, then environment/global scope
-  $manage_acme = lookup('profile::acme_server::manage_acme', Boolean, 'first', false)
-  $acme_host = lookup('profile::acme_server::acme_host', String[1], 'first', $facts['networking']['fqdn'])
-  $use_staging = lookup('profile::acme_server::use_staging', Boolean, 'first', false)
-  $contact_email = lookup('profile::acme_server::contact_email', Optional[String[1]], 'first', undef)
-  $profiles = lookup('profile::acme_server::profiles', Hash[String, Hash], 'first', {})
-  $certificates = lookup('profile::acme_server::certificates', Hash[String, Hash], 'first', {})
-  $renew_cron_hour = lookup('profile::acme_server::renew_cron_hour', Integer[0,23], 'first', 2)
+  # Use profile::param() helper to support both Hiera and Foreman ENC Smart Class Parameters
+  # This allows parameters to be set in either Hiera YAML files or Foreman UI
+  $manage_acme = profile::param('profile::acme_server::manage_acme', Boolean, false)
+  $acme_host = profile::param('profile::acme_server::acme_host', String[1], $facts['networking']['fqdn'])
+  $use_staging = profile::param('profile::acme_server::use_staging', Boolean, false)
+  $contact_email = profile::param('profile::acme_server::contact_email', Optional[String[1]], undef)
+  $profiles = profile::param('profile::acme_server::profiles', Hash[String, Hash], {})
+  $certificates = profile::param('profile::acme_server::certificates', Hash[String, Hash], {})
+  $renew_cron_hour = profile::param('profile::acme_server::renew_cron_hour', Integer[0,23], 2)
 
   if $manage_acme {
     # Validate contact_email is provided for production
