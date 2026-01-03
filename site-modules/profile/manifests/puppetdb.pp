@@ -71,7 +71,8 @@ class profile::puppetdb {
       manage_storeconfigs     => true,
       strict_validation       => true,
       enable_reports          => true,
-      restart_puppet          => true,  # Restart Puppet Server after config change
+      restart_puppet          => false,  # Don't manage service - puppet module already does
+      manage_puppetserver     => false,  # Don't manage puppetserver service
     }
 
     # Ordering to ensure PuppetDB is ready before Puppet Server connects
