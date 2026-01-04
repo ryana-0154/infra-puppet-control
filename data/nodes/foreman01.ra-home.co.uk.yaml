@@ -191,4 +191,4 @@ profile::acme_server::certificates:
     use_account: 'ryanalderton2@gmail.com'
     ca: 'letsencrypt'  # Production Let's Encrypt (trusted by all browsers)
     ocsp_must_staple: false  # Let's Encrypt ended OCSP must-staple support Dec 2024
-    posthook: 'systemctl reload httpd puppetserver || true'  # Reload services after certificate renewal
+    posthook_cmd: 'systemctl reload httpd puppetserver || true'  # Reload services after certificate renewal
