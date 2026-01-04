@@ -46,7 +46,35 @@ profile::postgresql::database_grants:
   # puppetdb grants managed via Foreman ENC
 
 # pg_hba rules for TCP connections from localhost
-# puppetdb pg_hba rules managed via Foreman ENC
+profile::postgresql::pg_hba_rules:
+  puppetdb_tcp_ipv4:
+    type: host
+    database: puppetdb
+    user: puppetdb
+    address: '127.0.0.1/32'
+    auth_method: md5
+    order: '100'
+  puppetdb_tcp_ipv6:
+    type: host
+    database: puppetdb
+    user: puppetdb
+    address: '::1/128'
+    auth_method: md5
+    order: '101'
+  puppetdb_read_tcp_ipv4:
+    type: host
+    database: puppetdb
+    user: puppetdb-read
+    address: '127.0.0.1/32'
+    auth_method: md5
+    order: '102'
+  puppetdb_read_tcp_ipv6:
+    type: host
+    database: puppetdb
+    user: puppetdb-read
+    address: '::1/128'
+    auth_method: md5
+    order: '103'
 
 # PuppetDB Configuration - All settings managed via Foreman ENC
 
