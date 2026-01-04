@@ -76,7 +76,13 @@ profile::postgresql::pg_hba_rules:
     auth_method: md5
     order: '103'
 
-# PuppetDB Configuration - All settings managed via Foreman ENC
+# PuppetDB Configuration
+profile::puppetdb::manage_puppetdb: true
+profile::puppetdb::postgres_host: 'localhost'
+profile::puppetdb::postgres_port: 5432
+profile::puppetdb::postgres_database: 'puppetdb'
+profile::puppetdb::postgres_username: 'puppetdb'
+profile::puppetdb::postgres_password: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEA4nKMgda+BUt+jQsISyCH5cLPHGoJ9vWhVm6pJ8g8b9Ngi5UQI2tpWyVkxsx+cPOHvIrW+/c6iSGkL5+yzJdzj7Kl3ny9HdZ2WyEUaZFKZq45n9f4+KrT8hBTD71xV9RsJ9azE52DGrkUhOGlxlkOtTSoIkg056S+RjmWl50altzKRNcvz516DbasSQugQauqu7Sk4+5JBFqvrONPiUu2wnwF5Lx8ddI07k5Ivql6dbP4M9NijMqQOJ1m17/obh7LM2tIIq+KR6YqZJjkDWozZllCzpRie8hsCdyJ1M3QKPMwMTQpClx4No1XpcOc1EVotT67rNrv/OA0s+Rm3twtrDBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBAP2m6MuJy7lXhyaw6aK7sXgDBoFX6VsajlAwd+zCvfYrUfOnwJr9PKzlU/ZWVdQbLmanR1fMvlTci0kNFcVpskz/4=]'
 
 # Foreman Server Configuration
 profile::foreman::manage_foreman: true
