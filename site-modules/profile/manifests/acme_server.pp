@@ -70,48 +70,24 @@ class profile::acme_server (
       fail('profile::acme_server: contact_email is required when manage_acme is true')
     }
 
-    # Create ACME account for Let's Encrypt
-    $account_name = 'default'
-    $ca_server = $_use_staging ? {
+    # Determine which CA to use (staging vs production)
+    $default_ca = $_use_staging ? {
       true    => 'letsencrypt_test',
       default => 'letsencrypt',
     }
 
-    # Install acme.sh on Puppet Server
+    # Install and configure acme.sh on Puppet Server
+    # The acme module handles account registration, profile setup, and certificate requests
     class { 'acme':
-      acme_host => $_acme_host,
-    }
-
-    # Create the ACME account
-    acme::account { $account_name:
-      email => $_contact_email,
-      ca    => $ca_server,
-    }
-
-    # Create challenge profiles
-    $_profiles.each |String $profile_name, Hash $profile_config| {
-      acme::profile { $profile_name:
-        * => $profile_config,
-      }
-    }
-
-    # Create certificate resources from configuration
-    # Each certificate will be requested via acme.sh and made available
-    # for deployment to nodes via exported resources
-    $_certificates.each |String $cert_name, Hash $cert_config| {
-      # Ensure use_account is set (default to 'default' account if not specified)
-      # The use_account parameter is required by acme::certificate
-      $cert_config_full = $cert_config + {
-        'use_account' => pick($cert_config['use_account'], $account_name),
-      }
-
-      acme::certificate { $cert_name:
-        * => $cert_config_full,
-      }
+      acme_host    => $_acme_host,
+      accounts     => [$_contact_email],
+      default_ca   => $default_ca,
+      profiles     => $_profiles,
+      certificates => $_certificates,
     }
 
     # Ensure acme.sh cron job runs daily for automatic renewal
-    # Certificates are renewed automatically 30 days before expiry
+    # Certificates are renewed automatically 60 days before expiry (module default)
     cron { 'acme_renewal':
       command => '/root/.acme.sh/acme.sh --cron --home /root/.acme.sh > /dev/null',
       user    => 'root',
