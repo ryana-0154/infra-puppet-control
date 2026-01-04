@@ -89,7 +89,8 @@ profile::foreman::manage_foreman: true
 profile::foreman::foreman_version: '3.12'  # Stable version with full Rocky Linux 9 support (EL9 support started in 3.11)
 profile::foreman::server_fqdn: 'foreman01.ra-home.co.uk'
 # Use Let's Encrypt wildcard certificate for Foreman web UI
-profile::foreman::server_ssl_cert: '/etc/acme.sh/certs/wildcard_ra_home/cert.pem'
+# Use fullchain.pem (cert + intermediate) for proper SSL chain verification
+profile::foreman::server_ssl_cert: '/etc/acme.sh/certs/wildcard_ra_home/fullchain.pem'
 profile::foreman::server_ssl_key: '/etc/acme.sh/keys/wildcard_ra_home/private.key'
 profile::foreman::server_ssl_ca: '/etc/acme.sh/certs/wildcard_ra_home/chain.pem'
 
