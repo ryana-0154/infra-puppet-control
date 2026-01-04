@@ -17,27 +17,25 @@ Data-Driven Design:
 - No environment-specific values hard-coded — move them into Hiera examples.
 - Use automatic parameter lookup patterns when reasonable.
 
-Foreman ENC Integration (MANDATORY):
-- This repository uses **Foreman ENC for class assignment AND configuration values**.
-- **CRITICAL REQUIREMENT**: ALL profile parameters MUST work with Foreman Smart Class Parameters.
-- **Implementation Pattern**: Use `getvar()` to check top-scope for ENC parameters first:
+Foreman ENC + Hiera Hybrid Approach:
+- This repository uses **Foreman ENC for class assignment** and **Hiera for configuration data**.
+- **IMPORTANT**: Foreman Smart Class Parameters only work when classes are **directly assigned** to hosts/hostgroups.
+- **When classes are included via roles** (the roles & profiles pattern), use **Hiera** for all configuration:
+  - Role includes profile → profile reads config from Hiera
+  - Foreman Smart Class Parameters are NOT available to automatic parameter lookup in this scenario
+- **Implementation Pattern**: Use `lookup()` with defaults to support both Hiera and direct assignment:
   ```puppet
   class profile::example (
-    Optional[Boolean] $manage_service = undef,
+    Boolean $manage_service = false,
   ) {
-    $_manage_service = pick($manage_service, getvar('profile::example::manage_service'), false)
+    $_manage_service = lookup('profile::example::manage_service', Boolean, 'first', $manage_service)
     # Use $_manage_service in the class logic
   }
   ```
-- **Why this is necessary**:
-  - Classes included via roles (e.g., `role::foreman` includes `profile::acme_server`)
-  - ENC outputs parameters in top-scope `parameters:` section
-  - Puppet's automatic parameter lookup doesn't check top-scope by default
-  - `getvar()` + `pick()` checks: explicit param → ENC top-scope → Hiera → default
-- **Testing**: Always verify parameters resolve correctly from Foreman ENC:
-  ```bash
-  puppet catalog find <node> | grep -A5 '"parameter_name"'
-  ```
+- **Configuration Location**:
+  - **Use Foreman**: For class assignment, host organization, fact collection
+  - **Use Hiera**: For ALL configuration data, encrypted secrets (eyaml), environment/node-specific values
+  - Store config in: `data/nodes/<fqdn>.yaml`, `data/common.yaml`, etc.
 
 Hiera Requirements:
 - When code requires configuration, generate:

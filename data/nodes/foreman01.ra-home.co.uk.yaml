@@ -152,5 +152,23 @@ profile::firewall::custom_rules:
     source: '10.10.10.0/24'
     jump: accept
 
-# ACME configuration managed via Foreman ENC Smart Class Parameters
-# See: Configure → Puppet Classes → profile::acme_server → Smart Class Parameters
+# ACME Server Configuration
+# NOTE: Foreman Smart Class Parameters don't work with automatic parameter lookup
+# when classes are included via roles. Use Hiera instead.
+profile::acme_server::manage_acme: true
+profile::acme_server::use_staging: true
+profile::acme_server::contact_email: 'ryanalderton2@gmail.com'
+
+profile::acme_server::profiles:
+  cloudflare_dns01:
+    challengetype: 'dns-01'
+    hook: 'dns_cf'
+    env:
+      CF_Token: "%{lookup('acme::cloudflare_api_token')}"
+    options:
+      dnssleep: 120
+
+profile::acme_server::certificates:
+  wildcard_ra_home:
+    domain: '*.ra-home.co.uk ra-home.co.uk'
+    use_profile: 'cloudflare_dns01'
