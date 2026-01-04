@@ -166,7 +166,7 @@ profile::firewall::custom_rules:
 # NOTE: Foreman Smart Class Parameters don't work with automatic parameter lookup
 # when classes are included via roles. Use Hiera instead.
 profile::acme_server::manage_acme: true
-profile::acme_server::use_staging: true
+profile::acme_server::use_staging: false  # Using production Let's Encrypt (trusted certificates)
 profile::acme_server::contact_email: 'ryanalderton2@gmail.com'
 
 profile::acme_server::profiles:
@@ -188,6 +188,6 @@ profile::acme_server::certificates:
     domain: '*.ra-home.co.uk ra-home.co.uk'
     use_profile: 'cloudflare_dns01'
     use_account: 'ryanalderton2@gmail.com'
-    ca: 'letsencrypt_test'
+    ca: 'letsencrypt'  # Production Let's Encrypt (trusted by all browsers)
     ocsp_must_staple: false  # Let's Encrypt ended OCSP must-staple support Dec 2024
     posthook_cmd: 'systemctl reload httpd puppetserver || true'  # Reload services after certificate renewal
