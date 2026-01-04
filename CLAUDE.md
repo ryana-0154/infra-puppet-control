@@ -12,10 +12,32 @@ Core Rules:
 - Support both RedHat-family and Debian-family platforms using $facts['os']['family'] or on_supported_os.
 
 Data-Driven Design:
-- Prefer “data in Hiera, logic in Puppet.”
+- Prefer "data in Hiera, logic in Puppet."
 - Classes must expose parameters (strong types: String, Integer, Boolean, Enum…).
 - No environment-specific values hard-coded — move them into Hiera examples.
 - Use automatic parameter lookup patterns when reasonable.
+
+Foreman ENC Integration (MANDATORY):
+- This repository uses **Foreman ENC for class assignment AND configuration values**.
+- **CRITICAL REQUIREMENT**: ALL profile parameters MUST work with Foreman Smart Class Parameters.
+- **Implementation Pattern**: Use `getvar()` to check top-scope for ENC parameters first:
+  ```puppet
+  class profile::example (
+    Optional[Boolean] $manage_service = undef,
+  ) {
+    $_manage_service = pick($manage_service, getvar('profile::example::manage_service'), false)
+    # Use $_manage_service in the class logic
+  }
+  ```
+- **Why this is necessary**:
+  - Classes included via roles (e.g., `role::foreman` includes `profile::acme_server`)
+  - ENC outputs parameters in top-scope `parameters:` section
+  - Puppet's automatic parameter lookup doesn't check top-scope by default
+  - `getvar()` + `pick()` checks: explicit param → ENC top-scope → Hiera → default
+- **Testing**: Always verify parameters resolve correctly from Foreman ENC:
+  ```bash
+  puppet catalog find <node> | grep -A5 '"parameter_name"'
+  ```
 
 Hiera Requirements:
 - When code requires configuration, generate:
