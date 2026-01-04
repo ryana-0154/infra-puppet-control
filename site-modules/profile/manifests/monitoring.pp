@@ -430,12 +430,23 @@ class profile::monitoring (
     }
 
     if $enable_promtail {
-      # ERB templates need non-prefixed variables in scope
-      $enable_grafana_cloud        = $_enable_grafana_cloud
-      $grafana_cloud_logs_url      = $_grafana_cloud_logs_url
-      $grafana_cloud_logs_username = $_grafana_cloud_logs_username
-      $grafana_cloud_logs_api_key  = $_grafana_cloud_logs_api_key
-      $enable_prometheus           = $enable_victoriametrics
+      # ERB templates need variables in scope - use unique names to avoid conflicts
+      $promtail_enable_grafana_cloud        = $_enable_grafana_cloud
+      $promtail_grafana_cloud_logs_url      = $_grafana_cloud_logs_url
+      $promtail_grafana_cloud_logs_username = $_grafana_cloud_logs_username
+      $promtail_grafana_cloud_logs_api_key  = $_grafana_cloud_logs_api_key
+      $promtail_enable_loki                 = $enable_loki
+      $promtail_monitoring_ip               = $monitoring_ip
+      $promtail_enable_prometheus           = $enable_victoriametrics
+      $promtail_enable_grafana              = $enable_grafana
+      $promtail_enable_blackbox             = $enable_blackbox
+      $promtail_enable_node_exporter        = $enable_node_exporter
+      $promtail_enable_pihole_exporter      = $enable_pihole_exporter
+      $promtail_enable_nginx_proxy          = $enable_nginx_proxy
+      $promtail_enable_authelia             = $enable_authelia
+      $promtail_enable_redis                = $enable_redis
+      $promtail_enable_promtail             = $enable_promtail
+      $promtail_facts                       = $facts
 
       file { "${monitoring_dir}/promtail-config.yaml":
         ensure  => file,

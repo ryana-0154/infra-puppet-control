@@ -9,13 +9,13 @@ positions:
   filename: /tmp/positions.yaml
 
 clients:
-<%- if @enable_grafana_cloud -%>
-  - url: <%= @grafana_cloud_logs_url %>
+<%- if @promtail_enable_grafana_cloud -%>
+  - url: <%= @promtail_grafana_cloud_logs_url %>
     basic_auth:
-      username: <%= @grafana_cloud_logs_username %>
-      password: <%= @grafana_cloud_logs_api_key.unwrap %>
-<%- elsif @enable_loki -%>
-  - url: http://<%= @monitoring_ip %>:3100/loki/api/v1/push
+      username: <%= @promtail_grafana_cloud_logs_username %>
+      password: <%= @promtail_grafana_cloud_logs_api_key.unwrap %>
+<%- elsif @promtail_enable_loki -%>
+  - url: http://<%= @promtail_monitoring_ip %>:3100/loki/api/v1/push
 <%- else -%>
   # Loki disabled - configure external Loki endpoint
   # - url: http://external-loki:3100/loki/api/v1/push
@@ -29,7 +29,7 @@ scrape_configs:
       - localhost
     labels:
       job: varlogs
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/*log
   pipeline_stages:
     - regex:
@@ -51,7 +51,7 @@ scrape_configs:
       - localhost
     labels:
       job: syslog
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/syslog
   pipeline_stages:
     - regex:
@@ -73,7 +73,7 @@ scrape_configs:
       - localhost
     labels:
       job: auth
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: authentication
       __path__: /var/log/auth.log
   pipeline_stages:
@@ -96,7 +96,7 @@ scrape_configs:
       - localhost
     labels:
       job: secure
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: authentication
       __path__: /var/log/secure
   pipeline_stages:
@@ -119,7 +119,7 @@ scrape_configs:
       - localhost
     labels:
       job: fail2ban
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: security
       __path__: /var/log/fail2ban.log
   pipeline_stages:
@@ -143,7 +143,7 @@ scrape_configs:
       - localhost
     labels:
       job: puppet
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: configuration_management
       __path__: /var/log/puppetlabs/puppet/*.log
   pipeline_stages:
@@ -166,7 +166,7 @@ scrape_configs:
     labels:
       job: nginx
       log_type: access
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/nginx/*access.log
   pipeline_stages:
     - regex:
@@ -188,7 +188,7 @@ scrape_configs:
     labels:
       job: nginx
       log_type: error
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/nginx/*error.log
   pipeline_stages:
     - regex:
@@ -210,7 +210,7 @@ scrape_configs:
     labels:
       job: apache
       log_type: access
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/apache2/*access*.log
 
 # Apache error logs
@@ -221,7 +221,7 @@ scrape_configs:
     labels:
       job: apache
       log_type: error
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/log/apache2/*error*.log
 
 # Docker container logs (general)
@@ -231,7 +231,7 @@ scrape_configs:
       - localhost
     labels:
       job: docker
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       __path__: /var/lib/docker/containers/*/*log
   pipeline_stages:
     - cri: {}
@@ -247,7 +247,7 @@ scrape_configs:
 
 
 # Monitoring stack container logs (labeled specifically)
-<%- if @enable_prometheus -%>
+<%- if @promtail_enable_prometheus -%>
 - job_name: prometheus-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -263,11 +263,11 @@ scrape_configs:
   static_configs:
   - labels:
       job: prometheus
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
-<%- if @enable_grafana -%>
+<%- if @promtail_enable_grafana -%>
 - job_name: grafana-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -283,11 +283,11 @@ scrape_configs:
   static_configs:
   - labels:
       job: grafana
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
-<%- if @enable_loki -%>
+<%- if @promtail_enable_loki -%>
 - job_name: loki-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -303,11 +303,11 @@ scrape_configs:
   static_configs:
   - labels:
       job: loki
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
-<%- if @enable_promtail -%>
+<%- if @promtail_enable_promtail -%>
 - job_name: promtail-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -323,11 +323,11 @@ scrape_configs:
   static_configs:
   - labels:
       job: promtail
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
-<%- if @enable_blackbox -%>
+<%- if @promtail_enable_blackbox -%>
 - job_name: blackbox-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -343,11 +343,11 @@ scrape_configs:
   static_configs:
   - labels:
       job: blackbox-exporter
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
-<%- if @enable_node_exporter -%>
+<%- if @promtail_enable_node_exporter -%>
 - job_name: node-exporter-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -363,11 +363,11 @@ scrape_configs:
   static_configs:
   - labels:
       job: node-exporter
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
-<%- if @enable_pihole_exporter -%>
+<%- if @promtail_enable_pihole_exporter -%>
 - job_name: pihole-exporter-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -383,11 +383,11 @@ scrape_configs:
   static_configs:
   - labels:
       job: pihole-exporter
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
-<%- if @enable_nginx_proxy -%>
+<%- if @promtail_enable_nginx_proxy -%>
 - job_name: nginx-proxy-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -403,11 +403,11 @@ scrape_configs:
   static_configs:
   - labels:
       job: nginx-proxy
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
-<%- if @enable_authelia -%>
+<%- if @promtail_enable_authelia -%>
 - job_name: authelia-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -423,11 +423,11 @@ scrape_configs:
   static_configs:
   - labels:
       job: authelia
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
-<%- if @enable_redis -%>
+<%- if @promtail_enable_redis -%>
 - job_name: redis-container
   docker_sd_configs:
     - host: unix:///var/run/docker.sock
@@ -443,7 +443,7 @@ scrape_configs:
   static_configs:
   - labels:
       job: redis
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: monitoring
 <%- end -%>
 
@@ -453,7 +453,7 @@ scrape_configs:
     max_age: 12h
     labels:
       job: systemd-journal
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
   relabel_configs:
     - source_labels: ['__journal__systemd_unit']
       target_label: 'unit'
@@ -469,7 +469,7 @@ scrape_configs:
       - localhost
     labels:
       job: unbound
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: dns
       __path__: /var/log/unbound/unbound.log
   pipeline_stages:
@@ -494,7 +494,7 @@ scrape_configs:
       - localhost
     labels:
       job: pihole
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: dns
       __path__: /var/log/pihole/pihole.log
   pipeline_stages:
@@ -516,7 +516,7 @@ scrape_configs:
       - localhost
     labels:
       job: pihole-ftl
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: dns
       __path__: /var/log/pihole/FTL.log
   pipeline_stages:
@@ -538,7 +538,7 @@ scrape_configs:
       - localhost
     labels:
       job: kernel
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: system
       __path__: /var/log/kern.log
   pipeline_stages:
@@ -561,7 +561,7 @@ scrape_configs:
       - localhost
     labels:
       job: cron
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: system
       __path__: /var/log/cron.log
   pipeline_stages:
@@ -584,7 +584,7 @@ scrape_configs:
       - localhost
     labels:
       job: apt
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: package_management
       __path__: /var/log/apt/*.log
   pipeline_stages:
@@ -606,7 +606,7 @@ scrape_configs:
       - localhost
     labels:
       job: unattended-upgrades
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: package_management
       __path__: /var/log/unattended-upgrades/unattended-upgrades.log
   pipeline_stages:
@@ -627,7 +627,7 @@ scrape_configs:
     max_age: 12h
     labels:
       job: wireguard
-      host: <%= @facts['networking']['fqdn'] || @facts['networking']['hostname'] || 'unknown' %>
+      host: <%= @promtail_facts['networking']['fqdn'] || @promtail_facts['networking']['hostname'] || 'unknown' %>
       log_type: vpn
   relabel_configs:
     - source_labels: ['__journal__systemd_unit']
