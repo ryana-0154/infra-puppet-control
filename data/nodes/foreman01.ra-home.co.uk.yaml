@@ -185,3 +185,4 @@ profile::acme_server::certificates:
     use_profile: 'cloudflare_dns01'
     use_account: 'ryanalderton2@gmail.com'
     ca: 'letsencrypt_test'
+    ocsp_must_staple: false  # Let's Encrypt ended OCSP must-staple support Dec 2024
