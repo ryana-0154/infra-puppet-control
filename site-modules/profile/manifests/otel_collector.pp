@@ -65,23 +65,35 @@ class profile::otel_collector (
     $enable_grafana_cloud_tempo
   )
 
-  $_grafana_cloud_tempo_endpoint = pick(
-    getvar('otel_grafana_cloud_tempo_endpoint'),
-    lookup('profile::otel_collector::grafana_cloud_tempo_endpoint', Optional[String], 'first', undef),
-    $grafana_cloud_tempo_endpoint
-  )
+  $_grafana_cloud_tempo_endpoint_enc = getvar('otel_grafana_cloud_tempo_endpoint')
+  $_grafana_cloud_tempo_endpoint_hiera = lookup('profile::otel_collector::grafana_cloud_tempo_endpoint', Optional[String], 'first', undef)
+  $_grafana_cloud_tempo_endpoint = $_grafana_cloud_tempo_endpoint_enc ? {
+    undef   => $_grafana_cloud_tempo_endpoint_hiera ? {
+      undef   => $grafana_cloud_tempo_endpoint,
+      default => $_grafana_cloud_tempo_endpoint_hiera,
+    },
+    default => $_grafana_cloud_tempo_endpoint_enc,
+  }
 
-  $_grafana_cloud_tempo_username = pick(
-    getvar('otel_grafana_cloud_tempo_username'),
-    lookup('profile::otel_collector::grafana_cloud_tempo_username', Optional[String], 'first', undef),
-    $grafana_cloud_tempo_username
-  )
+  $_grafana_cloud_tempo_username_enc = getvar('otel_grafana_cloud_tempo_username')
+  $_grafana_cloud_tempo_username_hiera = lookup('profile::otel_collector::grafana_cloud_tempo_username', Optional[String], 'first', undef)
+  $_grafana_cloud_tempo_username = $_grafana_cloud_tempo_username_enc ? {
+    undef   => $_grafana_cloud_tempo_username_hiera ? {
+      undef   => $grafana_cloud_tempo_username,
+      default => $_grafana_cloud_tempo_username_hiera,
+    },
+    default => $_grafana_cloud_tempo_username_enc,
+  }
 
-  $_tempo_protocol = pick(
-    getvar('otel_tempo_protocol'),
-    lookup('profile::otel_collector::tempo_protocol', Optional[String], 'first', undef),
-    $tempo_protocol
-  )
+  $_tempo_protocol_enc = getvar('otel_tempo_protocol')
+  $_tempo_protocol_hiera = lookup('profile::otel_collector::tempo_protocol', Optional[String], 'first', undef)
+  $_tempo_protocol = $_tempo_protocol_enc ? {
+    undef   => $_tempo_protocol_hiera ? {
+      undef   => $tempo_protocol,
+      default => $_tempo_protocol_hiera,
+    },
+    default => $_tempo_protocol_enc,
+  }
 
   # Sensitive parameter
   $_grafana_cloud_tempo_api_key_raw = getvar('otel_grafana_cloud_tempo_api_key')
