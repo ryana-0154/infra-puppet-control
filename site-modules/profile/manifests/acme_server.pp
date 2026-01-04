@@ -46,13 +46,13 @@
 #   - certificates: { wildcard_ra_home: { domain: '*.ra-home.co.uk ra-home.co.uk', use_profile: 'cloudflare_dns01' } }
 #
 class profile::acme_server (
-  Boolean $manage_acme = false,
-  String[1] $acme_host = $facts['networking']['fqdn'],
-  Boolean $use_staging = false,
-  Optional[String[1]] $contact_email = undef,
-  Hash[String, Hash] $profiles = {},
-  Hash[String, Hash] $certificates = {},
-  Integer[0,23] $renew_cron_hour = 2,
+  Boolean $manage_acme = lookup('profile::acme_server::manage_acme', Boolean, 'first', false),
+  String[1] $acme_host = lookup('profile::acme_server::acme_host', String[1], 'first', $facts['networking']['fqdn']),
+  Boolean $use_staging = lookup('profile::acme_server::use_staging', Boolean, 'first', false),
+  Optional[String[1]] $contact_email = lookup('profile::acme_server::contact_email', Optional[String[1]], 'first', undef),
+  Hash[String, Hash] $profiles = lookup('profile::acme_server::profiles', Hash[String, Hash], 'first', {}),
+  Hash[String, Hash] $certificates = lookup('profile::acme_server::certificates', Hash[String, Hash], 'first', {}),
+  Integer[0,23] $renew_cron_hour = lookup('profile::acme_server::renew_cron_hour', Integer[0,23], 'first', 2),
 ) {
 
   if $manage_acme {
