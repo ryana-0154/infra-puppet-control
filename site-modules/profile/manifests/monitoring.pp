@@ -237,12 +237,12 @@ class profile::monitoring (
 
   # Grafana Cloud integration
   Boolean                        $enable_grafana_cloud      = false,
-  Optional[String[1]]            $grafana_cloud_metrics_url = undef,
-  Optional[String[1]]            $grafana_cloud_logs_url    = undef,
-  Optional[String[1]]            $grafana_cloud_metrics_username = undef,
-  Optional[String[1]]            $grafana_cloud_logs_username = undef,
-  Optional[Sensitive[String[1]]] $grafana_cloud_metrics_api_key = undef,
-  Optional[Sensitive[String[1]]] $grafana_cloud_logs_api_key = undef,
+  Optional[String[1]]                           $grafana_cloud_metrics_url = undef,
+  Optional[String[1]]                           $grafana_cloud_logs_url    = undef,
+  Optional[String[1]]                           $grafana_cloud_metrics_username = undef,
+  Optional[String[1]]                           $grafana_cloud_logs_username = undef,
+  Optional[Variant[String[1], Sensitive[String[1]]]] $grafana_cloud_metrics_api_key = undef,
+  Optional[Variant[String[1], Sensitive[String[1]]]] $grafana_cloud_logs_api_key = undef,
 
   # Agent selection
   Enum['alloy', 'victoriametrics'] $metrics_agent = 'victoriametrics',
@@ -363,14 +363,20 @@ class profile::monitoring (
   }
 
   # Sensitive parameters need special handling - check both naming conventions
+  # Wrap with Sensitive() if it's a plain string
   $_grafana_cloud_metrics_api_key_raw = pick_default([
     getvar('profile::monitoring::grafana_cloud_metrics_api_key'),
     getvar('monitoring_grafana_cloud_metrics_api_key')
   ], undef)
   $_grafana_cloud_metrics_api_key_hiera = lookup('profile::monitoring::grafana_cloud_metrics_api_key', Optional[Sensitive[String]], 'first', undef)
+  $_grafana_cloud_metrics_api_key_param = $grafana_cloud_metrics_api_key ? {
+    Sensitive => $grafana_cloud_metrics_api_key,
+    String    => Sensitive($grafana_cloud_metrics_api_key),
+    default   => undef,
+  }
   $_grafana_cloud_metrics_api_key = $_grafana_cloud_metrics_api_key_raw ? {
     undef   => $_grafana_cloud_metrics_api_key_hiera ? {
-      undef   => $grafana_cloud_metrics_api_key,
+      undef   => $_grafana_cloud_metrics_api_key_param,
       default => $_grafana_cloud_metrics_api_key_hiera,
     },
     default => Sensitive($_grafana_cloud_metrics_api_key_raw),
@@ -381,9 +387,14 @@ class profile::monitoring (
     getvar('monitoring_grafana_cloud_logs_api_key')
   ], undef)
   $_grafana_cloud_logs_api_key_hiera = lookup('profile::monitoring::grafana_cloud_logs_api_key', Optional[Sensitive[String]], 'first', undef)
+  $_grafana_cloud_logs_api_key_param = $grafana_cloud_logs_api_key ? {
+    Sensitive => $grafana_cloud_logs_api_key,
+    String    => Sensitive($grafana_cloud_logs_api_key),
+    default   => undef,
+  }
   $_grafana_cloud_logs_api_key = $_grafana_cloud_logs_api_key_raw ? {
     undef   => $_grafana_cloud_logs_api_key_hiera ? {
-      undef   => $grafana_cloud_logs_api_key,
+      undef   => $_grafana_cloud_logs_api_key_param,
       default => $_grafana_cloud_logs_api_key_hiera,
     },
     default => Sensitive($_grafana_cloud_logs_api_key_raw),
