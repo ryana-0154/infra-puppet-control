@@ -368,16 +368,22 @@ class profile::monitoring (
     getvar('profile::monitoring::grafana_cloud_metrics_api_key'),
     getvar('monitoring_grafana_cloud_metrics_api_key')
   ], undef)
-  $_grafana_cloud_metrics_api_key_hiera = lookup('profile::monitoring::grafana_cloud_metrics_api_key', Optional[Sensitive[String]], 'first', undef)
+  $_grafana_cloud_metrics_api_key_hiera = lookup('profile::monitoring::grafana_cloud_metrics_api_key', Optional[Variant[String, Sensitive[String]]], 'first', undef)
+  # Wrap Hiera value with Sensitive() if it's a plain string
+  $_grafana_cloud_metrics_api_key_hiera_wrapped = $_grafana_cloud_metrics_api_key_hiera ? {
+    Sensitive => $_grafana_cloud_metrics_api_key_hiera,
+    String    => Sensitive($_grafana_cloud_metrics_api_key_hiera),
+    default   => undef,
+  }
   $_grafana_cloud_metrics_api_key_param = $grafana_cloud_metrics_api_key ? {
     Sensitive => $grafana_cloud_metrics_api_key,
     String    => Sensitive($grafana_cloud_metrics_api_key),
     default   => undef,
   }
   $_grafana_cloud_metrics_api_key = $_grafana_cloud_metrics_api_key_raw ? {
-    undef   => $_grafana_cloud_metrics_api_key_hiera ? {
+    undef   => $_grafana_cloud_metrics_api_key_hiera_wrapped ? {
       undef   => $_grafana_cloud_metrics_api_key_param,
-      default => $_grafana_cloud_metrics_api_key_hiera,
+      default => $_grafana_cloud_metrics_api_key_hiera_wrapped,
     },
     default => Sensitive($_grafana_cloud_metrics_api_key_raw),
   }
@@ -386,16 +392,22 @@ class profile::monitoring (
     getvar('profile::monitoring::grafana_cloud_logs_api_key'),
     getvar('monitoring_grafana_cloud_logs_api_key')
   ], undef)
-  $_grafana_cloud_logs_api_key_hiera = lookup('profile::monitoring::grafana_cloud_logs_api_key', Optional[Sensitive[String]], 'first', undef)
+  $_grafana_cloud_logs_api_key_hiera = lookup('profile::monitoring::grafana_cloud_logs_api_key', Optional[Variant[String, Sensitive[String]]], 'first', undef)
+  # Wrap Hiera value with Sensitive() if it's a plain string
+  $_grafana_cloud_logs_api_key_hiera_wrapped = $_grafana_cloud_logs_api_key_hiera ? {
+    Sensitive => $_grafana_cloud_logs_api_key_hiera,
+    String    => Sensitive($_grafana_cloud_logs_api_key_hiera),
+    default   => undef,
+  }
   $_grafana_cloud_logs_api_key_param = $grafana_cloud_logs_api_key ? {
     Sensitive => $grafana_cloud_logs_api_key,
     String    => Sensitive($grafana_cloud_logs_api_key),
     default   => undef,
   }
   $_grafana_cloud_logs_api_key = $_grafana_cloud_logs_api_key_raw ? {
-    undef   => $_grafana_cloud_logs_api_key_hiera ? {
+    undef   => $_grafana_cloud_logs_api_key_hiera_wrapped ? {
       undef   => $_grafana_cloud_logs_api_key_param,
-      default => $_grafana_cloud_logs_api_key_hiera,
+      default => $_grafana_cloud_logs_api_key_hiera_wrapped,
     },
     default => Sensitive($_grafana_cloud_logs_api_key_raw),
   }
