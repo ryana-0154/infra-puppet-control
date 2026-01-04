@@ -54,18 +54,18 @@ class profile::acme_server (
   Optional[Hash[String, Hash]] $certificates = undef,
   Optional[Integer[0,23]] $renew_cron_hour = undef,
 ) {
-  # Check top-scope for ENC parameters first, then defaults
-  # Use pick() for non-undef defaults, direct check for optional params
-  $_manage_acme = pick($manage_acme, getvar('profile::acme_server::manage_acme'), false)
-  $_acme_host = pick($acme_host, getvar('profile::acme_server::acme_host'), $facts['networking']['fqdn'])
-  $_use_staging = pick($use_staging, getvar('profile::acme_server::use_staging'), false)
+  # Check top-scope for ENC parameters (with :: prefix for top-scope)
+  # ENC parameters are in top-scope as $::profile::acme_server::parameter_name
+  $_manage_acme = pick($manage_acme, $::profile::acme_server::manage_acme, false)
+  $_acme_host = pick($acme_host, $::profile::acme_server::acme_host, $facts['networking']['fqdn'])
+  $_use_staging = pick($use_staging, $::profile::acme_server::use_staging, false)
   $_contact_email = $contact_email ? {
-    undef   => getvar('profile::acme_server::contact_email'),
+    undef   => $::profile::acme_server::contact_email,
     default => $contact_email,
   }
-  $_profiles = pick($profiles, getvar('profile::acme_server::profiles'), {})
-  $_certificates = pick($certificates, getvar('profile::acme_server::certificates'), {})
-  $_renew_cron_hour = pick($renew_cron_hour, getvar('profile::acme_server::renew_cron_hour'), 2)
+  $_profiles = pick($profiles, $::profile::acme_server::profiles, {})
+  $_certificates = pick($certificates, $::profile::acme_server::certificates, {})
+  $_renew_cron_hour = pick($renew_cron_hour, $::profile::acme_server::renew_cron_hour, 2)
 
   if $_manage_acme {
     # Validate contact_email is provided
