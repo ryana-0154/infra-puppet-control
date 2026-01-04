@@ -25,6 +25,9 @@
 # @param database_grants
 #   Hash of database grants to create with puppetlabs-postgresql::server::database_grant
 #   Format: { 'grant_name' => { privilege => 'ALL', db => 'dbname', role => 'user' } }
+# @param pg_hba_rules
+#   Hash of pg_hba rules to create with puppetlabs-postgresql::server::pg_hba_rule
+#   Format: { 'rule_name' => { type => 'host', database => 'db', user => 'user', address => '127.0.0.1/32', auth_method => 'md5' } }
 # @param data_dir
 #   PostgreSQL data directory (OS-dependent default)
 # @param manage_package_repo
@@ -51,6 +54,7 @@ class profile::postgresql (
   Hash[String[1], Hash]                   $databases             = {},
   Hash[String[1], Hash]                   $database_users        = {},
   Hash[String[1], Hash]                   $database_grants       = {},
+  Hash[String[1], Hash]                   $pg_hba_rules          = {},
   Optional[Stdlib::Absolutepath]          $data_dir              = undef,
   Boolean                                 $manage_package_repo   = true,
 ) {
@@ -92,9 +96,17 @@ class profile::postgresql (
     # Create database users from Hiera
     $database_users.each |String $username, Hash $user_config| {
       # Transform 'password' to 'password_hash' for postgresql::server::role compatibility
+      # Support password lookups for special users (puppetdb, puppetdb-read)
       $user_params = $user_config.map |$key, $value| {
         if $key == 'password' {
-          ['password_hash', postgresql::postgresql_password($username, $value)]
+          # Special handling for puppetdb users: lookup from profile::puppetdb::postgres_password
+          # This allows the password to come from Foreman ENC or Hiera
+          $password = if $username in ['puppetdb', 'puppetdb-read'] {
+            lookup('profile::puppetdb::postgres_password', String, 'first', $value)
+          } else {
+            $value
+          }
+          ['password_hash', postgresql::postgresql_password($username, $password)]
         } else {
           [$key, $value]
         }
@@ -110,6 +122,14 @@ class profile::postgresql (
     $database_grants.each |String $grant_name, Hash $grant_config| {
       postgresql::server::database_grant { $grant_name:
         *       => $grant_config,
+        require => Class['postgresql::server'],
+      }
+    }
+
+    # Create pg_hba rules from Hiera
+    $pg_hba_rules.each |String $rule_name, Hash $rule_config| {
+      postgresql::server::pg_hba_rule { $rule_name:
+        *       => $rule_config,
         require => Class['postgresql::server'],
       }
     }
