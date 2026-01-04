@@ -430,25 +430,16 @@ class profile::monitoring (
     }
 
     if $enable_promtail {
+      # ERB templates need non-prefixed variables in scope
+      $enable_grafana_cloud        = $_enable_grafana_cloud
+      $grafana_cloud_logs_url      = $_grafana_cloud_logs_url
+      $grafana_cloud_logs_username = $_grafana_cloud_logs_username
+      $grafana_cloud_logs_api_key  = $_grafana_cloud_logs_api_key
+      $enable_prometheus           = $enable_victoriametrics
+
       file { "${monitoring_dir}/promtail-config.yaml":
         ensure  => file,
-        content => epp('profile/monitoring/promtail-config.yaml.epp', {
-          enable_grafana_cloud        => $_enable_grafana_cloud,
-          enable_loki                 => $enable_loki,
-          grafana_cloud_logs_url      => $_grafana_cloud_logs_url,
-          grafana_cloud_logs_username => $_grafana_cloud_logs_username,
-          grafana_cloud_logs_api_key  => $_grafana_cloud_logs_api_key,
-          monitoring_ip               => $monitoring_ip,
-          enable_prometheus           => $enable_victoriametrics,
-          enable_grafana              => $enable_grafana,
-          enable_blackbox             => $enable_blackbox,
-          enable_node_exporter        => $enable_node_exporter,
-          enable_pihole_exporter      => $enable_pihole_exporter,
-          enable_nginx_proxy          => $enable_nginx_proxy,
-          enable_authelia             => $enable_authelia,
-          enable_redis                => $enable_redis,
-          facts                       => $facts,
-        }),
+        content => template('profile/monitoring/promtail-config.yaml.erb'),
         group   => $monitoring_dir_group,
         mode    => '0644',
         owner   => $monitoring_dir_owner,
