@@ -38,6 +38,8 @@
 #   Path to SSL server certificate (default: Puppet server cert)
 # @param server_ssl_key
 #   Path to SSL private key (default: Puppet server key)
+# @param server_ssl_chain
+#   Path to SSL certificate chain file (default: Puppet CA)
 #
 # @example Basic usage with Hiera
 #   profile::foreman::manage_foreman: true
@@ -65,6 +67,7 @@ class profile::foreman (
   Optional[Stdlib::Absolutepath]       $server_ssl_ca          = undef,
   Optional[Stdlib::Absolutepath]       $server_ssl_cert        = undef,
   Optional[Stdlib::Absolutepath]       $server_ssl_key         = undef,
+  Optional[Stdlib::Absolutepath]       $server_ssl_chain       = undef,
 ) {
   if $manage_foreman {
     # Handle both plain strings (from eyaml) and Sensitive types
@@ -110,6 +113,7 @@ class profile::foreman (
       server_ssl_ca          => pick($server_ssl_ca, '/etc/puppetlabs/puppet/ssl/certs/ca.pem'),
       server_ssl_cert        => pick($server_ssl_cert, "/etc/puppetlabs/puppet/ssl/certs/${server_fqdn}.pem"),
       server_ssl_key         => pick($server_ssl_key, "/etc/puppetlabs/puppet/ssl/private_keys/${server_fqdn}.pem"),
+      server_ssl_chain       => pick($server_ssl_chain, '/etc/puppetlabs/puppet/ssl/certs/ca.pem'),
       register_in_foreman    => true,  # Foreman is now running
       require                => [Class['foreman::repo'], Class['postgresql::server']],
     }
