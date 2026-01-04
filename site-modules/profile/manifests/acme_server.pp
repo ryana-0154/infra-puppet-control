@@ -95,5 +95,28 @@ class profile::acme_server (
       minute  => 0,
       require => Class['acme'],
     }
+
+    # Workaround for OCSP fetching failures
+    # Let's Encrypt ended OCSP must-staple support in Dec 2024, causing OCSP
+    # responder failures. Pre-create OCSP files with far-future timestamps
+    # so the acme module's unless condition skips the fetch attempt.
+    $_certificates.each |String $cert_name, Hash $cert_config| {
+      file { "/etc/acme.sh/results/${cert_name}.ocsp":
+        ensure  => file,
+        owner   => 'acme',
+        group   => 'acme',
+        mode    => '0644',
+        content => "# OCSP stapling disabled - Let's Encrypt ended support Dec 2024\n",
+        replace => false,  # Don't overwrite if already exists
+        require => Class['acme'],
+      }
+
+      # Touch the file with a far-future timestamp to prevent refresh attempts
+      exec { "touch_ocsp_${cert_name}":
+        command => "/usr/bin/touch -d '2030-01-01' /etc/acme.sh/results/${cert_name}.ocsp",
+        unless  => "/usr/bin/test -f /etc/acme.sh/results/${cert_name}.ocsp",
+        require => File["/etc/acme.sh/results/${cert_name}.ocsp"],
+      }
+    }
   }
 }
