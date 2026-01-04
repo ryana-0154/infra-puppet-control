@@ -132,6 +132,7 @@ class profile::foreman (
         server_foreman_url    => "https://${server_fqdn}",
         server_reports        => 'foreman',
         server_external_nodes => $external_nodes_path,
+        server_storeconfigs   => true,   # Enable PuppetDB storeconfigs for exported resources (required by ACME module)
         # Agent configuration - this node gets its catalog from itself
         agent_server_hostname => $server_fqdn,
         ca_server             => 'pi.ra-home.co.uk',  # CA remains on pi
