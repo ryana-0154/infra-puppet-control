@@ -54,6 +54,14 @@ exporters:
   debug:
     verbosity: basic
 
+<% if $enable_grafana_cloud_tempo { %>
+  # Grafana Cloud Tempo exporter
+  otlphttp/tempo:
+    endpoint: <%= $grafana_cloud_tempo_endpoint %>
+    auth:
+      authenticator: basicauth/tempo
+<% } %>
+
 extensions:
   health_check:
     endpoint: 0.0.0.0:<%= $health_port %>
@@ -61,8 +69,20 @@ extensions:
   pprof:
     endpoint: 0.0.0.0:<%= $pprof_port %>
 
+<% if $enable_grafana_cloud_tempo { %>
+  # Basic authentication for Grafana Cloud Tempo
+  basicauth/tempo:
+    client_auth:
+      username: <%= $grafana_cloud_tempo_username %>
+      password: <%= $grafana_cloud_tempo_api_key.unwrap %>
+<% } %>
+
 service:
+<% if $enable_grafana_cloud_tempo { %>
+  extensions: [health_check, pprof, basicauth/tempo]
+<% } else { %>
   extensions: [health_check, pprof]
+<% } %>
 
   pipelines:
     metrics:
@@ -73,7 +93,11 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, resource, batch]
+<% if $enable_grafana_cloud_tempo { %>
+      exporters: [otlphttp/tempo, logging]
+<% } else { %>
       exporters: [logging]
+<% } %>
 
     logs:
       receivers: [otlp]

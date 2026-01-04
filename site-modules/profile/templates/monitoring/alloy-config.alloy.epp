@@ -1,0 +1,175 @@
+<%- | Boolean $enable_node_exporter,
+      Boolean $enable_blackbox,
+      Boolean $enable_pihole_exporter,
+      Boolean $enable_wireguard_exporter,
+      Boolean $enable_unbound_exporter,
+      String $monitoring_ip,
+      Integer $blackbox_port,
+      Integer $pihole_exporter_port,
+      Integer $wireguard_exporter_port,
+      Integer $unbound_exporter_port,
+      String $grafana_cloud_metrics_url,
+      String $grafana_cloud_metrics_username,
+      Sensitive[String] $grafana_cloud_metrics_api_key,
+      String $grafana_cloud_logs_url,
+      String $grafana_cloud_logs_username,
+      Sensitive[String] $grafana_cloud_logs_api_key,
+      Hash $facts,
+| -%>
+// Grafana Alloy configuration
+// Managed by Puppet - do not edit manually
+//
+// Collects metrics and logs from local exporters and forwards to Grafana Cloud
+
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+//
+// METRICS COLLECTION
+//
+
+<% if $enable_node_exporter { %>
+// Node Exporter - System metrics
+prometheus.scrape "node_exporter" {
+  targets = [{
+    __address__ = "<%= $monitoring_ip %>:9100",
+  }]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+<% } %>
+
+<% if $enable_blackbox { %>
+// Blackbox Exporter - HTTP/HTTPS probing
+prometheus.scrape "blackbox_exporter" {
+  targets = [{
+    __address__ = "<%= $monitoring_ip %>:<%= $blackbox_port %>",
+  }]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+<% } %>
+
+<% if $enable_pihole_exporter { %>
+// PiHole Exporter - DNS ad-blocking metrics
+prometheus.scrape "pihole_exporter" {
+  targets = [{
+    __address__ = "<%= $monitoring_ip %>:<%= $pihole_exporter_port %>",
+  }]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+<% } %>
+
+<% if $enable_wireguard_exporter { %>
+// WireGuard Exporter - VPN metrics
+prometheus.scrape "wireguard_exporter" {
+  targets = [{
+    __address__ = "<%= $monitoring_ip %>:<%= $wireguard_exporter_port %>",
+  }]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+<% } %>
+
+<% if $enable_unbound_exporter { %>
+// Unbound Exporter - DNS resolver metrics
+prometheus.scrape "unbound_exporter" {
+  targets = [{
+    __address__ = "<%= $monitoring_ip %>:<%= $unbound_exporter_port %>",
+  }]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+<% } %>
+
+// Remote write to Grafana Cloud Metrics
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = "<%= $grafana_cloud_metrics_url %>"
+    basic_auth {
+      username = "<%= $grafana_cloud_metrics_username %>"
+      password = "<%= $grafana_cloud_metrics_api_key.unwrap %>"
+    }
+  }
+}
+
+//
+// LOGS COLLECTION
+//
+
+<% $hostname = $facts['networking']['fqdn'] ? {
+  undef => $facts['networking']['hostname'] ? {
+    undef => 'unknown',
+    default => $facts['networking']['hostname']
+  },
+  default => $facts['networking']['fqdn']
+} %>
+// System logs
+loki.source.file "system_logs" {
+  targets = [
+    {
+      __path__ = "/var/log/*log",
+      job      = "varlogs",
+      host     = "<%= $hostname %>",
+    },
+  ]
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+// Docker container logs
+loki.source.docker "docker_logs" {
+  host    = "unix:///var/run/docker.sock"
+  targets = []
+  forward_to = [loki.process.add_scrape_labels.receiver]
+  relabel_rules {
+    rule {
+      source_labels = ["__meta_docker_container_name"]
+      regex         = "/(.*)"
+      target_label  = "container"
+    }
+    rule {
+      source_labels = ["__meta_docker_container_log_stream"]
+      target_label  = "stream"
+    }
+  }
+}
+
+loki.process "add_scrape_labels" {
+  forward_to = [loki.write.grafana_cloud.receiver]
+
+  stage.static_labels {
+    values = {
+      host = "<%= $hostname %>",
+    }
+  }
+}
+
+// Systemd journal logs
+loki.source.journal "systemd_journal" {
+  max_age       = "12h"
+  path          = "/var/log/journal"
+  relabel_rules {
+    rule {
+      source_labels = ["__journal__systemd_unit"]
+      target_label  = "unit"
+    }
+    rule {
+      source_labels = ["__journal_priority"]
+      target_label  = "priority"
+    }
+    rule {
+      source_labels = ["__journal__hostname"]
+      target_label  = "nodename"
+    }
+  }
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+// Remote write to Grafana Cloud Logs
+loki.write "grafana_cloud" {
+  endpoint {
+    url = "<%= $grafana_cloud_logs_url %>"
+    basic_auth {
+      username = "<%= $grafana_cloud_logs_username %>"
+      password = "<%= $grafana_cloud_logs_api_key.unwrap %>"
+    }
+  }
+}

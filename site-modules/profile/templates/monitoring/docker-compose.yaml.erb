@@ -3,6 +3,25 @@ x-host: &host
   restart: unless-stopped
 
 services:
+<%- if @enable_grafana_cloud_resolved && @metrics_agent_resolved == 'alloy' -%>
+  alloy:
+    image: <%= @alloy_image %>
+    <<: *host
+    container_name: alloy
+    command:
+      - run
+      - --server.http.listen-addr=<%= @monitoring_ip %>:<%= @alloy_http_port %>
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./alloy-config.alloy:/etc/alloy/config.alloy:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /run/log/journal:/run/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - alloy-data:/var/lib/alloy
+<%- end -%>
+
 <%- if @enable_victoriametrics -%>
   victoriametrics:
     image: <%= @victoriametrics_image %>
@@ -242,6 +261,9 @@ services:
 <%- end -%>
 
 volumes:
+<%- if @enable_grafana_cloud_resolved && @metrics_agent_resolved == 'alloy' -%>
+  alloy-data:
+<%- end -%>
 <%- if @enable_grafana -%>
   grafana-data:
 <%- end -%>
