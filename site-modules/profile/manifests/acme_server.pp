@@ -71,24 +71,28 @@ class profile::acme_server (
     }
 
     # Create ACME account for Let's Encrypt
-    # The markt-acme module requires accounts to be defined in the main acme class
-    # Certificates reference accounts via the use_account parameter
     $account_name = 'default'
-    $accounts = {
-      $account_name => {
-        'email' => $_contact_email,
-        'ca'    => $_use_staging ? {
-          true    => 'letsencrypt_test',
-          default => 'letsencrypt',
-        },
-      }
+    $ca_server = $_use_staging ? {
+      true    => 'letsencrypt_test',
+      default => 'letsencrypt',
     }
 
-    # Install acme.sh on Puppet Server with account configuration
+    # Install acme.sh on Puppet Server
     class { 'acme':
       acme_host => $_acme_host,
-      accounts  => $accounts,
-      profiles  => $_profiles,
+    }
+
+    # Create the ACME account
+    acme::account { $account_name:
+      email => $_contact_email,
+      ca    => $ca_server,
+    }
+
+    # Create challenge profiles
+    $_profiles.each |String $profile_name, Hash $profile_config| {
+      acme::profile { $profile_name:
+        * => $profile_config,
+      }
     }
 
     # Create certificate resources from configuration
