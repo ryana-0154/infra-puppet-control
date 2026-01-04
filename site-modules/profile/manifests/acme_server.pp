@@ -100,22 +100,12 @@ class profile::acme_server (
     # Let's Encrypt ended OCSP must-staple support in Dec 2024, causing OCSP
     # responder failures. Pre-create OCSP files with far-future timestamps
     # so the acme module's unless condition skips the fetch attempt.
+    # Use exec (not file resource) to avoid duplicate declaration with acme::request::ocsp
     $_certificates.each |String $cert_name, Hash $cert_config| {
-      file { "/etc/acme.sh/results/${cert_name}.ocsp":
-        ensure  => file,
-        owner   => 'acme',
-        group   => 'acme',
-        mode    => '0644',
-        content => "# OCSP stapling disabled - Let's Encrypt ended support Dec 2024\n",
-        replace => false,  # Don't overwrite if already exists
-        require => Class['acme'],
-      }
-
-      # Touch the file with a far-future timestamp to prevent refresh attempts
-      exec { "touch_ocsp_${cert_name}":
-        command => "/usr/bin/touch -d '2030-01-01' /etc/acme.sh/results/${cert_name}.ocsp",
+      exec { "create_ocsp_placeholder_${cert_name}":
+        command => "/bin/sh -c 'echo \"# OCSP stapling disabled - Let\\'s Encrypt ended support Dec 2024\" > /etc/acme.sh/results/${cert_name}.ocsp && chown acme:acme /etc/acme.sh/results/${cert_name}.ocsp && chmod 644 /etc/acme.sh/results/${cert_name}.ocsp && touch -d \"2030-01-01\" /etc/acme.sh/results/${cert_name}.ocsp'",
         unless  => "/usr/bin/test -f /etc/acme.sh/results/${cert_name}.ocsp",
-        require => File["/etc/acme.sh/results/${cert_name}.ocsp"],
+        require => Class['acme'],
       }
     }
   }
