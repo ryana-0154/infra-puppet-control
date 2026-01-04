@@ -54,15 +54,63 @@ class profile::acme_server (
   Hash[String, Hash] $certificates = {},
   Integer[0,23] $renew_cron_hour = 2,
 ) {
-  # Use lookup() to check both Hiera AND automatic parameter lookup (which includes ENC)
-  # This works because lookup checks: Hiera -> automatic parameter lookup -> defaults
-  $_manage_acme = lookup('profile::acme_server::manage_acme', Boolean, 'first', $manage_acme)
-  $_acme_host = lookup('profile::acme_server::acme_host', String[1], 'first', $acme_host)
-  $_use_staging = lookup('profile::acme_server::use_staging', Boolean, 'first', $use_staging)
-  $_contact_email = lookup('profile::acme_server::contact_email', Optional[String[1]], 'first', $contact_email)
-  $_profiles = lookup('profile::acme_server::profiles', Hash[String, Hash], 'deep', $profiles)
-  $_certificates = lookup('profile::acme_server::certificates', Hash[String, Hash], 'deep', $certificates)
-  $_renew_cron_hour = lookup('profile::acme_server::renew_cron_hour', Integer[0,23], 'first', $renew_cron_hour)
+  # Multi-source parameter resolution (priority order):
+  # 1. Top-scope variables from Foreman ENC parameters (e.g., $::acme_manage_acme)
+  # 2. Hiera data (profile::acme_server::manage_acme)
+  # 3. Class parameter defaults
+  #
+  # To configure via Foreman: Set host/hostgroup parameters:
+  #   acme_manage_acme, acme_use_staging, acme_contact_email, etc.
+
+  # Boolean parameters - use pick() with explicit type checking
+  $_manage_acme = pick(
+    getvar('acme_manage_acme'),
+    lookup('profile::acme_server::manage_acme', Optional[Boolean], 'first', undef),
+    $manage_acme
+  )
+
+  $_use_staging = pick(
+    getvar('acme_use_staging'),
+    lookup('profile::acme_server::use_staging', Optional[Boolean], 'first', undef),
+    $use_staging
+  )
+
+  # String parameters
+  $_acme_host = pick(
+    getvar('acme_host'),
+    lookup('profile::acme_server::acme_host', Optional[String[1]], 'first', undef),
+    $acme_host
+  )
+
+  $_contact_email = pick(
+    getvar('acme_contact_email'),
+    lookup('profile::acme_server::contact_email', Optional[String[1]], 'first', undef),
+    $contact_email
+  )
+
+  # Integer parameter
+  $_renew_cron_hour = pick(
+    getvar('acme_renew_cron_hour'),
+    lookup('profile::acme_server::renew_cron_hour', Optional[Integer[0,23]], 'first', undef),
+    $renew_cron_hour
+  )
+
+  # Hash parameters - use deep merge for profiles and certificates
+  $enc_profiles = getvar('acme_profiles')
+  $hiera_profiles = lookup('profile::acme_server::profiles', Optional[Hash[String, Hash]], 'deep', undef)
+  $_profiles = deep_merge(
+    $profiles,  # Defaults
+    $hiera_profiles ? { NotUndef => $hiera_profiles, default => {} },
+    $enc_profiles ? { NotUndef => $enc_profiles, default => {} }
+  )
+
+  $enc_certificates = getvar('acme_certificates')
+  $hiera_certificates = lookup('profile::acme_server::certificates', Optional[Hash[String, Hash]], 'deep', undef)
+  $_certificates = deep_merge(
+    $certificates,  # Defaults
+    $hiera_certificates ? { NotUndef => $hiera_certificates, default => {} },
+    $enc_certificates ? { NotUndef => $enc_certificates, default => {} }
+  )
 
   if $_manage_acme {
     # Validate contact_email is provided
