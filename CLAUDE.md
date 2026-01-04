@@ -20,22 +20,49 @@ Data-Driven Design:
 Foreman ENC + Hiera Hybrid Approach:
 - This repository uses **Foreman ENC for class assignment** and **Hiera for configuration data**.
 - **IMPORTANT**: Foreman Smart Class Parameters only work when classes are **directly assigned** to hosts/hostgroups.
-- **When classes are included via roles** (the roles & profiles pattern), use **Hiera** for all configuration:
-  - Role includes profile → profile reads config from Hiera
-  - Foreman Smart Class Parameters are NOT available to automatic parameter lookup in this scenario
-- **Implementation Pattern**: Use `lookup()` with defaults to support both Hiera and direct assignment:
+- **When classes are included via roles** (the roles & profiles pattern), Smart Class Parameters are NOT available.
+  - Solution: Use **Foreman Host/Hostgroup Parameters** (not Smart Class Parameters)
+  - These become top-scope variables accessible via `getvar()`
+- **Multi-Source Parameter Resolution Pattern** (priority order):
+  1. Top-scope variables from Foreman ENC parameters (e.g., `$::acme_manage_acme`)
+  2. Hiera data (`profile::example::param`)
+  3. Class parameter defaults
   ```puppet
   class profile::example (
     Boolean $manage_service = false,
+    String[1] $service_name = 'myapp',
   ) {
-    $_manage_service = lookup('profile::example::manage_service', Boolean, 'first', $manage_service)
-    # Use $_manage_service in the class logic
+    # Boolean/String parameters - use pick() to get first defined value
+    $_manage_service = pick(
+      getvar('example_manage_service'),  # Foreman parameter
+      lookup('profile::example::manage_service', Optional[Boolean], 'first', undef),  # Hiera
+      $manage_service  # Default
+    )
+
+    $_service_name = pick(
+      getvar('example_service_name'),
+      lookup('profile::example::service_name', Optional[String[1]], 'first', undef),
+      $service_name
+    )
+
+    # Hash parameters - use deep_merge for layered config
+    $enc_config = getvar('example_config')
+    $hiera_config = lookup('profile::example::config', Optional[Hash], 'deep', undef)
+    $_config = deep_merge(
+      {},  # Defaults
+      $hiera_config ? { NotUndef => $hiera_config, default => {} },
+      $enc_config ? { NotUndef => $enc_config, default => {} }
+    )
   }
   ```
+- **Configuration in Foreman**:
+  - Navigate to: Host/Hostgroup → Parameters tab
+  - Add parameters like: `example_manage_service`, `example_service_name`
+  - Parameters become top-scope variables: `$::example_manage_service`, `$::example_service_name`
 - **Configuration Location**:
-  - **Use Foreman**: For class assignment, host organization, fact collection
-  - **Use Hiera**: For ALL configuration data, encrypted secrets (eyaml), environment/node-specific values
-  - Store config in: `data/nodes/<fqdn>.yaml`, `data/common.yaml`, etc.
+  - **Use Foreman**: Class assignment, host organization, fact collection, **host/hostgroup parameters**
+  - **Use Hiera**: Configuration data, encrypted secrets (eyaml), environment/node-specific values
+  - Store Hiera config in: `data/nodes/<fqdn>.yaml`, `data/common.yaml`, etc.
 
 Hiera Requirements:
 - When code requires configuration, generate:
