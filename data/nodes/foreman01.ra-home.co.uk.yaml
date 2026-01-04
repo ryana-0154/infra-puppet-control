@@ -88,11 +88,10 @@ profile::puppetdb::postgres_password: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYY
 profile::foreman::manage_foreman: true
 profile::foreman::foreman_version: '3.12'  # Stable version with full Rocky Linux 9 support (EL9 support started in 3.11)
 profile::foreman::server_fqdn: 'foreman01.ra-home.co.uk'
-# Note: ACME certificate paths commented out until certificate is issued
-# Once certificate exists at /etc/acme.sh/certs/wildcard_ra_home/, uncomment:
-# profile::foreman::server_ssl_cert: '/etc/acme.sh/certs/wildcard_ra_home/cert.pem'
-# profile::foreman::server_ssl_key: '/etc/acme.sh/keys/wildcard_ra_home/private.key'
-# profile::foreman::server_ssl_ca: '/etc/acme.sh/certs/wildcard_ra_home/chain.pem'
+# Use Let's Encrypt wildcard certificate for Foreman web UI
+profile::foreman::server_ssl_cert: '/etc/acme.sh/certs/wildcard_ra_home/cert.pem'
+profile::foreman::server_ssl_key: '/etc/acme.sh/keys/wildcard_ra_home/private.key'
+profile::foreman::server_ssl_ca: '/etc/acme.sh/certs/wildcard_ra_home/chain.pem'
 
 profile::foreman::admin_username: 'admin'
 profile::foreman::admin_password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAeQlPpKiNWrDsnk0BePZS9Kjn/6tjQdVgdAPRXIkVgqk0XXiocmYYmnMVH70j682PnhIhudLD2MBTcOVjJH+jJyTZcXtqcyVjhzuGHk3g5PZVeZnkWt11QwYWs30/o+yihOmL81DlnLDc9nbI8S61HDsDMC3SxmZD7nClr/Wh8/7oyRUpbfO+dSVmtPF0JnC0TxIsThAoVm2A+GRK3IczD+1pw9RU/NWnsqKLSf68LcN9Q/PcShXJwNBe9c1JYPZj+rz86RgiAF3piF1R8dkbOEvsJLHMaFXW5tC9mQ8plnmmJpKFqGIJxf+uGpZqMh9LLUt28SfBzwrVCdjjrVtv9TA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBA8uEmF1dGYV87X5QY2JRP5gBD2Wp7ua7VTHY2+aAGm65dO]'
