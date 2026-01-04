@@ -168,11 +168,16 @@ profile::acme_server::contact_email: 'ryanalderton2@gmail.com'
 profile::acme_server::profiles:
   cloudflare_dns01:
     challengetype: 'dns-01'
-    hook: 'dns_cf'
+    hook: 'cf'
     env:
       CF_Token: "%{lookup('acme::cloudflare_api_token')}"
     options:
       dnssleep: 120
+
+# Cloudflare API Token for DNS-01 challenge
+# Generate at: https://dash.cloudflare.com/profile/api-tokens
+# Required permissions: Zone.DNS.Edit for ra-home.co.uk zone
+acme::cloudflare_api_token: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAymuUsxhbW9UuzlI2QpxiEKV0ZtP85dP6/NmrZtvgoVCgn0iDw+K30VFeVKvYDPE53ALiAwXQ1ggP2b+TanAv+dgm9u10xZjXXtNBE7EFbzwytvKeU4V+ZVipUYxLJBP+7uGZ0vwuG1SgfQVCMAj6o1IuC71BVcCFWfcGWos4+/SMfKts7sbLHehBA/VolJ/cRJWbSbCgv55RRoUQjLGxro5459CRvlFaGkdaDBKlCA0dm7TqJpB8Bd0iANQZTbFVdtmxmbQGsalOw+49KUc+dZre7U2Ykgx1hmtyA2q8Ys83v2qtJ8wfDjR6fscUUiL7cHCpQpYCFsxNJVOyiuv/5TBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBB0K1Sncr7P3olOnJNyJBrtgDA+pzOa57fQI4glpz65K7ljnm08NTIZOgRDmUAzbTW+CkYp2o5KUTlWvTEJq408wD8=]'
 
 profile::acme_server::certificates:
   wildcard_ra_home:
