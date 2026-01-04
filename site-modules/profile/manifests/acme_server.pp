@@ -104,7 +104,7 @@ class profile::acme_server (
     # Must run BEFORE the acme::request::ocsp exec attempts to fetch
     $_certificates.each |String $cert_name, Hash $cert_config| {
       exec { "create_ocsp_placeholder_${cert_name}":
-        command => "/bin/sh -c 'mkdir -p /etc/acme.sh/results && echo \"# OCSP stapling disabled - Let\\'s Encrypt ended support Dec 2024\" > /etc/acme.sh/results/${cert_name}.ocsp && chown acme:acme /etc/acme.sh/results/${cert_name}.ocsp && chmod 644 /etc/acme.sh/results/${cert_name}.ocsp && touch -d \"2030-01-01\" /etc/acme.sh/results/${cert_name}.ocsp'",
+        command => "/bin/sh -c \"mkdir -p /etc/acme.sh/results && printf '# OCSP stapling disabled - LetsEncrypt ended support Dec 2024\\n' > /etc/acme.sh/results/${cert_name}.ocsp && chown acme:acme /etc/acme.sh/results/${cert_name}.ocsp && chmod 644 /etc/acme.sh/results/${cert_name}.ocsp && touch -d 2030-01-01 /etc/acme.sh/results/${cert_name}.ocsp\"",
         unless  => "/usr/bin/test -f /etc/acme.sh/results/${cert_name}.ocsp && /usr/bin/test \$(/usr/bin/stat -c %Y /etc/acme.sh/results/${cert_name}.ocsp) -gt \$(/usr/bin/date +%s)",
         before  => Exec["update_ocsp_file_for_${cert_name}"],
       }
