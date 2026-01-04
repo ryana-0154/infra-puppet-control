@@ -31,10 +31,7 @@ profile::postgresql::databases:
     owner: foreman
     encoding: UTF8
     locale: en_US.UTF-8
-  puppetdb:
-    owner: puppetdb
-    encoding: UTF8
-    locale: en_US.UTF-8
+  # puppetdb database is managed by puppetlabs-puppetdb module
 
 profile::postgresql::database_users:
   foreman:
