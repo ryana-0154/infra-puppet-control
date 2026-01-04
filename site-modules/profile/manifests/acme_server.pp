@@ -46,26 +46,23 @@
 #   - certificates: { wildcard_ra_home: { domain: '*.ra-home.co.uk ra-home.co.uk', use_profile: 'cloudflare_dns01' } }
 #
 class profile::acme_server (
-  Optional[Boolean] $manage_acme = undef,
-  Optional[String[1]] $acme_host = undef,
-  Optional[Boolean] $use_staging = undef,
+  Boolean $manage_acme = false,
+  String[1] $acme_host = $facts['networking']['fqdn'],
+  Boolean $use_staging = false,
   Optional[String[1]] $contact_email = undef,
-  Optional[Hash[String, Hash]] $profiles = undef,
-  Optional[Hash[String, Hash]] $certificates = undef,
-  Optional[Integer[0,23]] $renew_cron_hour = undef,
+  Hash[String, Hash] $profiles = {},
+  Hash[String, Hash] $certificates = {},
+  Integer[0,23] $renew_cron_hour = 2,
 ) {
-  # Check top-scope for ENC parameters (with :: prefix for top-scope)
-  # ENC parameters are in top-scope as $::profile::acme_server::parameter_name
-  $_manage_acme = pick($manage_acme, $::profile::acme_server::manage_acme, false)
-  $_acme_host = pick($acme_host, $::profile::acme_server::acme_host, $facts['networking']['fqdn'])
-  $_use_staging = pick($use_staging, $::profile::acme_server::use_staging, false)
-  $_contact_email = $contact_email ? {
-    undef   => $::profile::acme_server::contact_email,
-    default => $contact_email,
-  }
-  $_profiles = pick($profiles, $::profile::acme_server::profiles, {})
-  $_certificates = pick($certificates, $::profile::acme_server::certificates, {})
-  $_renew_cron_hour = pick($renew_cron_hour, $::profile::acme_server::renew_cron_hour, 2)
+  # Use lookup() to check both Hiera AND automatic parameter lookup (which includes ENC)
+  # This works because lookup checks: Hiera -> automatic parameter lookup -> defaults
+  $_manage_acme = lookup('profile::acme_server::manage_acme', Boolean, 'first', $manage_acme)
+  $_acme_host = lookup('profile::acme_server::acme_host', String[1], 'first', $acme_host)
+  $_use_staging = lookup('profile::acme_server::use_staging', Boolean, 'first', $use_staging)
+  $_contact_email = lookup('profile::acme_server::contact_email', Optional[String[1]], 'first', $contact_email)
+  $_profiles = lookup('profile::acme_server::profiles', Hash[String, Hash], 'deep', $profiles)
+  $_certificates = lookup('profile::acme_server::certificates', Hash[String, Hash], 'deep', $certificates)
+  $_renew_cron_hour = lookup('profile::acme_server::renew_cron_hour', Integer[0,23], 'first', $renew_cron_hour)
 
   if $_manage_acme {
     # Validate contact_email is provided
