@@ -371,10 +371,11 @@ class profile::firewall (
     }
 
     # Log dropped packets for debugging
+    # Note: log_level defaults to 4 (warn) and is omitted to prevent drift
+    # when iptables-save doesn't persist default values
     firewall { '990 log dropped input':
       proto      => 'all',
       jump       => 'LOG',
-      log_level  => '4',
       log_prefix => '[IPTABLES DROPPED INPUT]: ',
     }
 
@@ -382,7 +383,6 @@ class profile::firewall (
       chain      => 'FORWARD',
       proto      => 'all',
       jump       => 'LOG',
-      log_level  => '4',
       log_prefix => '[IPTABLES DROPPED FORWARD]: ',
     }
 
