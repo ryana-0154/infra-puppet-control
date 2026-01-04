@@ -64,13 +64,13 @@ class profile::puppetdb (
 
     # Configure Puppet Server to use PuppetDB for storeconfigs
     # This enables exported resources (@@resource) and PuppetDB integration
-    # NOTE: storeconfigs setting is managed by puppet module (server_storeconfigs = true)
-    # to avoid conflict with puppet.conf management
+    # NOTE: Both storeconfigs and reports are managed by puppet module to avoid
+    # section conflicts ([server] vs [master])
     class { 'puppetdb::master::config':
       puppetdb_server         => $facts['networking']['fqdn'],
       puppetdb_port           => 8081,
-      manage_report_processor => true,
-      manage_storeconfigs     => false,  # Managed by puppet module instead to avoid section conflict
+      manage_report_processor => false,  # Managed by puppet module (server_reports) to avoid section conflict
+      manage_storeconfigs     => false,  # Managed by puppet module (server_storeconfigs) to avoid section conflict
       strict_validation       => true,
       enable_reports          => true,
       restart_puppet          => false,  # Don't manage service - puppet module already does

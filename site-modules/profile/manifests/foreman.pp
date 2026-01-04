@@ -130,7 +130,7 @@ class profile::foreman (
         server_ca             => false,  # pi.ra-home.co.uk is the CA, not this server
         server_foreman        => true,
         server_foreman_url    => "https://${server_fqdn}",
-        server_reports        => 'foreman',
+        server_reports        => 'foreman,puppetdb',  # Send reports to both Foreman and PuppetDB
         server_external_nodes => $external_nodes_path,
         server_storeconfigs   => true,   # Enable PuppetDB storeconfigs for exported resources (required by ACME module)
         # Agent configuration - this node gets its catalog from itself
