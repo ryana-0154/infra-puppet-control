@@ -49,7 +49,7 @@ profile::postgresql::database_grants:
     db: puppetdb
     role: puppetdb
   puppetdb_read_db_access:
-    privilege: SELECT
+    privilege: CONNECT
     db: puppetdb
     role: puppetdb-read
 
