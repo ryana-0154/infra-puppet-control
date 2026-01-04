@@ -44,6 +44,20 @@ profile::monitoring::pihole_exporter_port: 9617
 profile::monitoring::wireguard_exporter_port: 9586
 profile::monitoring::unbound_exporter_port: 9167
 
+# Grafana Cloud Configuration
+profile::monitoring::enable_grafana_cloud: true
+profile::monitoring::metrics_agent: alloy
+
+# Grafana Cloud URLs and credentials (REPLACE WITH YOUR VALUES)
+profile::monitoring::grafana_cloud_metrics_url: 'https://YOUR-PROMETHEUS-ENDPOINT.grafana.net/api/prom/push'
+profile::monitoring::grafana_cloud_metrics_username: 'YOUR_INSTANCE_ID'
+profile::monitoring::grafana_cloud_logs_url: 'https://YOUR-LOKI-ENDPOINT.grafana.net/loki/api/v1/push'
+profile::monitoring::grafana_cloud_logs_username: 'YOUR_LOGS_USER_ID'
+
+# API Keys - ENCRYPT THESE WITH: eyaml encrypt -s 'your-api-token-here'
+profile::monitoring::grafana_cloud_metrics_api_key: 'glc_YOUR_API_TOKEN_HERE'
+profile::monitoring::grafana_cloud_logs_api_key: 'glc_YOUR_API_TOKEN_HERE'
+
 # Enable/disable services
 profile::monitoring::enable_victoriametrics: true
 profile::monitoring::enable_grafana: true
