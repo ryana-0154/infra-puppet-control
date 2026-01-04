@@ -46,18 +46,26 @@
 #   - certificates: { wildcard_ra_home: { domain: '*.ra-home.co.uk ra-home.co.uk', use_profile: 'cloudflare_dns01' } }
 #
 class profile::acme_server (
-  Boolean $manage_acme = lookup('profile::acme_server::manage_acme', Boolean, 'first', false),
-  String[1] $acme_host = lookup('profile::acme_server::acme_host', String[1], 'first', $facts['networking']['fqdn']),
-  Boolean $use_staging = lookup('profile::acme_server::use_staging', Boolean, 'first', false),
-  Optional[String[1]] $contact_email = lookup('profile::acme_server::contact_email', Optional[String[1]], 'first', undef),
-  Hash[String, Hash] $profiles = lookup('profile::acme_server::profiles', Hash[String, Hash], 'first', {}),
-  Hash[String, Hash] $certificates = lookup('profile::acme_server::certificates', Hash[String, Hash], 'first', {}),
-  Integer[0,23] $renew_cron_hour = lookup('profile::acme_server::renew_cron_hour', Integer[0,23], 'first', 2),
+  Optional[Boolean] $manage_acme = undef,
+  Optional[String[1]] $acme_host = undef,
+  Optional[Boolean] $use_staging = undef,
+  Optional[String[1]] $contact_email = undef,
+  Optional[Hash[String, Hash]] $profiles = undef,
+  Optional[Hash[String, Hash]] $certificates = undef,
+  Optional[Integer[0,23]] $renew_cron_hour = undef,
 ) {
+  # Check top-scope for ENC parameters first, then Hiera, then defaults
+  $_manage_acme = pick($manage_acme, getvar('profile::acme_server::manage_acme'), false)
+  $_acme_host = pick($acme_host, getvar('profile::acme_server::acme_host'), $facts['networking']['fqdn'])
+  $_use_staging = pick($use_staging, getvar('profile::acme_server::use_staging'), false)
+  $_contact_email = pick($contact_email, getvar('profile::acme_server::contact_email'), undef)
+  $_profiles = pick($profiles, getvar('profile::acme_server::profiles'), {})
+  $_certificates = pick($certificates, getvar('profile::acme_server::certificates'), {})
+  $_renew_cron_hour = pick($renew_cron_hour, getvar('profile::acme_server::renew_cron_hour'), 2)
 
-  if $manage_acme {
+  if $_manage_acme {
     # Validate contact_email is provided
-    if !$contact_email {
+    if !$_contact_email {
       fail('profile::acme_server: contact_email is required when manage_acme is true')
     }
 
@@ -67,8 +75,8 @@ class profile::acme_server (
     $account_name = 'default'
     $accounts = {
       $account_name => {
-        'email' => $contact_email,
-        'ca'    => $use_staging ? {
+        'email' => $_contact_email,
+        'ca'    => $_use_staging ? {
           true    => 'letsencrypt_test',
           default => 'letsencrypt',
         },
@@ -77,15 +85,15 @@ class profile::acme_server (
 
     # Install acme.sh on Puppet Server with account configuration
     class { 'acme':
-      acme_host => $acme_host,
+      acme_host => $_acme_host,
       accounts  => $accounts,
-      profiles  => $profiles,
+      profiles  => $_profiles,
     }
 
     # Create certificate resources from configuration
     # Each certificate will be requested via acme.sh and made available
     # for deployment to nodes via exported resources
-    $certificates.each |String $cert_name, Hash $cert_config| {
+    $_certificates.each |String $cert_name, Hash $cert_config| {
       # Ensure use_account is set (default to 'default' account if not specified)
       # The use_account parameter is required by acme::certificate
       $cert_config_full = $cert_config + {
@@ -102,7 +110,7 @@ class profile::acme_server (
     cron { 'acme_renewal':
       command => '/root/.acme.sh/acme.sh --cron --home /root/.acme.sh > /dev/null',
       user    => 'root',
-      hour    => $renew_cron_hour,
+      hour    => $_renew_cron_hour,
       minute  => 0,
       require => Class['acme'],
     }
