@@ -84,10 +84,21 @@ profile::puppetdb::postgres_database: 'puppetdb'
 profile::puppetdb::postgres_username: 'puppetdb'
 profile::puppetdb::postgres_password: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEA4nKMgda+BUt+jQsISyCH5cLPHGoJ9vWhVm6pJ8g8b9Ngi5UQI2tpWyVkxsx+cPOHvIrW+/c6iSGkL5+yzJdzj7Kl3ny9HdZ2WyEUaZFKZq45n9f4+KrT8hBTD71xV9RsJ9azE52DGrkUhOGlxlkOtTSoIkg056S+RjmWl50altzKRNcvz516DbasSQugQauqu7Sk4+5JBFqvrONPiUu2wnwF5Lx8ddI07k5Ivql6dbP4M9NijMqQOJ1m17/obh7LM2tIIq+KR6YqZJjkDWozZllCzpRie8hsCdyJ1M3QKPMwMTQpClx4No1XpcOc1EVotT67rNrv/OA0s+Rm3twtrDBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBAP2m6MuJy7lXhyaw6aK7sXgDBoFX6VsajlAwd+zCvfYrUfOnwJr9PKzlU/ZWVdQbLmanR1fMvlTci0kNFcVpskz/4=]'
 
+# ACME Certificate Deployment
+# Deploy wildcard certificate to this node for use by Foreman and Puppet Server
+profile::acme_deploy::manage_deploy: true
+profile::acme_deploy::deploy_certificates:
+  wildcard_ra_home:
+    post_refresh_cmd: 'systemctl reload httpd puppetserver || true'
+
 # Foreman Server Configuration
 profile::foreman::manage_foreman: true
 profile::foreman::foreman_version: '3.12'  # Stable version with full Rocky Linux 9 support (EL9 support started in 3.11)
 profile::foreman::server_fqdn: 'foreman01.ra-home.co.uk'
+# Use ACME wildcard certificate for Foreman web UI
+profile::foreman::server_ssl_cert: '/etc/ssl/letsencrypt/wildcard_ra_home/cert.pem'
+profile::foreman::server_ssl_key: '/etc/ssl/letsencrypt/wildcard_ra_home/key.pem'
+profile::foreman::server_ssl_ca: '/etc/ssl/letsencrypt/wildcard_ra_home/chain.pem'
 
 profile::foreman::admin_username: 'admin'
 profile::foreman::admin_password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAeQlPpKiNWrDsnk0BePZS9Kjn/6tjQdVgdAPRXIkVgqk0XXiocmYYmnMVH70j682PnhIhudLD2MBTcOVjJH+jJyTZcXtqcyVjhzuGHk3g5PZVeZnkWt11QwYWs30/o+yihOmL81DlnLDc9nbI8S61HDsDMC3SxmZD7nClr/Wh8/7oyRUpbfO+dSVmtPF0JnC0TxIsThAoVm2A+GRK3IczD+1pw9RU/NWnsqKLSf68LcN9Q/PcShXJwNBe9c1JYPZj+rz86RgiAF3piF1R8dkbOEvsJLHMaFXW5tC9mQ8plnmmJpKFqGIJxf+uGpZqMh9LLUt28SfBzwrVCdjjrVtv9TA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBA8uEmF1dGYV87X5QY2JRP5gBD2Wp7ua7VTHY2+aAGm65dO]'
