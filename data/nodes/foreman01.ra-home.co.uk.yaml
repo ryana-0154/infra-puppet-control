@@ -36,61 +36,19 @@ profile::postgresql::databases:
 profile::postgresql::database_users:
   foreman:
     password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEARTA3cU6AmDX8cbahBhJV1zMqgNL+A//t3NxF2H2u57p87RyBbC6DdR9YX/PtccMcRRCZcb78dU7HrU2Wxw3bojwJDzMYoeTqz4vPcOFG0J01H5IyVKlsHr0Bbi2NudOROQiQduqIVmE83odjhtOJGUQUAblE5uXD+mBQ7e61no5ihnDx7zGNKqf/L+JLYJ6+CkXkBnwZZf+rAvsapdFiCe4YOtb+Vcls875H8FlP/3TLC2MeHk0nM6/ep/cYuaSWKtgj0ABZnMLxJ5FflQ4KxH+vsu9Ju7ga3ND58DkXH6y4nach5NGFjuIltiA/dxUHi4sqgIQhqgMDa6iMZhM+ijA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCdjc/UFCM6RgIfHirj4fUvgBAv+qlb8A2mKqX+ccylLEzP]'
-  puppetdb: {}      # Password from Foreman ENC: profile::puppetdb::postgres_password
-  puppetdb-read: {} # Password from Foreman ENC: profile::puppetdb::postgres_password
+  # puppetdb and puppetdb-read users managed via Foreman ENC
 
 profile::postgresql::database_grants:
   foreman_db_access:
     privilege: ALL
     db: foreman
     role: foreman
-  puppetdb_db_access:
-    privilege: ALL
-    db: puppetdb
-    role: puppetdb
-  puppetdb_read_db_access:
-    privilege: CONNECT
-    db: puppetdb
-    role: puppetdb-read
+  # puppetdb grants managed via Foreman ENC
 
 # pg_hba rules for TCP connections from localhost
-profile::postgresql::pg_hba_rules:
-  puppetdb_tcp_ipv4:
-    type: host
-    database: puppetdb
-    user: puppetdb
-    address: '127.0.0.1/32'
-    auth_method: md5
-    order: '100'
-  puppetdb_tcp_ipv6:
-    type: host
-    database: puppetdb
-    user: puppetdb
-    address: '::1/128'
-    auth_method: md5
-    order: '101'
-  puppetdb_read_tcp_ipv4:
-    type: host
-    database: puppetdb
-    user: puppetdb-read
-    address: '127.0.0.1/32'
-    auth_method: md5
-    order: '102'
-  puppetdb_read_tcp_ipv6:
-    type: host
-    database: puppetdb
-    user: puppetdb-read
-    address: '::1/128'
-    auth_method: md5
-    order: '103'
+# puppetdb pg_hba rules managed via Foreman ENC
 
-# PuppetDB Configuration
-profile::puppetdb::manage_puppetdb: true
-profile::puppetdb::postgres_host: 'localhost'
-profile::puppetdb::postgres_port: 5432
-profile::puppetdb::postgres_database: 'puppetdb'
-profile::puppetdb::postgres_username: 'puppetdb'
-# profile::puppetdb::postgres_password - Set this in Foreman as a host parameter
+# PuppetDB Configuration - All settings managed via Foreman ENC
 
 # Foreman Server Configuration
 profile::foreman::manage_foreman: true
