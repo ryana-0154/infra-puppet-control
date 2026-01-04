@@ -50,7 +50,58 @@ class profile::otel_collector (
   String[1]            $otel_collector_image      = 'otel/opentelemetry-collector-contrib:latest',
   Boolean              $enable_grafana_dashboards = true,
   String[1]            $grafana_datasource_name   = 'Prometheus',
+
+  # Grafana Cloud Tempo integration
+  Boolean                        $enable_grafana_cloud_tempo = false,
+  Optional[String[1]]            $grafana_cloud_tempo_endpoint = undef,
+  Optional[String[1]]            $grafana_cloud_tempo_username = undef,
+  Optional[Sensitive[String[1]]] $grafana_cloud_tempo_api_key = undef,
+  Enum['otlp', 'otlphttp']       $tempo_protocol = 'otlphttp',
 ) {
+  # Multi-source parameter resolution (Foreman ENC → Hiera → Defaults)
+  $_enable_grafana_cloud_tempo = pick(
+    getvar('otel_enable_grafana_cloud_tempo'),
+    lookup('profile::otel_collector::enable_grafana_cloud_tempo', Optional[Boolean], 'first', undef),
+    $enable_grafana_cloud_tempo
+  )
+
+  $_grafana_cloud_tempo_endpoint = pick(
+    getvar('otel_grafana_cloud_tempo_endpoint'),
+    lookup('profile::otel_collector::grafana_cloud_tempo_endpoint', Optional[String], 'first', undef),
+    $grafana_cloud_tempo_endpoint
+  )
+
+  $_grafana_cloud_tempo_username = pick(
+    getvar('otel_grafana_cloud_tempo_username'),
+    lookup('profile::otel_collector::grafana_cloud_tempo_username', Optional[String], 'first', undef),
+    $grafana_cloud_tempo_username
+  )
+
+  $_tempo_protocol = pick(
+    getvar('otel_tempo_protocol'),
+    lookup('profile::otel_collector::tempo_protocol', Optional[String], 'first', undef),
+    $tempo_protocol
+  )
+
+  # Sensitive parameter
+  $_grafana_cloud_tempo_api_key_raw = getvar('otel_grafana_cloud_tempo_api_key')
+  $_grafana_cloud_tempo_api_key_hiera = lookup('profile::otel_collector::grafana_cloud_tempo_api_key', Optional[Sensitive[String]], 'first', undef)
+  $_grafana_cloud_tempo_api_key = $_grafana_cloud_tempo_api_key_raw ? {
+    undef   => $_grafana_cloud_tempo_api_key_hiera ? {
+      undef   => $grafana_cloud_tempo_api_key,
+      default => $_grafana_cloud_tempo_api_key_hiera,
+    },
+    default => Sensitive($_grafana_cloud_tempo_api_key_raw),
+  }
+
+  # Validate Grafana Cloud Tempo parameters
+  if $_enable_grafana_cloud_tempo {
+    if !$_grafana_cloud_tempo_endpoint or !$_grafana_cloud_tempo_username or
+      !$_grafana_cloud_tempo_api_key {
+      fail('profile::otel_collector: All grafana_cloud_tempo_* parameters required when enable_grafana_cloud_tempo is true')
+    }
+  }
+
   if $manage_otel_collector {
     # Ensure Docker Compose v2 is installed
     ensure_packages(['docker-compose-plugin'])
@@ -70,11 +121,16 @@ class profile::otel_collector (
       owner   => 'root',
       group   => 'root',
       content => epp('profile/otel/otel-collector-config.yaml.epp', {
-        grpc_port       => $otel_grpc_port,
-        http_port       => $otel_http_port,
-        health_port     => $otel_health_port,
-        pprof_port      => $otel_pprof_port,
-        prometheus_port => $otel_prometheus_port,
+        grpc_port                    => $otel_grpc_port,
+        http_port                    => $otel_http_port,
+        health_port                  => $otel_health_port,
+        pprof_port                   => $otel_pprof_port,
+        prometheus_port              => $otel_prometheus_port,
+        enable_grafana_cloud_tempo   => $_enable_grafana_cloud_tempo,
+        grafana_cloud_tempo_endpoint => $_grafana_cloud_tempo_endpoint,
+        grafana_cloud_tempo_username => $_grafana_cloud_tempo_username,
+        grafana_cloud_tempo_api_key  => $_grafana_cloud_tempo_api_key,
+        tempo_protocol               => $_tempo_protocol,
       }),
       require => File["${otel_dir}/config"],
     }

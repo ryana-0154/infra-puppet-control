@@ -234,6 +234,20 @@ class profile::monitoring (
   # Unbound exporter configuration
   String[1]                      $unbound_host              = '127.0.0.1',
   Integer[1,65535]               $unbound_control_port      = 8953,
+
+  # Grafana Cloud integration
+  Boolean                        $enable_grafana_cloud      = false,
+  Optional[String[1]]            $grafana_cloud_metrics_url = undef,
+  Optional[String[1]]            $grafana_cloud_logs_url    = undef,
+  Optional[String[1]]            $grafana_cloud_metrics_username = undef,
+  Optional[String[1]]            $grafana_cloud_logs_username = undef,
+  Optional[Sensitive[String[1]]] $grafana_cloud_metrics_api_key = undef,
+  Optional[Sensitive[String[1]]] $grafana_cloud_logs_api_key = undef,
+
+  # Agent selection
+  Enum['alloy', 'victoriametrics'] $metrics_agent = 'victoriametrics',
+  String[1]                      $alloy_image              = 'grafana/alloy:latest',
+  Integer[1,65535]               $alloy_http_port          = 12345,
 ) {
   # Validate SSO parameters when Authelia is enabled
   if $enable_authelia {
@@ -278,7 +292,79 @@ class profile::monitoring (
     fail('profile::monitoring: domain_name is required when enable_ssl is true')
   }
 
+  # Multi-source parameter resolution (Foreman ENC → Hiera → Defaults)
+  # This allows configuration via Foreman Host/Hostgroup Parameters
+  $_enable_grafana_cloud = pick(
+    getvar('monitoring_enable_grafana_cloud'),
+    lookup('profile::monitoring::enable_grafana_cloud', Optional[Boolean], 'first', undef),
+    $enable_grafana_cloud
+  )
+
+  $_metrics_agent = pick(
+    getvar('monitoring_metrics_agent'),
+    lookup('profile::monitoring::metrics_agent', Optional[String], 'first', undef),
+    $metrics_agent
+  )
+
+  $_grafana_cloud_metrics_url = pick(
+    getvar('monitoring_grafana_cloud_metrics_url'),
+    lookup('profile::monitoring::grafana_cloud_metrics_url', Optional[String], 'first', undef),
+    $grafana_cloud_metrics_url
+  )
+
+  $_grafana_cloud_logs_url = pick(
+    getvar('monitoring_grafana_cloud_logs_url'),
+    lookup('profile::monitoring::grafana_cloud_logs_url', Optional[String], 'first', undef),
+    $grafana_cloud_logs_url
+  )
+
+  $_grafana_cloud_metrics_username = pick(
+    getvar('monitoring_grafana_cloud_metrics_username'),
+    lookup('profile::monitoring::grafana_cloud_metrics_username', Optional[String], 'first', undef),
+    $grafana_cloud_metrics_username
+  )
+
+  $_grafana_cloud_logs_username = pick(
+    getvar('monitoring_grafana_cloud_logs_username'),
+    lookup('profile::monitoring::grafana_cloud_logs_username', Optional[String], 'first', undef),
+    $grafana_cloud_logs_username
+  )
+
+  # Sensitive parameters need special handling
+  $_grafana_cloud_metrics_api_key_raw = getvar('monitoring_grafana_cloud_metrics_api_key')
+  $_grafana_cloud_metrics_api_key_hiera = lookup('profile::monitoring::grafana_cloud_metrics_api_key', Optional[Sensitive[String]], 'first', undef)
+  $_grafana_cloud_metrics_api_key = $_grafana_cloud_metrics_api_key_raw ? {
+    undef   => $_grafana_cloud_metrics_api_key_hiera ? {
+      undef   => $grafana_cloud_metrics_api_key,
+      default => $_grafana_cloud_metrics_api_key_hiera,
+    },
+    default => Sensitive($_grafana_cloud_metrics_api_key_raw),
+  }
+
+  $_grafana_cloud_logs_api_key_raw = getvar('monitoring_grafana_cloud_logs_api_key')
+  $_grafana_cloud_logs_api_key_hiera = lookup('profile::monitoring::grafana_cloud_logs_api_key', Optional[Sensitive[String]], 'first', undef)
+  $_grafana_cloud_logs_api_key = $_grafana_cloud_logs_api_key_raw ? {
+    undef   => $_grafana_cloud_logs_api_key_hiera ? {
+      undef   => $grafana_cloud_logs_api_key,
+      default => $_grafana_cloud_logs_api_key_hiera,
+    },
+    default => Sensitive($_grafana_cloud_logs_api_key_raw),
+  }
+
+  # Validate Grafana Cloud parameters
+  if $_enable_grafana_cloud {
+    if !$_grafana_cloud_metrics_url or !$_grafana_cloud_logs_url or
+      !$_grafana_cloud_metrics_username or !$_grafana_cloud_logs_username or
+      !$_grafana_cloud_metrics_api_key or !$_grafana_cloud_logs_api_key {
+      fail('profile::monitoring: All grafana_cloud_* parameters required when enable_grafana_cloud is true')
+    }
+  }
+
   if $manage_monitoring {
+    # Set template variables for docker-compose (ERB templates need these in scope)
+    $enable_grafana_cloud_resolved = $_enable_grafana_cloud
+    $metrics_agent_resolved = $_metrics_agent
+
     # Ensure Docker Compose v2 is installed
     ensure_packages(['docker-compose-plugin'])
 
@@ -330,7 +416,23 @@ class profile::monitoring (
     if $enable_promtail {
       file { "${monitoring_dir}/promtail-config.yaml":
         ensure  => file,
-        content => template('profile/monitoring/promtail-config.yaml.erb'),
+        content => epp('profile/monitoring/promtail-config.yaml.epp', {
+          enable_grafana_cloud        => $_enable_grafana_cloud,
+          enable_loki                 => $enable_loki,
+          grafana_cloud_logs_url      => $_grafana_cloud_logs_url,
+          grafana_cloud_logs_username => $_grafana_cloud_logs_username,
+          grafana_cloud_logs_api_key  => $_grafana_cloud_logs_api_key,
+          monitoring_ip               => $monitoring_ip,
+          enable_prometheus           => $enable_victoriametrics,
+          enable_grafana              => $enable_grafana,
+          enable_blackbox             => $enable_blackbox,
+          enable_node_exporter        => $enable_node_exporter,
+          enable_pihole_exporter      => $enable_pihole_exporter,
+          enable_nginx_proxy          => $enable_nginx_proxy,
+          enable_authelia             => $enable_authelia,
+          enable_redis                => $enable_redis,
+          facts                       => $facts,
+        }),
         group   => $monitoring_dir_group,
         mode    => '0644',
         owner   => $monitoring_dir_owner,
@@ -342,6 +444,36 @@ class profile::monitoring (
       file { "${monitoring_dir}/blackbox.yaml":
         ensure  => file,
         content => template('profile/monitoring/blackbox.yaml.erb'),
+        group   => $monitoring_dir_group,
+        mode    => '0644',
+        owner   => $monitoring_dir_owner,
+        require => File[$monitoring_dir],
+      }
+    }
+
+    # Create Grafana Alloy configuration
+    if $_enable_grafana_cloud and $_metrics_agent == 'alloy' {
+      file { "${monitoring_dir}/alloy-config.alloy":
+        ensure  => file,
+        content => epp('profile/monitoring/alloy-config.alloy.epp', {
+          enable_node_exporter           => $enable_node_exporter,
+          enable_blackbox                => $enable_blackbox,
+          enable_pihole_exporter         => $enable_pihole_exporter,
+          enable_wireguard_exporter      => $enable_wireguard_exporter,
+          enable_unbound_exporter        => $enable_unbound_exporter,
+          monitoring_ip                  => $monitoring_ip,
+          blackbox_port                  => $blackbox_port,
+          pihole_exporter_port           => $pihole_exporter_port,
+          wireguard_exporter_port        => $wireguard_exporter_port,
+          unbound_exporter_port          => $unbound_exporter_port,
+          grafana_cloud_metrics_url      => $_grafana_cloud_metrics_url,
+          grafana_cloud_metrics_username => $_grafana_cloud_metrics_username,
+          grafana_cloud_metrics_api_key  => $_grafana_cloud_metrics_api_key,
+          grafana_cloud_logs_url         => $_grafana_cloud_logs_url,
+          grafana_cloud_logs_username    => $_grafana_cloud_logs_username,
+          grafana_cloud_logs_api_key     => $_grafana_cloud_logs_api_key,
+          facts                          => $facts,
+        }),
         group   => $monitoring_dir_group,
         mode    => '0644',
         owner   => $monitoring_dir_owner,
@@ -539,8 +671,12 @@ class profile::monitoring (
       true    => [Vcsrepo["${monitoring_dir}/dashboards-external"]],
       default => [],
     }
+    $alloy_subscribe = $_enable_grafana_cloud ? {
+      true    => [File["${monitoring_dir}/alloy-config.alloy"]],
+      default => [],
+    }
 
-    $all_subscribe = $base_subscribe + $victoriametrics_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe + $external_dashboards_subscribe
+    $all_subscribe = $base_subscribe + $victoriametrics_subscribe + $loki_subscribe + $promtail_subscribe + $blackbox_subscribe + $grafana_subscribe + $authelia_subscribe + $nginx_subscribe + $external_dashboards_subscribe + $alloy_subscribe
 
     exec { 'restart-monitoring-stack':
       command     => 'docker compose up -d --force-recreate --remove-orphans',

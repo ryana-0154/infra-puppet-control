@@ -9,7 +9,12 @@ positions:
   filename: /tmp/positions.yaml
 
 clients:
-<%- if @enable_loki -%>
+<%- if @enable_grafana_cloud -%>
+  - url: <%= @grafana_cloud_logs_url %>
+    basic_auth:
+      username: <%= @grafana_cloud_logs_username %>
+      password: <%= @grafana_cloud_logs_api_key.unwrap %>
+<%- elsif @enable_loki -%>
   - url: http://<%= @monitoring_ip %>:3100/loki/api/v1/push
 <%- else -%>
   # Loki disabled - configure external Loki endpoint
