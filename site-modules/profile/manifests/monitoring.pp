@@ -294,19 +294,26 @@ class profile::monitoring (
 
   # Multi-source parameter resolution (Foreman ENC → Hiera → Defaults)
   # This allows configuration via Foreman Host/Hostgroup Parameters
+  # Check both naming conventions: profile::monitoring::X and monitoring_X
   $_enable_grafana_cloud = pick(
+    getvar('profile::monitoring::enable_grafana_cloud'),
     getvar('monitoring_enable_grafana_cloud'),
     lookup('profile::monitoring::enable_grafana_cloud', Optional[Boolean], 'first', undef),
     $enable_grafana_cloud
   )
 
   $_metrics_agent = pick(
+    getvar('profile::monitoring::metrics_agent'),
     getvar('monitoring_metrics_agent'),
     lookup('profile::monitoring::metrics_agent', Optional[String], 'first', undef),
     $metrics_agent
   )
 
-  $_grafana_cloud_metrics_url_enc = getvar('monitoring_grafana_cloud_metrics_url')
+  # Check both naming conventions for optional URL parameters
+  $_grafana_cloud_metrics_url_enc = pick_default([
+    getvar('profile::monitoring::grafana_cloud_metrics_url'),
+    getvar('monitoring_grafana_cloud_metrics_url')
+  ], undef)
   $_grafana_cloud_metrics_url_hiera = lookup('profile::monitoring::grafana_cloud_metrics_url', Optional[String], 'first', undef)
   $_grafana_cloud_metrics_url = $_grafana_cloud_metrics_url_enc ? {
     undef   => $_grafana_cloud_metrics_url_hiera ? {
@@ -316,7 +323,10 @@ class profile::monitoring (
     default => $_grafana_cloud_metrics_url_enc,
   }
 
-  $_grafana_cloud_logs_url_enc = getvar('monitoring_grafana_cloud_logs_url')
+  $_grafana_cloud_logs_url_enc = pick_default([
+    getvar('profile::monitoring::grafana_cloud_logs_url'),
+    getvar('monitoring_grafana_cloud_logs_url')
+  ], undef)
   $_grafana_cloud_logs_url_hiera = lookup('profile::monitoring::grafana_cloud_logs_url', Optional[String], 'first', undef)
   $_grafana_cloud_logs_url = $_grafana_cloud_logs_url_enc ? {
     undef   => $_grafana_cloud_logs_url_hiera ? {
@@ -326,7 +336,10 @@ class profile::monitoring (
     default => $_grafana_cloud_logs_url_enc,
   }
 
-  $_grafana_cloud_metrics_username_enc = getvar('monitoring_grafana_cloud_metrics_username')
+  $_grafana_cloud_metrics_username_enc = pick_default([
+    getvar('profile::monitoring::grafana_cloud_metrics_username'),
+    getvar('monitoring_grafana_cloud_metrics_username')
+  ], undef)
   $_grafana_cloud_metrics_username_hiera = lookup('profile::monitoring::grafana_cloud_metrics_username', Optional[String], 'first', undef)
   $_grafana_cloud_metrics_username = $_grafana_cloud_metrics_username_enc ? {
     undef   => $_grafana_cloud_metrics_username_hiera ? {
@@ -336,7 +349,10 @@ class profile::monitoring (
     default => $_grafana_cloud_metrics_username_enc,
   }
 
-  $_grafana_cloud_logs_username_enc = getvar('monitoring_grafana_cloud_logs_username')
+  $_grafana_cloud_logs_username_enc = pick_default([
+    getvar('profile::monitoring::grafana_cloud_logs_username'),
+    getvar('monitoring_grafana_cloud_logs_username')
+  ], undef)
   $_grafana_cloud_logs_username_hiera = lookup('profile::monitoring::grafana_cloud_logs_username', Optional[String], 'first', undef)
   $_grafana_cloud_logs_username = $_grafana_cloud_logs_username_enc ? {
     undef   => $_grafana_cloud_logs_username_hiera ? {
@@ -346,8 +362,11 @@ class profile::monitoring (
     default => $_grafana_cloud_logs_username_enc,
   }
 
-  # Sensitive parameters need special handling
-  $_grafana_cloud_metrics_api_key_raw = getvar('monitoring_grafana_cloud_metrics_api_key')
+  # Sensitive parameters need special handling - check both naming conventions
+  $_grafana_cloud_metrics_api_key_raw = pick_default([
+    getvar('profile::monitoring::grafana_cloud_metrics_api_key'),
+    getvar('monitoring_grafana_cloud_metrics_api_key')
+  ], undef)
   $_grafana_cloud_metrics_api_key_hiera = lookup('profile::monitoring::grafana_cloud_metrics_api_key', Optional[Sensitive[String]], 'first', undef)
   $_grafana_cloud_metrics_api_key = $_grafana_cloud_metrics_api_key_raw ? {
     undef   => $_grafana_cloud_metrics_api_key_hiera ? {
@@ -357,7 +376,10 @@ class profile::monitoring (
     default => Sensitive($_grafana_cloud_metrics_api_key_raw),
   }
 
-  $_grafana_cloud_logs_api_key_raw = getvar('monitoring_grafana_cloud_logs_api_key')
+  $_grafana_cloud_logs_api_key_raw = pick_default([
+    getvar('profile::monitoring::grafana_cloud_logs_api_key'),
+    getvar('monitoring_grafana_cloud_logs_api_key')
+  ], undef)
   $_grafana_cloud_logs_api_key_hiera = lookup('profile::monitoring::grafana_cloud_logs_api_key', Optional[Sensitive[String]], 'first', undef)
   $_grafana_cloud_logs_api_key = $_grafana_cloud_logs_api_key_raw ? {
     undef   => $_grafana_cloud_logs_api_key_hiera ? {
