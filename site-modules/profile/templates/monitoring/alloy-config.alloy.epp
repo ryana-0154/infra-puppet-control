@@ -114,22 +114,26 @@ loki.source.file "system_logs" {
   forward_to = [loki.write.grafana_cloud.receiver]
 }
 
+// Docker container relabeling rules
+loki.relabel "docker_relabel" {
+  forward_to = [loki.process.add_scrape_labels.receiver]
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label  = "stream"
+  }
+}
+
 // Docker container logs
 loki.source.docker "docker_logs" {
-  host    = "unix:///var/run/docker.sock"
-  targets = []
-  forward_to = [loki.process.add_scrape_labels.receiver]
-  relabel_rules {
-    rule {
-      source_labels = ["__meta_docker_container_name"]
-      regex         = "/(.*)"
-      target_label  = "container"
-    }
-    rule {
-      source_labels = ["__meta_docker_container_log_stream"]
-      target_label  = "stream"
-    }
-  }
+  host       = "unix:///var/run/docker.sock"
+  targets    = []
+  forward_to = [loki.relabel.docker_relabel.receiver]
 }
 
 loki.process "add_scrape_labels" {
@@ -142,25 +146,29 @@ loki.process "add_scrape_labels" {
   }
 }
 
+// Journal relabeling rules
+loki.relabel "journal_relabel" {
+  forward_to = [loki.write.grafana_cloud.receiver]
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+  rule {
+    source_labels = ["__journal_priority"]
+    target_label  = "priority"
+  }
+  rule {
+    source_labels = ["__journal__hostname"]
+    target_label  = "nodename"
+  }
+}
+
 // Systemd journal logs
 loki.source.journal "systemd_journal" {
-  max_age       = "12h"
-  path          = "/var/log/journal"
-  relabel_rules {
-    rule {
-      source_labels = ["__journal__systemd_unit"]
-      target_label  = "unit"
-    }
-    rule {
-      source_labels = ["__journal_priority"]
-      target_label  = "priority"
-    }
-    rule {
-      source_labels = ["__journal__hostname"]
-      target_label  = "nodename"
-    }
-  }
-  forward_to = [loki.write.grafana_cloud.receiver]
+  max_age    = "12h"
+  path       = "/var/log/journal"
+  forward_to = [loki.relabel.journal_relabel.receiver]
 }
 
 // Remote write to Grafana Cloud Logs
