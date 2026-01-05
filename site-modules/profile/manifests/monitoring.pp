@@ -736,7 +736,7 @@ class profile::monitoring (
       true    => [File["${monitoring_dir}/nginx.conf"]],
       default => [],
     }
-    $external_dashboards_subscribe = $enable_external_dashboards ? {
+    $external_dashboards_subscribe = ($enable_grafana and $enable_external_dashboards) ? {
       true    => [Vcsrepo["${monitoring_dir}/dashboards-external"]],
       default => [],
     }
