@@ -14,7 +14,7 @@
       String $grafana_cloud_logs_url,
       String $grafana_cloud_logs_username,
       Sensitive[String] $grafana_cloud_logs_api_key,
-      Hash $facts,
+      Hash $node_facts,
 | -%>
 // Grafana Alloy configuration
 // Managed by Puppet - do not edit manually
@@ -95,12 +95,12 @@ prometheus.remote_write "grafana_cloud" {
 // LOGS COLLECTION
 //
 
-<% $hostname = $facts['networking']['fqdn'] ? {
-  undef => $facts['networking']['hostname'] ? {
+<% $hostname = $node_facts['networking']['fqdn'] ? {
+  undef => $node_facts['networking']['hostname'] ? {
     undef => 'unknown',
-    default => $facts['networking']['hostname']
+    default => $node_facts['networking']['hostname']
   },
-  default => $facts['networking']['fqdn']
+  default => $node_facts['networking']['fqdn']
 } %>
 // System logs
 loki.source.file "system_logs" {

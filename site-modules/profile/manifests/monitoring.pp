@@ -541,7 +541,7 @@ class profile::monitoring (
           grafana_cloud_logs_url         => $_grafana_cloud_logs_url,
           grafana_cloud_logs_username    => $_grafana_cloud_logs_username,
           grafana_cloud_logs_api_key     => $_grafana_cloud_logs_api_key,
-          facts                          => $facts,
+          node_facts                     => $facts,
         }),
         group   => $monitoring_dir_group,
         mode    => '0644',
