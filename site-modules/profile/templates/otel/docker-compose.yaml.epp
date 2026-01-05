@@ -1,3 +1,12 @@
+<%- |
+  String[1] $otel_collector_image,
+  Stdlib::Absolutepath $otel_dir,
+  Integer[1,65535] $grpc_port,
+  Integer[1,65535] $http_port,
+  Integer[1,65535] $prometheus_port,
+  Integer[1,65535] $health_port,
+  Integer[1,65535] $pprof_port,
+| -%>
 version: '3.8'
 
 services:

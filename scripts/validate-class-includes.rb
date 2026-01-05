@@ -122,10 +122,14 @@ puts
 site_modules = ['site-modules/profile', 'site-modules/role']
 
 # Look for modules in both spec/fixtures (testing) and modules/ (deployment)
-external_modules = if File.directory?('spec/fixtures/modules')
-                     Dir.glob('spec/fixtures/modules/*').select { |f| File.directory?(f) }
-                   elsif File.directory?('modules')
-                     Dir.glob('modules/*').select { |f| File.directory?(f) }
+# Prefer modules/ if it has content (deployed by r10k), otherwise use spec/fixtures
+modules_dir = Dir.glob('modules/*').select { |f| File.directory?(f) }
+spec_fixtures_dir = Dir.glob('spec/fixtures/modules/*').select { |f| File.directory?(f) }
+
+external_modules = if modules_dir.any?
+                     modules_dir
+                   elsif spec_fixtures_dir.any?
+                     spec_fixtures_dir
                    else
                      []
                    end

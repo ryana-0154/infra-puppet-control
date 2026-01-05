@@ -38,7 +38,7 @@ class profile::dotfiles (
   String[1]            $dotfiles_repo     = 'https://github.com/ryana-0154/dotfiles.git',
   String[1]            $dotfiles_revision = 'main',
   String[1]            $dotfiles_dir_name = '.dotfiles',
-  Hash                 $dotfiles_users    = {},
+  Hash[String[1], Hash] $dotfiles_users   = {},
   Boolean              $auto_update       = false,
   Boolean              $install_git       = true,
 ) {

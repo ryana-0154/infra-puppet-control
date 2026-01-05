@@ -7,6 +7,6 @@
 #   include role::base
 #
 class role::base {
-  include profile::base
-  include profile::dotfiles
+  contain profile::base
+  contain profile::dotfiles
 }

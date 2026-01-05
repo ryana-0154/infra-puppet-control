@@ -11,6 +11,7 @@ mod 'puppetlabs-resource_api', '1.1.0'
 mod 'puppetlabs-ntp', '10.1.0'
 mod 'puppetlabs-accounts', '8.2.1'
 mod 'puppetlabs-inifile', '6.1.1'
+mod 'puppetlabs-cron_core', '1.3.0'  # Cron resource type (required by puppet module)
 
 # System management
 mod 'puppet-logrotate', '7.1.0'

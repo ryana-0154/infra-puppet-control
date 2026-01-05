@@ -31,11 +31,11 @@ class profile::base (
   Boolean $manage_ssh_hardening       = false,
 ) {
   # DNS configuration - always included for internal DNS resolution
-  include profile::dns
+  contain profile::dns
 
   # Puppet agent configuration - connects to Puppet Server
   # Disabled on nodes that ARE the Puppet Server (e.g., foreman01)
-  include profile::puppet_agent
+  contain profile::puppet_agent
 
   # NTP configuration
   if $manage_ntp {
@@ -44,7 +44,7 @@ class profile::base (
 
   # Firewall configuration
   if $manage_firewall {
-    include profile::firewall
+    contain profile::firewall
   }
   # Note: We don't purge firewall rules when manage_firewall is false
   # because purging ALL iptables rules breaks connectivity.
@@ -56,22 +56,22 @@ class profile::base (
 
   # OpenTelemetry Collector configuration
   if $manage_otel_collector {
-    include profile::otel_collector
+    contain profile::otel_collector
   }
 
   # Fail2ban intrusion prevention
   if $manage_fail2ban {
-    include profile::fail2ban
+    contain profile::fail2ban
   }
 
   # Unattended upgrades for automatic security updates
   if $manage_unattended_upgrades {
-    include profile::unattended_upgrades
+    contain profile::unattended_upgrades
   }
 
   # SSH server hardening
   if $manage_ssh_hardening {
-    include profile::ssh_hardening
+    contain profile::ssh_hardening
   }
 
   # Basic package management

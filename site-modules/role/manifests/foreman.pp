@@ -18,12 +18,12 @@
 #   }
 #
 class role::foreman {
-  include profile::base
-  include profile::postgresql
-  include profile::puppetdb
-  include profile::foreman
-  include profile::foreman_proxy
-  include profile::acme_server
+  contain profile::base
+  contain profile::postgresql
+  contain profile::puppetdb
+  contain profile::foreman
+  contain profile::foreman_proxy
+  contain profile::acme_server
 
   # Explicit ordering to ensure proper dependency chain
   # PostgreSQL must be running before PuppetDB and Foreman install

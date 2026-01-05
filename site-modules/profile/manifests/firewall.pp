@@ -66,7 +66,7 @@ class profile::firewall (
   Optional[String[1]]     $wireguard_network       = '10.10.10.0/24',
   Optional[String[1]]     $wireguard_interface     = 'wg0',
   Boolean                 $allow_wireguard_routing = true,
-  Hash                    $custom_rules            = {},
+  Hash[String[1], Hash]   $custom_rules            = {},
 ) {
   if $manage_firewall {
     # Ensure firewall is installed and running

@@ -14,8 +14,8 @@
 #   include role::vpn_gateway
 #
 class role::vpn_gateway {
-  include profile::base
-  include profile::wireguard
-  include profile::pihole_native
-  include profile::unbound
+  contain profile::base
+  contain profile::wireguard
+  contain profile::pihole_native
+  contain profile::unbound
 }

@@ -82,11 +82,16 @@ class profile::acme_server (
     $acme_host
   )
 
-  $_contact_email = pick(
-    getvar('acme_contact_email'),
-    lookup('profile::acme_server::contact_email', Optional[String[1]], 'first', undef),
-    $contact_email
-  )
+  # contact_email can be undef when manage_acme is false, so use conditionals instead of pick()
+  $_contact_email_enc = getvar('acme_contact_email')
+  $_contact_email_hiera = lookup('profile::acme_server::contact_email', Optional[String[1]], 'first', undef)
+  $_contact_email = $_contact_email_enc ? {
+    undef   => $_contact_email_hiera ? {
+      undef   => $contact_email,
+      default => $_contact_email_hiera,
+    },
+    default => $_contact_email_enc,
+  }
 
   # Integer parameter
   $_renew_cron_hour = pick(

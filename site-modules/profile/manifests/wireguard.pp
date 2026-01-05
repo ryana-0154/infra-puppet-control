@@ -63,7 +63,7 @@ class profile::wireguard (
   Boolean                  $enable_nat              = true,
   Boolean                  $enable_ip_forward       = true,
   Boolean                  $manage_ufw              = true,
-  Hash                     $peers                   = {},
+  Hash[String[1], Hash]    $peers                   = {},
   Array[String[1]]         $dns_servers             = ['10.10.10.1'],
   Integer[0]               $persistent_keepalive    = 25,
 ) {

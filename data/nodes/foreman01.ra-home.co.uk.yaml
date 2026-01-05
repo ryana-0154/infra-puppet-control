@@ -106,6 +106,7 @@ profile::foreman::db_password: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxgg
 profile::foreman::enable_puppetserver: true
 profile::foreman::enable_enc: true
 profile::foreman::enable_reports: true
+profile::foreman::ca_server: 'pi.ra-home.co.uk'  # Puppet CA remains on Pi
 
 profile::foreman::initial_organization:
   name: 'RA Home'

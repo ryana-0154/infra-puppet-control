@@ -6,6 +6,6 @@
 #   include role::webserver
 #
 class role::webserver {
-  include profile::base
-  include profile::webserver
+  contain profile::base
+  contain profile::webserver
 }

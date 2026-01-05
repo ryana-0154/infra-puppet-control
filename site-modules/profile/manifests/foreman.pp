@@ -40,6 +40,8 @@
 #   Path to SSL private key (default: Puppet server key)
 # @param server_ssl_chain
 #   Path to SSL certificate chain file (default: Puppet CA)
+# @param ca_server
+#   Hostname of the Puppet CA server (required when this server is not the CA)
 #
 # @example Basic usage with Hiera
 #   profile::foreman::manage_foreman: true
@@ -68,6 +70,7 @@ class profile::foreman (
   Optional[Stdlib::Absolutepath]       $server_ssl_cert        = undef,
   Optional[Stdlib::Absolutepath]       $server_ssl_key         = undef,
   Optional[Stdlib::Absolutepath]       $server_ssl_chain       = undef,
+  Optional[Stdlib::Host]               $ca_server              = undef,
 ) {
   if $manage_foreman {
     # Handle both plain strings (from eyaml) and Sensitive types
@@ -139,7 +142,7 @@ class profile::foreman (
         server_storeconfigs   => true,   # Enable PuppetDB storeconfigs for exported resources (required by ACME module)
         # Agent configuration - this node gets its catalog from itself
         agent_server_hostname => $server_fqdn,
-        ca_server             => 'pi.ra-home.co.uk',  # CA remains on pi
+        ca_server             => $ca_server,
       }
 
       # Install Foreman Puppet plugin for web UI integration
@@ -147,7 +150,7 @@ class profile::foreman (
 
       # Deploy Puppet control repository with r10k
       # This ensures the Puppet Server has the latest code from Git
-      include profile::r10k
+      contain profile::r10k
     }
 
     # Note: Service management is handled by the foreman class itself

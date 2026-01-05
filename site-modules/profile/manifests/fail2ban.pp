@@ -71,9 +71,9 @@ class profile::fail2ban (
   Boolean $enable_http_jails                 = true,
   Optional[Variant[Integer[1, 65535], String[1]]] $ssh_port = undef,
   Array[String[1]] $http_logpath             = ['/var/log/nginx/access.log', '/var/log/apache2/access.log'],
-  Hash $custom_jails                         = {},
-  Hash $custom_filters                       = {},
-  Hash $custom_actions                       = {},
+  Hash[String[1], Hash] $custom_jails        = {},
+  Hash[String[1], Hash] $custom_filters      = {},
+  Hash[String[1], Hash] $custom_actions      = {},
 ) {
   if $manage_fail2ban {
     # Auto-detect SSH port from firewall profile via Hiera lookup

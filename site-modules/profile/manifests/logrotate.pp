@@ -41,7 +41,7 @@ class profile::logrotate (
   String[4,4] $create_mode      = '0640',
   String[1]   $create_owner     = 'root',
   String[1]   $create_group     = 'adm',
-  Hash        $rules            = {},
+  Hash[String[1], Hash] $rules = {},
 ) {
   if $manage_logrotate {
     # Manage the logrotate package and base configuration

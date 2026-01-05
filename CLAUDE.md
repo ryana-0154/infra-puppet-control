@@ -126,6 +126,24 @@ Assumptions:
 Final Rule:
 - Only return control to the user once a fully working, test-passing Puppet module and Hiera config is delivered.
 
+Validation Before Handing Back:
+- **After completing significant code changes**, run the full local CI to validate your work:
+  ```bash
+  ./scripts/run-ci-locally.sh
+  ```
+- This runs all validation steps including:
+  - Puppet lint and syntax checks
+  - RuboCop style checks
+  - ERB template validation
+  - Test coverage check
+  - Puppetfile validation
+  - RSpec unit tests
+  - **Deployment simulation** (catalog compilation for all profiles/roles)
+  - Security scan
+- **Classes requiring eyaml decryption** will be marked as "skipped" in deployment simulation when the private key is unavailable - this is expected behavior
+- **Do not hand control back until ALL checks pass** (excluding expected eyaml skips)
+- If any check fails, fix the issue and re-run the CI
+
 
 ## Setup
 

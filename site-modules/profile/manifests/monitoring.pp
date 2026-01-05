@@ -205,7 +205,7 @@ class profile::monitoring (
   Optional[String[1]]            $authelia_jwt_secret       = undef,
   Optional[String[1]]            $authelia_session_secret   = undef,
   Optional[String[1]]            $authelia_storage_encryption_key = undef,
-  Hash                           $sso_users                 = {},
+  Hash[String[1], Hash]          $sso_users                 = {},
   Optional[String[1]]            $grafana_oidc_secret       = undef,
   Optional[String[1]]            $oidc_private_key          = undef,
 
@@ -310,11 +310,13 @@ class profile::monitoring (
   )
 
   # Check both naming conventions for optional URL parameters
-  $_grafana_cloud_metrics_url_enc = pick(
-    getvar('profile::monitoring::grafana_cloud_metrics_url'),
-    getvar('monitoring_grafana_cloud_metrics_url'),
-    undef
-  )
+  # Use conditional instead of pick() to allow all-undef values
+  $_enc_metrics_url_1 = getvar('profile::monitoring::grafana_cloud_metrics_url')
+  $_enc_metrics_url_2 = getvar('monitoring_grafana_cloud_metrics_url')
+  $_grafana_cloud_metrics_url_enc = $_enc_metrics_url_1 ? {
+    undef   => $_enc_metrics_url_2,
+    default => $_enc_metrics_url_1,
+  }
   $_grafana_cloud_metrics_url_hiera = lookup('profile::monitoring::grafana_cloud_metrics_url', Optional[String], 'first', undef)
   $_grafana_cloud_metrics_url = $_grafana_cloud_metrics_url_enc ? {
     undef   => $_grafana_cloud_metrics_url_hiera ? {
@@ -324,11 +326,12 @@ class profile::monitoring (
     default => $_grafana_cloud_metrics_url_enc,
   }
 
-  $_grafana_cloud_logs_url_enc = pick(
-    getvar('profile::monitoring::grafana_cloud_logs_url'),
-    getvar('monitoring_grafana_cloud_logs_url'),
-    undef
-  )
+  $_enc_logs_url_1 = getvar('profile::monitoring::grafana_cloud_logs_url')
+  $_enc_logs_url_2 = getvar('monitoring_grafana_cloud_logs_url')
+  $_grafana_cloud_logs_url_enc = $_enc_logs_url_1 ? {
+    undef   => $_enc_logs_url_2,
+    default => $_enc_logs_url_1,
+  }
   $_grafana_cloud_logs_url_hiera = lookup('profile::monitoring::grafana_cloud_logs_url', Optional[String], 'first', undef)
   $_grafana_cloud_logs_url = $_grafana_cloud_logs_url_enc ? {
     undef   => $_grafana_cloud_logs_url_hiera ? {
@@ -338,11 +341,12 @@ class profile::monitoring (
     default => $_grafana_cloud_logs_url_enc,
   }
 
-  $_grafana_cloud_metrics_username_enc = pick(
-    getvar('profile::monitoring::grafana_cloud_metrics_username'),
-    getvar('monitoring_grafana_cloud_metrics_username'),
-    undef
-  )
+  $_enc_metrics_username_1 = getvar('profile::monitoring::grafana_cloud_metrics_username')
+  $_enc_metrics_username_2 = getvar('monitoring_grafana_cloud_metrics_username')
+  $_grafana_cloud_metrics_username_enc = $_enc_metrics_username_1 ? {
+    undef   => $_enc_metrics_username_2,
+    default => $_enc_metrics_username_1,
+  }
   $_grafana_cloud_metrics_username_hiera = lookup('profile::monitoring::grafana_cloud_metrics_username', Optional[String], 'first', undef)
   $_grafana_cloud_metrics_username = $_grafana_cloud_metrics_username_enc ? {
     undef   => $_grafana_cloud_metrics_username_hiera ? {
@@ -352,11 +356,12 @@ class profile::monitoring (
     default => $_grafana_cloud_metrics_username_enc,
   }
 
-  $_grafana_cloud_logs_username_enc = pick(
-    getvar('profile::monitoring::grafana_cloud_logs_username'),
-    getvar('monitoring_grafana_cloud_logs_username'),
-    undef
-  )
+  $_enc_logs_username_1 = getvar('profile::monitoring::grafana_cloud_logs_username')
+  $_enc_logs_username_2 = getvar('monitoring_grafana_cloud_logs_username')
+  $_grafana_cloud_logs_username_enc = $_enc_logs_username_1 ? {
+    undef   => $_enc_logs_username_2,
+    default => $_enc_logs_username_1,
+  }
   $_grafana_cloud_logs_username_hiera = lookup('profile::monitoring::grafana_cloud_logs_username', Optional[String], 'first', undef)
   $_grafana_cloud_logs_username = $_grafana_cloud_logs_username_enc ? {
     undef   => $_grafana_cloud_logs_username_hiera ? {
@@ -368,11 +373,12 @@ class profile::monitoring (
 
   # Sensitive parameters need special handling - check both naming conventions
   # Wrap with Sensitive() if it's a plain string
-  $_grafana_cloud_metrics_api_key_raw = pick(
-    getvar('profile::monitoring::grafana_cloud_metrics_api_key'),
-    getvar('monitoring_grafana_cloud_metrics_api_key'),
-    undef
-  )
+  $_enc_metrics_api_key_1 = getvar('profile::monitoring::grafana_cloud_metrics_api_key')
+  $_enc_metrics_api_key_2 = getvar('monitoring_grafana_cloud_metrics_api_key')
+  $_grafana_cloud_metrics_api_key_raw = $_enc_metrics_api_key_1 ? {
+    undef   => $_enc_metrics_api_key_2,
+    default => $_enc_metrics_api_key_1,
+  }
   $_grafana_cloud_metrics_api_key_hiera = lookup('profile::monitoring::grafana_cloud_metrics_api_key', Optional[Variant[String, Sensitive[String]]], 'first', undef)
   # Wrap Hiera value with Sensitive() if it's a plain string
   $_grafana_cloud_metrics_api_key_hiera_wrapped = $_grafana_cloud_metrics_api_key_hiera ? {
@@ -393,11 +399,12 @@ class profile::monitoring (
     default => Sensitive($_grafana_cloud_metrics_api_key_raw),
   }
 
-  $_grafana_cloud_logs_api_key_raw = pick(
-    getvar('profile::monitoring::grafana_cloud_logs_api_key'),
-    getvar('monitoring_grafana_cloud_logs_api_key'),
-    undef
-  )
+  $_enc_logs_api_key_1 = getvar('profile::monitoring::grafana_cloud_logs_api_key')
+  $_enc_logs_api_key_2 = getvar('monitoring_grafana_cloud_logs_api_key')
+  $_grafana_cloud_logs_api_key_raw = $_enc_logs_api_key_1 ? {
+    undef   => $_enc_logs_api_key_2,
+    default => $_enc_logs_api_key_1,
+  }
   $_grafana_cloud_logs_api_key_hiera = lookup('profile::monitoring::grafana_cloud_logs_api_key', Optional[Variant[String, Sensitive[String]]], 'first', undef)
   # Wrap Hiera value with Sensitive() if it's a plain string
   $_grafana_cloud_logs_api_key_hiera_wrapped = $_grafana_cloud_logs_api_key_hiera ? {
@@ -618,7 +625,7 @@ class profile::monitoring (
       if $enable_embedded_dashboards {
         file { "${monitoring_dir}/provisioning/dashboards/loki-logs-overview.json":
           ensure  => file,
-          content => template('profile/monitoring/provisioning/dashboards/loki-logs-overview.json.erb'),
+          source  => 'puppet:///modules/profile/monitoring/provisioning/dashboards/loki-logs-overview.json',
           group   => $monitoring_dir_group,
           mode    => '0644',
           owner   => $monitoring_dir_owner,

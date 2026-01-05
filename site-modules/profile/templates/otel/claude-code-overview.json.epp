@@ -1,3 +1,6 @@
+<%- |
+  String[1] $datasource_name,
+| -%>
 {
   "dashboard": {
     "id": null,

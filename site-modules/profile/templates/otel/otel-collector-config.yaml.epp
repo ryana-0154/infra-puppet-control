@@ -1,3 +1,15 @@
+<%- |
+  Integer[1,65535] $grpc_port,
+  Integer[1,65535] $http_port,
+  Integer[1,65535] $prometheus_port,
+  Integer[1,65535] $health_port,
+  Integer[1,65535] $pprof_port,
+  Boolean $enable_grafana_cloud_tempo,
+  Optional[String[1]] $grafana_cloud_tempo_endpoint = undef,
+  Optional[String[1]] $grafana_cloud_tempo_username = undef,
+  Optional[Sensitive[String[1]]] $grafana_cloud_tempo_api_key = undef,
+  Optional[String[1]] $tempo_protocol = undef,
+| -%>
 # OpenTelemetry Collector configuration for Claude Code monitoring
 # This configuration receives metrics via gRPC/HTTP and exports to Prometheus
 

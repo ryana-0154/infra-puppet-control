@@ -8,9 +8,9 @@
 #   include role::vps
 #
 class role::vps {
-  include profile::base
-  include profile::unbound
-  include profile::monitoring
-  include profile::wireguard
-  include profile::pihole_native
+  contain profile::base
+  contain profile::unbound
+  contain profile::monitoring
+  contain profile::wireguard
+  contain profile::pihole_native
 }

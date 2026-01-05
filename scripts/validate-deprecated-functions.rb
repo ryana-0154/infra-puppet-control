@@ -39,8 +39,9 @@ REMOVED_FUNCTIONS = {
   'is_bool' => 'Use $var =~ Boolean',
   'is_integer' => 'Use $var =~ Integer',
   'is_numeric' => 'Use $var =~ Numeric',
-  'type3x' => 'Removed in Puppet 6, use modern data types',
-  'getvar' => 'Use $facts or direct variable access'
+  'type3x' => 'Removed in Puppet 6, use modern data types'
+  # NOTE: getvar() is NOT removed - it's a valid stdlib function for accessing
+  # top-scope variables from Foreman ENC parameters
 }.freeze
 
 # Functions that are deprecated but still work (warnings only)

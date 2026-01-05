@@ -32,7 +32,7 @@ class profile::r10k (
   Stdlib::HTTPUrl $git_remote            = 'https://github.com/ryana-0154/infra-puppet-control.git',
   Stdlib::Absolutepath $basedir          = '/etc/puppetlabs/code/environments',
   Stdlib::Absolutepath $cachedir         = '/var/cache/r10k',
-  Hash $sources                          = {
+  Hash[String[1], Hash] $sources         = {
     'puppet' => {
       'remote'  => $git_remote,
       'basedir' => $basedir,
