@@ -59,16 +59,16 @@ profile::monitoring::grafana_cloud_metrics_api_key: 'ENC[PKCS7,MIICCwYJKoZIhvcNA
 profile::monitoring::grafana_cloud_logs_api_key: 'ENC[PKCS7,MIICCwYJKoZIhvcNAQcDoIIB/DCCAfgCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAJZuFJuWkWppUhkV7A66ccHcr0K8DGx0vgccJV2DWwzxEZzGc1haqoo6cE1/DB7honE0QBqFCrjIfEbKgl5qN9V4yRCrXBmH0rSAUBMVRoRAfiLoJKl1hWBg6I0HKvHG4m1dyw+Q3ChnpLdfVHbDpNYkevF5SlQZ5mYJ7Xq0UZui+BB0ZAije3tvc7hdaivs4CYgj0pAOV76qzrZ/aeVxoLJy9hOHlWtJR1jwMxm0YmM8eEVI/dBiS+Qq/5AQqfNM7NfDcL119luaXDYnHQbIIAF/fkEfanUetQf0peYkrySO5zC34gUG4N3K6daAs06ZM2XThv+Un5lXMk2JCJ0bCDCBzQYJKoZIhvcNAQcBMB0GCWCGSAFlAwQBKgQQPAOBjbeWJjyjUT9ZpdngxICBoFW4V85DA3qqp+8fzvkUlC7oYSEJ7m4h/unv9m3gpLcsE3DFVuhnyVY81zbytDSN80kjs5qk7Qwpgx8y2FBI810g7ST3SSid0jY5DKH7u7a6QSqBgGi8PSqPTcRW7xj5YQF4xvRAWLrdQB0Tw54EPMgTHuSVJ6SBKzDHpL0FLjOZPnccPaFk0HOgp6hH2m8k5x1STR4gcvyH66CmlrFFiKI=]'
 
 # Enable/disable services
-profile::monitoring::enable_victoriametrics: false
-profile::monitoring::enable_grafana: false
-profile::monitoring::enable_loki: false       # Log aggregation server
-profile::monitoring::enable_promtail: false   # Log collection agent
-profile::monitoring::enable_pihole_exporter: false  # Disable if no PiHole
-profile::monitoring::enable_blackbox: false
-profile::monitoring::enable_node_exporter: false
-profile::monitoring::enable_wg_portal: false  # Disabled - binds to all interfaces, security risk
-profile::monitoring::enable_wireguard_exporter: false  # WireGuard metrics
-profile::monitoring::enable_unbound_exporter: false    # Unbound DNS metrics
+profile::monitoring::enable_victoriametrics: false  # Not needed - using Grafana Cloud
+profile::monitoring::enable_grafana: false          # Not needed - using Grafana Cloud
+profile::monitoring::enable_loki: false             # Not needed - using Grafana Cloud
+profile::monitoring::enable_promtail: false         # Not needed - Alloy handles logs
+profile::monitoring::enable_pihole_exporter: true   # Pi-hole DNS metrics
+profile::monitoring::enable_blackbox: true          # HTTP/HTTPS probing
+profile::monitoring::enable_node_exporter: true     # System metrics (CPU, memory, disk)
+profile::monitoring::enable_wg_portal: false        # Disabled - binds to all interfaces, security risk
+profile::monitoring::enable_wireguard_exporter: true   # WireGuard VPN metrics
+profile::monitoring::enable_unbound_exporter: true     # Unbound DNS resolver metrics
 
 # WireGuard exporter configuration
 profile::monitoring::wireguard_config_path: '/etc/wireguard'
