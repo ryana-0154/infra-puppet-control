@@ -310,10 +310,11 @@ class profile::monitoring (
   )
 
   # Check both naming conventions for optional URL parameters
-  $_grafana_cloud_metrics_url_enc = pick_default([
+  $_grafana_cloud_metrics_url_enc = pick(
     getvar('profile::monitoring::grafana_cloud_metrics_url'),
-    getvar('monitoring_grafana_cloud_metrics_url')
-  ], undef)
+    getvar('monitoring_grafana_cloud_metrics_url'),
+    undef
+  )
   $_grafana_cloud_metrics_url_hiera = lookup('profile::monitoring::grafana_cloud_metrics_url', Optional[String], 'first', undef)
   $_grafana_cloud_metrics_url = $_grafana_cloud_metrics_url_enc ? {
     undef   => $_grafana_cloud_metrics_url_hiera ? {
@@ -323,10 +324,11 @@ class profile::monitoring (
     default => $_grafana_cloud_metrics_url_enc,
   }
 
-  $_grafana_cloud_logs_url_enc = pick_default([
+  $_grafana_cloud_logs_url_enc = pick(
     getvar('profile::monitoring::grafana_cloud_logs_url'),
-    getvar('monitoring_grafana_cloud_logs_url')
-  ], undef)
+    getvar('monitoring_grafana_cloud_logs_url'),
+    undef
+  )
   $_grafana_cloud_logs_url_hiera = lookup('profile::monitoring::grafana_cloud_logs_url', Optional[String], 'first', undef)
   $_grafana_cloud_logs_url = $_grafana_cloud_logs_url_enc ? {
     undef   => $_grafana_cloud_logs_url_hiera ? {
@@ -336,10 +338,11 @@ class profile::monitoring (
     default => $_grafana_cloud_logs_url_enc,
   }
 
-  $_grafana_cloud_metrics_username_enc = pick_default([
+  $_grafana_cloud_metrics_username_enc = pick(
     getvar('profile::monitoring::grafana_cloud_metrics_username'),
-    getvar('monitoring_grafana_cloud_metrics_username')
-  ], undef)
+    getvar('monitoring_grafana_cloud_metrics_username'),
+    undef
+  )
   $_grafana_cloud_metrics_username_hiera = lookup('profile::monitoring::grafana_cloud_metrics_username', Optional[String], 'first', undef)
   $_grafana_cloud_metrics_username = $_grafana_cloud_metrics_username_enc ? {
     undef   => $_grafana_cloud_metrics_username_hiera ? {
@@ -349,10 +352,11 @@ class profile::monitoring (
     default => $_grafana_cloud_metrics_username_enc,
   }
 
-  $_grafana_cloud_logs_username_enc = pick_default([
+  $_grafana_cloud_logs_username_enc = pick(
     getvar('profile::monitoring::grafana_cloud_logs_username'),
-    getvar('monitoring_grafana_cloud_logs_username')
-  ], undef)
+    getvar('monitoring_grafana_cloud_logs_username'),
+    undef
+  )
   $_grafana_cloud_logs_username_hiera = lookup('profile::monitoring::grafana_cloud_logs_username', Optional[String], 'first', undef)
   $_grafana_cloud_logs_username = $_grafana_cloud_logs_username_enc ? {
     undef   => $_grafana_cloud_logs_username_hiera ? {
@@ -364,10 +368,11 @@ class profile::monitoring (
 
   # Sensitive parameters need special handling - check both naming conventions
   # Wrap with Sensitive() if it's a plain string
-  $_grafana_cloud_metrics_api_key_raw = pick_default([
+  $_grafana_cloud_metrics_api_key_raw = pick(
     getvar('profile::monitoring::grafana_cloud_metrics_api_key'),
-    getvar('monitoring_grafana_cloud_metrics_api_key')
-  ], undef)
+    getvar('monitoring_grafana_cloud_metrics_api_key'),
+    undef
+  )
   $_grafana_cloud_metrics_api_key_hiera = lookup('profile::monitoring::grafana_cloud_metrics_api_key', Optional[Variant[String, Sensitive[String]]], 'first', undef)
   # Wrap Hiera value with Sensitive() if it's a plain string
   $_grafana_cloud_metrics_api_key_hiera_wrapped = $_grafana_cloud_metrics_api_key_hiera ? {
@@ -388,10 +393,11 @@ class profile::monitoring (
     default => Sensitive($_grafana_cloud_metrics_api_key_raw),
   }
 
-  $_grafana_cloud_logs_api_key_raw = pick_default([
+  $_grafana_cloud_logs_api_key_raw = pick(
     getvar('profile::monitoring::grafana_cloud_logs_api_key'),
-    getvar('monitoring_grafana_cloud_logs_api_key')
-  ], undef)
+    getvar('monitoring_grafana_cloud_logs_api_key'),
+    undef
+  )
   $_grafana_cloud_logs_api_key_hiera = lookup('profile::monitoring::grafana_cloud_logs_api_key', Optional[Variant[String, Sensitive[String]]], 'first', undef)
   # Wrap Hiera value with Sensitive() if it's a plain string
   $_grafana_cloud_logs_api_key_hiera_wrapped = $_grafana_cloud_logs_api_key_hiera ? {
