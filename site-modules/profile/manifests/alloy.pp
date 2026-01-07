@@ -71,9 +71,10 @@ class profile::alloy (
   String[1]                      $bind_address                    = '0.0.0.0',
 
   # Feature flags (disabled by default - enable via Hiera with credentials)
-  Boolean                        $enable_metrics                  = false,
-  Boolean                        $enable_logs                     = false,
-  Boolean                        $enable_node_exporter            = true,
+  # Accept both Boolean and String to handle Foreman Smart Class Parameters
+  Variant[Boolean, Enum['true', 'false']] $enable_metrics         = false,
+  Variant[Boolean, Enum['true', 'false']] $enable_logs            = false,
+  Variant[Boolean, Enum['true', 'false']] $enable_node_exporter   = true,
 
   # Grafana Cloud configuration
   Optional[String[1]]            $grafana_cloud_metrics_url       = undef,
@@ -170,22 +171,38 @@ class profile::alloy (
   }
 
   # Multi-source parameter resolution for feature flags (Foreman ENC -> Hiera -> Defaults)
+  # Convert string booleans ('true'/'false') to actual booleans for Foreman compatibility
   $_enable_metrics_enc = getvar('alloy_enable_metrics')
-  $_enable_metrics = $_enable_metrics_enc ? {
+  $_enable_metrics_raw = $_enable_metrics_enc ? {
     undef   => $enable_metrics,
     default => $_enable_metrics_enc,
   }
+  $_enable_metrics = $_enable_metrics_raw ? {
+    'true'  => true,
+    'false' => false,
+    default => $_enable_metrics_raw,
+  }
 
   $_enable_logs_enc = getvar('alloy_enable_logs')
-  $_enable_logs = $_enable_logs_enc ? {
+  $_enable_logs_raw = $_enable_logs_enc ? {
     undef   => $enable_logs,
     default => $_enable_logs_enc,
   }
+  $_enable_logs = $_enable_logs_raw ? {
+    'true'  => true,
+    'false' => false,
+    default => $_enable_logs_raw,
+  }
 
   $_enable_node_exporter_enc = getvar('alloy_enable_node_exporter')
-  $_enable_node_exporter = $_enable_node_exporter_enc ? {
+  $_enable_node_exporter_raw = $_enable_node_exporter_enc ? {
     undef   => $enable_node_exporter,
     default => $_enable_node_exporter_enc,
+  }
+  $_enable_node_exporter = $_enable_node_exporter_raw ? {
+    'true'  => true,
+    'false' => false,
+    default => $_enable_node_exporter_raw,
   }
 
   # Validate required parameters when metrics are enabled
