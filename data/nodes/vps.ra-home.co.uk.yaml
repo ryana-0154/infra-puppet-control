@@ -281,3 +281,4 @@ profile::pihole_native::local_dns_records:
   'pi.ra-home.co.uk': '10.10.10.5'
   'puppet.pi': '10.10.10.5'
   'foreman.ra-home.co.uk': '10.10.10.6'
+  'foreman01.ra-home.co.uk': '10.10.10.6'
