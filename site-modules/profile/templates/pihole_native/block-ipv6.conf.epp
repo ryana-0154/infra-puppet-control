@@ -1,0 +1,7 @@
+<%- | Array[String] $domains | -%>
+# Block IPv6 (AAAA) lookups for specified domains
+# Returns :: (null IPv6 address) to force clients to use IPv4
+# Managed by Puppet - do not edit manually
+<% $domains.each |$domain| { -%>
+address=/<%= $domain %>/::
+<% } -%>

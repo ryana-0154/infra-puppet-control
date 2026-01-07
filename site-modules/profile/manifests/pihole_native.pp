@@ -28,6 +28,9 @@
 #   Whether ad blocking is enabled (default: true)
 # @param local_dns_records
 #   Hash of local DNS records to configure (hostname => IP)
+# @param block_ipv6_domains
+#   Array of domains to block IPv6 (AAAA) lookups for
+#   Useful when public DNS returns IPv6 addresses that conflict with local services
 # @param dnsmasq_listening
 #   DNSMasq listening mode (single, all, local, bind)
 #
@@ -59,6 +62,7 @@ class profile::pihole_native (
   Integer[1,65535]         $pihole_dns_port         = 53,
   Boolean                  $blocking_enabled        = true,
   Hash[String[1],String[1]] $local_dns_records      = {},
+  Array[String[1]]         $block_ipv6_domains      = [],
   Enum['single','all','local','bind'] $dnsmasq_listening = 'bind',
 ) {
   if $manage_pihole {
@@ -143,6 +147,21 @@ class profile::pihole_native (
         mode    => '0640',
         content => template('profile/pihole_native/custom.list.erb'),
         require => File['/etc/pihole'],
+        notify  => Exec['pihole-reload-dns'],
+      }
+    }
+
+    # Block IPv6 (AAAA) lookups for specified domains
+    # Returns :: (null IPv6) to force clients to use IPv4
+    if !empty($block_ipv6_domains) {
+      file { '/etc/dnsmasq.d/05-block-ipv6.conf':
+        ensure  => file,
+        owner   => 'root',
+        group   => 'root',
+        mode    => '0644',
+        content => epp('profile/pihole_native/block-ipv6.conf.epp', {
+          'domains' => $block_ipv6_domains,
+        }),
         notify  => Exec['pihole-reload-dns'],
       }
     }

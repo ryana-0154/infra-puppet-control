@@ -130,6 +130,35 @@ describe 'profile::pihole_native' do
 
           it { is_expected.to compile.with_all_deps }
         end
+
+        context 'with block_ipv6_domains configured' do
+          let(:params) do
+            super().merge(
+              block_ipv6_domains: ['foreman01.ra-home.co.uk', 'foreman.ra-home.co.uk']
+            )
+          end
+
+          it { is_expected.to compile.with_all_deps }
+
+          it {
+            is_expected.to contain_file('/etc/dnsmasq.d/05-block-ipv6.conf').with(
+              ensure: 'file',
+              owner: 'root',
+              group: 'root',
+              mode: '0644'
+            ).that_notifies('Exec[pihole-reload-dns]')
+          }
+
+          it {
+            is_expected.to contain_file('/etc/dnsmasq.d/05-block-ipv6.conf')
+              .with_content(%r{address=/foreman01\.ra-home\.co\.uk/::})
+              .with_content(%r{address=/foreman\.ra-home\.co\.uk/::})
+          }
+        end
+
+        context 'without block_ipv6_domains' do
+          it { is_expected.not_to contain_file('/etc/dnsmasq.d/05-block-ipv6.conf') }
+        end
       end
     end
   end

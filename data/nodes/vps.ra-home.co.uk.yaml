@@ -282,3 +282,9 @@ profile::pihole_native::local_dns_records:
   'puppet.pi': '10.10.10.5'
   'foreman.ra-home.co.uk': '10.10.10.6'
   'foreman01.ra-home.co.uk': '10.10.10.6'
+
+# Block IPv6 (AAAA) lookups for domains that should only resolve to local IPv4
+# This prevents browsers from trying IPv6 addresses (e.g., Cloudflare) when local IPv4 exists
+profile::pihole_native::block_ipv6_domains:
+  - 'foreman01.ra-home.co.uk'
+  - 'foreman.ra-home.co.uk'
