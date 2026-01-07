@@ -56,47 +56,61 @@ class profile::dotfiles (
       if $ensure == 'present' {
         $dotfiles_path = "${home_dir}/${dotfiles_dir_name}"
 
-        # Determine vcsrepo ensure value
-        $vcsrepo_ensure = $auto_update ? {
-          true    => 'latest',
-          default => 'present',
-        }
-
-        # Clone/update dotfiles repository
-        vcsrepo { $dotfiles_path:
-          ensure   => $vcsrepo_ensure,
-          provider => 'git',
-          source   => $dotfiles_repo,
-          revision => $dotfiles_revision,
-          user     => $username,
-        }
-
         # Determine if we can run as a different user (requires root)
-        # In production, Puppet runs as root and can execute as other users
-        # In CI/non-root environments, omit user parameter to allow catalog compilation
         $exec_user = $facts['identity']['user'] ? {
           'root'  => $username,
           default => undef,
         }
 
-        # Run install script to create symlinks
+        # Check if directory exists but is not a git repo - warn and skip if so
+        # This exec only runs (and warns) if the path exists but .git doesn't
+        exec { "dotfiles-check-${username}":
+          command   => "echo 'Warning: ${dotfiles_path} exists but is not a git repository. Skipping dotfiles management for ${username}. Remove or rename the directory if you want Puppet to manage it.' >&2",
+          path      => ['/usr/bin', '/bin'],
+          onlyif    => "test -e '${dotfiles_path}' && test ! -d '${dotfiles_path}/.git'",
+          loglevel  => 'warning',
+          logoutput => true,
+        }
+
+        # Clone dotfiles repository (only if directory doesn't exist)
+        exec { "clone-dotfiles-${username}":
+          command => "git clone --branch '${dotfiles_revision}' '${dotfiles_repo}' '${dotfiles_path}'",
+          path    => ['/usr/bin', '/bin'],
+          user    => $exec_user,
+          creates => "${dotfiles_path}/.git",
+          unless  => "test -e '${dotfiles_path}'",
+          require => Exec["dotfiles-check-${username}"],
+        }
+
+        # Update dotfiles repository (only if auto_update is true and it's a valid git repo)
+        if $auto_update {
+          exec { "update-dotfiles-${username}":
+            command => "git fetch origin && git checkout '${dotfiles_revision}' && git pull origin '${dotfiles_revision}'",
+            cwd     => $dotfiles_path,
+            path    => ['/usr/bin', '/bin'],
+            user    => $exec_user,
+            onlyif  => "test -d '${dotfiles_path}/.git'",
+            require => Exec["clone-dotfiles-${username}"],
+          }
+        }
+
+        # Run install script to create symlinks (only if repo exists)
         exec { "install-dotfiles-${username}":
           command     => './install',
           cwd         => $dotfiles_path,
           path        => ['/usr/bin', '/usr/local/bin', '/bin'],
           user        => $exec_user,
           environment => ["HOME=${home_dir}"],
-          # Only run if dotfiles were just cloned/updated or symlinks don't exist
           refreshonly => true,
-          subscribe   => Vcsrepo[$dotfiles_path],
-          require     => Vcsrepo[$dotfiles_path],
+          subscribe   => Exec["clone-dotfiles-${username}"],
+          onlyif      => "test -d '${dotfiles_path}/.git'",
         }
 
-        # Ensure install script is executable
-        file { "${dotfiles_path}/install":
-          ensure  => file,
-          mode    => '0755',
-          require => Vcsrepo[$dotfiles_path],
+        # Ensure install script is executable (only if repo exists)
+        exec { "chmod-dotfiles-install-${username}":
+          command => "chmod 755 '${dotfiles_path}/install'",
+          path    => ['/usr/bin', '/bin'],
+          onlyif  => "test -f '${dotfiles_path}/install' && test ! -x '${dotfiles_path}/install'",
           before  => Exec["install-dotfiles-${username}"],
         }
       } elsif $ensure == 'absent' {
