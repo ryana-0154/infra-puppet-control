@@ -1,0 +1,46 @@
+<%- |
+  String $unpoller_image,
+  Integer $unpoller_port,
+  String $bind_address,
+  String $unpoller_url,
+  String $unpoller_user,
+  Sensitive[String] $unpoller_pass,
+  Boolean $unpoller_save_dpi,
+  Boolean $unpoller_verify_ssl,
+  Array[String] $unpoller_sites,
+| -%>
+# UniFi Poller Docker Compose
+# Managed by Puppet - do not edit manually
+#
+# Metrics available at: http://<%= $bind_address %>:<%= $unpoller_port %>/metrics
+
+services:
+  unpoller:
+    image: <%= $unpoller_image %>
+    container_name: unpoller
+    restart: unless-stopped
+    ports:
+      - "<%= $bind_address %>:<%= $unpoller_port %>:9130"
+    environment:
+      # UniFi Controller Configuration
+      UP_UNIFI_DEFAULT_URL: "<%= $unpoller_url %>"
+      UP_UNIFI_DEFAULT_USER: "<%= $unpoller_user %>"
+      UP_UNIFI_DEFAULT_PASS: "<%= $unpoller_pass.unwrap %>"
+      UP_UNIFI_DEFAULT_SAVE_DPI: "<%= $unpoller_save_dpi %>"
+      UP_UNIFI_DEFAULT_VERIFY_SSL: "<%= $unpoller_verify_ssl %>"
+      UP_UNIFI_DEFAULT_SAVE_SITES: "true"
+      UP_UNIFI_DEFAULT_SAVE_IDS: "true"
+      UP_UNIFI_DEFAULT_SAVE_EVENTS: "true"
+      UP_UNIFI_DEFAULT_SAVE_ALARMS: "true"
+      UP_UNIFI_DEFAULT_SAVE_ANOMALIES: "true"
+      UP_UNIFI_DEFAULT_SITES:
+<% $unpoller_sites.each |$site| { -%>
+        - "<%= $site %>"
+<% } -%>
+      # Prometheus Output Configuration
+      UP_PROMETHEUS_DISABLE: "false"
+      UP_PROMETHEUS_HTTP_LISTEN: "0.0.0.0:9130"
+      UP_PROMETHEUS_NAMESPACE: "unpoller"
+      # Disable other outputs
+      UP_INFLUXDB_DISABLE: "true"
+      UP_LOKI_DISABLE: "true"
