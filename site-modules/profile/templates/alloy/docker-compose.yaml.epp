@@ -1,0 +1,50 @@
+<%- |
+  String $alloy_image,
+  String $alloy_dir,
+  String $bind_address,
+  Integer $alloy_http_port,
+| -%>
+# Grafana Alloy Docker Compose
+# Managed by Puppet - do not edit manually
+
+services:
+  alloy:
+    image: <%= $alloy_image %>
+    container_name: alloy
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    privileged: true
+    command:
+      - run
+      - --server.http.listen-addr=<%= $bind_address %>:<%= $alloy_http_port %>
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      # Alloy configuration
+      - <%= $alloy_dir %>/config.alloy:/etc/alloy/config.alloy:ro
+      # Persistent storage for Alloy
+      - alloy-data:/var/lib/alloy
+      # System logs
+      - /var/log:/var/log:ro
+      # Docker socket for container discovery and logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Docker container logs
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # Systemd journal
+      - /run/log/journal:/run/log/journal:ro
+      - /var/log/journal:/var/log/journal:ro
+      # Machine ID for journal
+      - /etc/machine-id:/etc/machine-id:ro
+      # Host filesystem for node_exporter
+      - /:/host:ro,rslave
+      # Proc filesystem
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    environment:
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+      - HOST_ROOT=/host
+
+volumes:
+  alloy-data:

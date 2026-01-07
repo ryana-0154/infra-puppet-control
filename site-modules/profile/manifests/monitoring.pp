@@ -46,6 +46,8 @@
 #   Whether to enable WireGuard Prometheus exporter
 # @param enable_unbound_exporter
 #   Whether to enable Unbound Prometheus exporter
+# @param enable_unpoller
+#   Whether to enable UniFi Poller for network monitoring
 # @param enable_authelia
 #   Whether to enable Authelia SSO
 # @param enable_nginx_proxy
@@ -72,6 +74,8 @@
 #   Docker image for WireGuard Prometheus exporter
 # @param unbound_exporter_image
 #   Docker image for Unbound Prometheus exporter
+# @param unpoller_image
+#   Docker image for UniFi Poller
 # @param authelia_image
 #   Docker image for Authelia
 # @param nginx_image
@@ -130,6 +134,18 @@
 #   Hostname/IP where Unbound is running
 # @param unbound_control_port
 #   Port for Unbound control interface
+# @param unpoller_port
+#   Port for UniFi Poller Prometheus metrics endpoint
+# @param unpoller_url
+#   URL of UniFi controller (e.g., https://192.168.1.1 or https://10.10.10.2)
+# @param unpoller_user
+#   Username for UniFi controller read-only user
+# @param unpoller_pass
+#   Password for UniFi controller user (should be encrypted with eyaml)
+# @param unpoller_save_dpi
+#   Whether to save DPI data from UniFi controller
+# @param unpoller_verify_ssl
+#   Whether to verify SSL certificate of UniFi controller
 #
 # @example Basic usage
 #   include profile::monitoring
@@ -159,6 +175,7 @@ class profile::monitoring (
   Integer[1,65535]               $pihole_exporter_port      = 9617,
   Integer[1,65535]               $wireguard_exporter_port   = 9586,
   Integer[1,65535]               $unbound_exporter_port     = 9167,
+  Integer[1,65535]               $unpoller_port             = 9130,
 
   # Service enable/disable flags
   Boolean                        $enable_victoriametrics    = true,
@@ -171,6 +188,7 @@ class profile::monitoring (
   Boolean                        $enable_wg_portal          = true,
   Boolean                        $enable_wireguard_exporter = true,
   Boolean                        $enable_unbound_exporter   = true,
+  Boolean                        $enable_unpoller           = false,
 
   # SSO/Authentication
   Boolean                        $enable_authelia           = false,
@@ -188,6 +206,7 @@ class profile::monitoring (
   String[1]                      $wg_portal_image           = 'wgportal/wg-portal:v2',
   String[1]                      $wireguard_exporter_image  = 'mindflavor/prometheus-wireguard-exporter:latest',
   String[1]                      $unbound_exporter_image    = 'cyb3rjak3/unbound-exporter:latest',
+  String[1]                      $unpoller_image            = 'ghcr.io/unpoller/unpoller:latest',
 
   # SSO images
   String[1]                      $authelia_image            = 'authelia/authelia:4.38',
@@ -235,6 +254,13 @@ class profile::monitoring (
   String[1]                      $unbound_host              = '127.0.0.1',
   Integer[1,65535]               $unbound_control_port      = 8953,
 
+  # UniFi Poller configuration
+  Optional[String[1]]            $unpoller_url              = undef,
+  Optional[String[1]]            $unpoller_user             = undef,
+  Optional[String[1]]            $unpoller_pass             = undef,
+  Boolean                        $unpoller_save_dpi         = false,
+  Boolean                        $unpoller_verify_ssl       = false,
+
   # Grafana Cloud integration
   Boolean                        $enable_grafana_cloud      = false,
   Optional[String[1]]                           $grafana_cloud_metrics_url = undef,
@@ -281,6 +307,13 @@ class profile::monitoring (
   # Validate external dashboard parameters
   if $enable_external_dashboards and !$dashboard_repo_url {
     fail('profile::monitoring: dashboard_repo_url is required when enable_external_dashboards is true')
+  }
+
+  # Validate UniFi Poller parameters
+  if $enable_unpoller {
+    if !$unpoller_url or !$unpoller_user or !$unpoller_pass {
+      fail('profile::monitoring: unpoller_url, unpoller_user, and unpoller_pass are required when enable_unpoller is true')
+    }
   }
 
   # Validate SSL parameters
@@ -537,11 +570,13 @@ class profile::monitoring (
           enable_pihole_exporter         => $enable_pihole_exporter,
           enable_wireguard_exporter      => $enable_wireguard_exporter,
           enable_unbound_exporter        => $enable_unbound_exporter,
+          enable_unpoller                => $enable_unpoller,
           monitoring_ip                  => $monitoring_ip,
           blackbox_port                  => $blackbox_port,
           pihole_exporter_port           => $pihole_exporter_port,
           wireguard_exporter_port        => $wireguard_exporter_port,
           unbound_exporter_port          => $unbound_exporter_port,
+          unpoller_port                  => $unpoller_port,
           grafana_cloud_metrics_url      => $_grafana_cloud_metrics_url,
           grafana_cloud_metrics_username => $_grafana_cloud_metrics_username,
           grafana_cloud_metrics_api_key  => $_grafana_cloud_metrics_api_key,

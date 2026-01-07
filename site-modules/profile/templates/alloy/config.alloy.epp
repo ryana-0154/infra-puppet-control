@@ -1,0 +1,212 @@
+<%- |
+  Boolean $enable_metrics,
+  Boolean $enable_logs,
+  Boolean $enable_node_exporter,
+  String $bind_address,
+  String $scrape_interval,
+  Array[Hash] $additional_scrape_targets,
+  Optional[String] $grafana_cloud_metrics_url,
+  Optional[String] $grafana_cloud_metrics_username,
+  Optional[Sensitive[String]] $grafana_cloud_metrics_api_key,
+  Optional[String] $grafana_cloud_logs_url,
+  Optional[String] $grafana_cloud_logs_username,
+  Optional[Sensitive[String]] $grafana_cloud_logs_api_key,
+  String $hostname,
+| -%>
+// Grafana Alloy configuration
+// Managed by Puppet - do not edit manually
+//
+// Collects metrics and logs and forwards to Grafana Cloud
+
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+<% if $enable_metrics { -%>
+//
+// =====================
+// METRICS COLLECTION
+// =====================
+//
+
+<% if $enable_node_exporter { -%>
+// Embedded node_exporter for system metrics
+prometheus.exporter.unix "node" {
+  set_collectors = [
+    "cpu",
+    "diskstats",
+    "filesystem",
+    "loadavg",
+    "meminfo",
+    "netdev",
+    "os",
+    "time",
+    "uname",
+    "vmstat",
+  ]
+}
+
+// Scrape the embedded node_exporter
+prometheus.scrape "node_exporter" {
+  targets         = prometheus.exporter.unix.node.targets
+  scrape_interval = "<%= $scrape_interval %>"
+  forward_to      = [prometheus.relabel.add_host_label.receiver]
+}
+<% } -%>
+
+<% $additional_scrape_targets.each |$target| { -%>
+// Additional target: <%= $target['name'] %>
+prometheus.scrape "<%= $target['name'] %>" {
+  targets = [{
+    __address__ = "<%= $target['address'] %>",
+  }]
+<% if $target['metrics_path'] { -%>
+  metrics_path    = "<%= $target['metrics_path'] %>"
+<% } -%>
+  scrape_interval = "<%= $scrape_interval %>"
+  forward_to      = [prometheus.relabel.add_host_label.receiver]
+}
+
+<% } -%>
+// Add host label to all metrics
+prometheus.relabel "add_host_label" {
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+
+  rule {
+    target_label = "instance"
+    replacement  = "<%= $hostname %>"
+  }
+
+  rule {
+    target_label = "host"
+    replacement  = "<%= $hostname %>"
+  }
+}
+
+// Remote write to Grafana Cloud Metrics
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = "<%= $grafana_cloud_metrics_url %>"
+    basic_auth {
+      username = "<%= $grafana_cloud_metrics_username %>"
+      password = "<%= $grafana_cloud_metrics_api_key.unwrap %>"
+    }
+  }
+}
+<% } -%>
+
+<% if $enable_logs { -%>
+//
+// =====================
+// LOGS COLLECTION
+// =====================
+//
+
+// System logs from /var/log
+loki.source.file "system_logs" {
+  targets = [
+    {
+      __path__ = "/var/log/*log",
+      job      = "varlogs",
+      host     = "<%= $hostname %>",
+    },
+    {
+      __path__ = "/var/log/syslog",
+      job      = "syslog",
+      host     = "<%= $hostname %>",
+    },
+    {
+      __path__ = "/var/log/messages",
+      job      = "messages",
+      host     = "<%= $hostname %>",
+    },
+  ]
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+// Docker container relabeling
+loki.relabel "docker_relabel" {
+  forward_to = [loki.process.docker_labels.receiver]
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label  = "stream"
+  }
+}
+
+// Docker container logs
+loki.source.docker "docker_logs" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = []
+  forward_to = [loki.relabel.docker_relabel.receiver]
+}
+
+// Add static labels for Docker logs
+loki.process "docker_labels" {
+  forward_to = [loki.write.grafana_cloud.receiver]
+
+  stage.static_labels {
+    values = {
+      host = "<%= $hostname %>",
+      job  = "docker",
+    }
+  }
+}
+
+// Journal relabeling
+loki.relabel "journal_relabel" {
+  forward_to = [loki.process.journal_labels.receiver]
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+
+  rule {
+    source_labels = ["__journal_priority"]
+    target_label  = "priority"
+  }
+
+  rule {
+    source_labels = ["__journal__hostname"]
+    target_label  = "nodename"
+  }
+}
+
+// Add static labels for journal logs
+loki.process "journal_labels" {
+  forward_to = [loki.write.grafana_cloud.receiver]
+
+  stage.static_labels {
+    values = {
+      host = "<%= $hostname %>",
+      job  = "journal",
+    }
+  }
+}
+
+// Systemd journal logs
+loki.source.journal "systemd_journal" {
+  max_age    = "12h"
+  path       = "/var/log/journal"
+  forward_to = [loki.relabel.journal_relabel.receiver]
+}
+
+// Remote write to Grafana Cloud Logs
+loki.write "grafana_cloud" {
+  endpoint {
+    url = "<%= $grafana_cloud_logs_url %>"
+    basic_auth {
+      username = "<%= $grafana_cloud_logs_username %>"
+      password = "<%= $grafana_cloud_logs_api_key.unwrap %>"
+    }
+  }
+}
+<% } -%>

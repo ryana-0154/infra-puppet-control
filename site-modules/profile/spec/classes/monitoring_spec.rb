@@ -236,7 +236,7 @@ describe 'profile::monitoring' do
 
     it 'restarts containers on config changes' do
       is_expected.to contain_exec('restart-monitoring-stack').with(
-        command: 'docker compose up -d --force-recreate',
+        command: 'docker compose up -d --force-recreate --remove-orphans',
         cwd: '/opt/monitoring',
         refreshonly: true
       )
@@ -330,6 +330,72 @@ describe 'profile::monitoring' do
 
     it 'uses custom revision' do
       is_expected.to contain_vcsrepo('/opt/monitoring/dashboards-external').with_revision('v1.2.3')
+    end
+  end
+
+  context 'with unpoller enabled' do
+    let(:params) do
+      {
+        enable_unpoller: true,
+        unpoller_url: 'https://10.10.10.2',
+        unpoller_user: 'unifipoller',
+        unpoller_pass: 'secret123'
+      }
+    end
+
+    it { is_expected.to compile.with_all_deps }
+
+    it 'includes unpoller in docker-compose' do
+      is_expected.to contain_file('/opt/monitoring/docker-compose.yaml')
+        .with_content(/unpoller:/)
+        .with_content(%r{UP_UNIFI_DEFAULT_URL=https://10\.10\.10\.2})
+        .with_content(/UP_UNIFI_DEFAULT_USER=unifipoller/)
+        .with_content(/UP_PROMETHEUS_HTTP_LISTEN=10\.10\.10\.1:9130/)
+    end
+  end
+
+  context 'with unpoller enabled but missing credentials' do
+    let(:params) do
+      {
+        enable_unpoller: true,
+        unpoller_url: 'https://10.10.10.2'
+      }
+    end
+
+    it 'fails with validation error' do
+      is_expected.to compile.and_raise_error(
+        /unpoller_url, unpoller_user, and unpoller_pass are required when enable_unpoller is true/
+      )
+    end
+  end
+
+  context 'with unpoller disabled' do
+    let(:params) { { enable_unpoller: false } }
+
+    it { is_expected.to compile.with_all_deps }
+
+    it 'does not include unpoller in docker-compose' do
+      is_expected.to contain_file('/opt/monitoring/docker-compose.yaml')
+        .without_content(/unpoller:/)
+    end
+  end
+
+  context 'with unpoller and custom port' do
+    let(:params) do
+      {
+        enable_unpoller: true,
+        unpoller_url: 'https://192.168.1.1',
+        unpoller_user: 'unifipoller',
+        unpoller_pass: 'secret123',
+        unpoller_port: 9999
+      }
+    end
+
+    it { is_expected.to compile.with_all_deps }
+
+    it 'uses custom port' do
+      is_expected.to contain_file('/opt/monitoring/docker-compose.yaml')
+        .with_content(/UP_PROMETHEUS_HTTP_LISTEN=10\.10\.10\.1:9999/)
     end
   end
 end

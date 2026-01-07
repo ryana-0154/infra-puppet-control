@@ -69,6 +69,7 @@ profile::monitoring::enable_node_exporter: true     # System metrics (CPU, memor
 profile::monitoring::enable_wg_portal: false        # Disabled - binds to all interfaces, security risk
 profile::monitoring::enable_wireguard_exporter: true   # WireGuard VPN metrics
 profile::monitoring::enable_unbound_exporter: true     # Unbound DNS resolver metrics
+profile::monitoring::enable_unpoller: true             # UniFi network device metrics
 
 # WireGuard exporter configuration
 profile::monitoring::wireguard_config_path: '/etc/wireguard'
@@ -76,6 +77,21 @@ profile::monitoring::wireguard_config_path: '/etc/wireguard'
 # Unbound exporter configuration
 profile::monitoring::unbound_host: '127.0.0.1'
 profile::monitoring::unbound_control_port: 8953
+
+# UniFi Poller configuration
+# UDR is at 10.10.10.2 on the WireGuard network
+# IMPORTANT: Create a read-only local user on your UniFi controller:
+#   1. Go to UniFi OS Settings → Admins & Users → Add Admin
+#   2. Set Role to "Limited Admin" with Read-Only access to UniFi Network
+#   3. Use that username/password here (encrypt password with eyaml)
+profile::monitoring::unpoller_url: 'https://10.10.10.2'
+profile::monitoring::unpoller_user: 'unifipoller'
+profile::monitoring::unpoller_port: 9130
+profile::monitoring::unpoller_save_dpi: false
+profile::monitoring::unpoller_verify_ssl: false
+# REQUIRED: Encrypt your UniFi password with: eyaml encrypt -s 'your-password'
+# TODO: Replace this placeholder with your encrypted UniFi password
+profile::monitoring::unpoller_pass: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAhQEC0uzDiu6Hi40tYToJQw2cJ4iOY6afssakMfB74W6cTwBPbVCDbDvdZUdhT2rhhVhtbqH+AG6smHdkhM5TbrWNiyQkryYf9ajf7OEKgQh/QRZvnkIn7WgvKbApkZXrYcOz0Nk8N9kc0x9FxuZuY+bIKhGYYEUnTVqakeAwjzqr5FJsZpH4EEpa+012Tgvbbh0OPA+sGmjffc3IR8Sv/Nej5upn2ef/769nGl/LBSiLPgppjQatworDIkJ9/J1EzEsUeXL2Qo6KPUKruCAjBUAYXUdkdgSM+UQSJKN5B9Blm4BxQ5+wFOt+DQUhIKcAG7dEkfcPZHTkxMgae1MXjTA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCOBM/lDdp39fRSSbgLslpVgBBG1Rx+O1AwP39C/Fh8JWDa]'
 
 # PiHole configuration (if enabled)
 profile::monitoring::pihole_hostname: '10.10.10.1'

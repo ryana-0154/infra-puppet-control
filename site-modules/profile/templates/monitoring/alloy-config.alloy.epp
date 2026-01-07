@@ -3,11 +3,13 @@
       Boolean $enable_pihole_exporter,
       Boolean $enable_wireguard_exporter,
       Boolean $enable_unbound_exporter,
+      Boolean $enable_unpoller,
       String $monitoring_ip,
       Integer $blackbox_port,
       Integer $pihole_exporter_port,
       Integer $wireguard_exporter_port,
       Integer $unbound_exporter_port,
+      Integer $unpoller_port,
       String $grafana_cloud_metrics_url,
       String $grafana_cloud_metrics_username,
       Sensitive[String] $grafana_cloud_metrics_api_key,
@@ -75,6 +77,16 @@ prometheus.scrape "wireguard_exporter" {
 prometheus.scrape "unbound_exporter" {
   targets = [{
     __address__ = "<%= $monitoring_ip %>:<%= $unbound_exporter_port %>",
+  }]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+<% } %>
+
+<% if $enable_unpoller { %>
+// UniFi Poller - Network device metrics (UDM, switches, APs)
+prometheus.scrape "unpoller" {
+  targets = [{
+    __address__ = "<%= $monitoring_ip %>:<%= $unpoller_port %>",
   }]
   forward_to = [prometheus.remote_write.grafana_cloud.receiver]
 }

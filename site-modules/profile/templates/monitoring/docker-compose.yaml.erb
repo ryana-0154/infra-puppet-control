@@ -175,6 +175,22 @@ services:
       - /run/unbound.ctl:/run/unbound.ctl
 <%- end -%>
 
+<%- if @enable_unpoller -%>
+  unpoller:
+    image: <%= @unpoller_image %>
+    <<: *host
+    container_name: unpoller
+    environment:
+      - UP_UNIFI_DEFAULT_URL=<%= @unpoller_url %>
+      - UP_UNIFI_DEFAULT_USER=<%= @unpoller_user %>
+      - UP_UNIFI_DEFAULT_PASS=<%= @unpoller_pass %>
+      - UP_UNIFI_DEFAULT_SAVE_DPI=<%= @unpoller_save_dpi %>
+      - UP_UNIFI_DEFAULT_VERIFY_SSL=<%= @unpoller_verify_ssl %>
+      - UP_PROMETHEUS_HTTP_LISTEN=<%= @monitoring_ip %>:<%= @unpoller_port %>
+      - UP_PROMETHEUS_NAMESPACE=unpoller
+      - UP_INFLUXDB_DISABLE=true
+<%- end -%>
+
 <%- if @enable_wg_portal -%>
   wg-portal:
     image: <%= @wg_portal_image %>
