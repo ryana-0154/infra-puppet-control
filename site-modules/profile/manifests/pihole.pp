@@ -21,6 +21,8 @@
 #   Owner for gravity.db file (use 'root' if bind-mounting into Docker)
 # @param gravity_db_group
 #   Group for gravity.db file (use 'root' if bind-mounting into Docker)
+# @param local_domain
+#   The local DNS domain used by Pi-hole (e.g., 'home', 'lan', 'local')
 #
 # @example Basic usage
 #   include profile::pihole
@@ -39,6 +41,7 @@ class profile::pihole (
   Boolean                  $restart_on_config_change   = true,
   String[1]                $gravity_db_owner           = 'root',
   String[1]                $gravity_db_group           = 'root',
+  String[1]                $local_domain               = 'home',
 ) {
   # Validate that password hash is provided
   if $manage_pihole and !$pihole_password_hash {

@@ -33,6 +33,7 @@ describe 'profile::pihole' do
   context 'with default parameters and password provided' do
     let(:params) do
       {
+        manage_pihole: true,
         pihole_password_hash: '$BALLOON-SHA256$v=1$test_hash'
       }
     end
@@ -102,6 +103,7 @@ describe 'profile::pihole' do
   context 'with gravity database disabled' do
     let(:params) do
       {
+        manage_pihole: true,
         pihole_password_hash: '$BALLOON-SHA256$v=1$test_hash',
         provision_gravity_db: false
       }
@@ -114,6 +116,7 @@ describe 'profile::pihole' do
   context 'with custom hosts disabled' do
     let(:params) do
       {
+        manage_pihole: true,
         pihole_password_hash: '$BALLOON-SHA256$v=1$test_hash',
         provision_custom_hosts: false
       }
@@ -126,6 +129,7 @@ describe 'profile::pihole' do
   context 'with restart disabled' do
     let(:params) do
       {
+        manage_pihole: true,
         pihole_password_hash: '$BALLOON-SHA256$v=1$test_hash',
         restart_on_config_change: false
       }
@@ -141,6 +145,7 @@ describe 'profile::pihole' do
   context 'with custom container name' do
     let(:params) do
       {
+        manage_pihole: true,
         pihole_password_hash: '$BALLOON-SHA256$v=1$test_hash',
         pihole_container_name: 'my-pihole'
       }
