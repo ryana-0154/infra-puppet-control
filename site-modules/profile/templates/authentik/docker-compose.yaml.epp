@@ -1,0 +1,197 @@
+<%- |
+  Stdlib::Absolutepath $authentik_dir,
+  String[1] $authentik_image,
+  Integer[1,65535] $http_port,
+  Integer[1,65535] $https_port,
+  String[1] $postgres_host,
+  Integer[1,65535] $postgres_port,
+  String[1] $postgres_db,
+  String[1] $postgres_user,
+  String[1] $redis_host,
+  Integer[1,65535] $redis_port,
+  Boolean $enable_bundled_postgresql,
+  Boolean $enable_bundled_redis,
+  String[1] $postgres_image,
+  String[1] $redis_image,
+  Boolean $geoip_enabled,
+  String[1] $geoip_image,
+| -%>
+---
+# Authentik Docker Compose configuration
+# Managed by Puppet - do not edit manually
+
+services:
+<% if $enable_bundled_postgresql { -%>
+  postgresql:
+    image: <%= $postgres_image %>
+    container_name: authentik-postgresql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - <%= $authentik_dir %>/database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_USER: ${POSTGRES_USER:-authentik}
+      POSTGRES_DB: ${POSTGRES_DB:-authentik}
+    networks:
+      - authentik
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+<% } -%>
+<% if $enable_bundled_redis { -%>
+  redis:
+    image: <%= $redis_image %>
+    container_name: authentik-redis
+    command: --save 60 1 --loglevel warning
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    volumes:
+      - <%= $authentik_dir %>/redis:/data
+    networks:
+      - authentik
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+<% } -%>
+  server:
+    image: <%= $authentik_image %>
+    container_name: authentik-server
+    restart: unless-stopped
+    command: server
+    environment:
+      AUTHENTIK_REDIS__HOST: <%= $redis_host %>
+      AUTHENTIK_REDIS__PORT: <%= $redis_port %>
+      AUTHENTIK_POSTGRESQL__HOST: <%= $postgres_host %>
+      AUTHENTIK_POSTGRESQL__PORT: <%= $postgres_port %>
+      AUTHENTIK_POSTGRESQL__USER: ${POSTGRES_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${POSTGRES_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_LOG_LEVEL: ${AUTHENTIK_LOG_LEVEL:-info}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: ${AUTHENTIK_ERROR_REPORTING__ENABLED:-false}
+<% if $geoip_enabled { -%>
+      AUTHENTIK_GEOIP: /geoip/GeoLite2-City.mmdb
+<% } -%>
+    env_file:
+      - .env
+    volumes:
+      - <%= $authentik_dir %>/media:/media
+      - <%= $authentik_dir %>/templates:/templates
+<% if $geoip_enabled { -%>
+      - <%= $authentik_dir %>/geoip:/geoip
+<% } -%>
+    ports:
+      - "<%= $http_port %>:9000"
+      - "<%= $https_port %>:9443"
+<% if $enable_bundled_postgresql or $enable_bundled_redis { -%>
+    depends_on:
+<% if $enable_bundled_postgresql { -%>
+      postgresql:
+        condition: service_healthy
+<% } -%>
+<% if $enable_bundled_redis { -%>
+      redis:
+        condition: service_healthy
+<% } -%>
+<% } -%>
+    networks:
+      - authentik
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  worker:
+    image: <%= $authentik_image %>
+    container_name: authentik-worker
+    restart: unless-stopped
+    command: worker
+    environment:
+      AUTHENTIK_REDIS__HOST: <%= $redis_host %>
+      AUTHENTIK_REDIS__PORT: <%= $redis_port %>
+      AUTHENTIK_POSTGRESQL__HOST: <%= $postgres_host %>
+      AUTHENTIK_POSTGRESQL__PORT: <%= $postgres_port %>
+      AUTHENTIK_POSTGRESQL__USER: ${POSTGRES_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${POSTGRES_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_LOG_LEVEL: ${AUTHENTIK_LOG_LEVEL:-info}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: ${AUTHENTIK_ERROR_REPORTING__ENABLED:-false}
+<% if $geoip_enabled { -%>
+      AUTHENTIK_GEOIP: /geoip/GeoLite2-City.mmdb
+<% } -%>
+    env_file:
+      - .env
+    # `user: root` and the docker socket volume are optional.
+    # See more for the docker socket integration here:
+    # https://goauthentik.io/docs/outposts/integrations/docker
+    # Uncomment the following lines to enable docker socket integration
+    # user: root
+    volumes:
+      # - /var/run/docker.sock:/var/run/docker.sock
+      - <%= $authentik_dir %>/media:/media
+      - <%= $authentik_dir %>/templates:/templates
+      - <%= $authentik_dir %>/certs:/certs
+<% if $geoip_enabled { -%>
+      - <%= $authentik_dir %>/geoip:/geoip
+<% } -%>
+<% if $enable_bundled_postgresql or $enable_bundled_redis { -%>
+    depends_on:
+<% if $enable_bundled_postgresql { -%>
+      postgresql:
+        condition: service_healthy
+<% } -%>
+<% if $enable_bundled_redis { -%>
+      redis:
+        condition: service_healthy
+<% } -%>
+<% } -%>
+    networks:
+      - authentik
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+<% if $geoip_enabled { -%>
+  geoipupdate:
+    image: <%= $geoip_image %>
+    container_name: authentik-geoipupdate
+    volumes:
+      - <%= $authentik_dir %>/geoip:/usr/share/GeoIP
+    environment:
+      GEOIPUPDATE_EDITION_IDS: "GeoLite2-City"
+      GEOIPUPDATE_FREQUENCY: "8"
+      GEOIPUPDATE_ACCOUNT_ID: ${GEOIPUPDATE_ACCOUNT_ID}
+      GEOIPUPDATE_LICENSE_KEY: ${GEOIPUPDATE_LICENSE_KEY}
+    networks:
+      - authentik
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+<% } -%>
+networks:
+  authentik:
+    driver: bridge
