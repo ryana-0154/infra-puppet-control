@@ -1,0 +1,94 @@
+# Authentik Identity Provider - Hiera Configuration Example
+# Copy relevant sections to your node or common.yaml file
+#
+# IMPORTANT: Generate secrets before deployment:
+#   Secret key: openssl rand -base64 60
+#   PostgreSQL password: openssl rand -base64 32
+#
+# Encrypt secrets with eyaml:
+#   eyaml encrypt -s 'your_secret_here'
+
+---
+# Basic deployment with bundled PostgreSQL and Redis
+profile::authentik::manage_authentik: true
+
+# REQUIRED: Secret key for cookie signing and session management
+# Generate with: openssl rand -base64 60
+# Encrypt with: eyaml encrypt -s 'your_secret_key'
+profile::authentik::secret_key: >
+  ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQEw
+  ... your encrypted secret key ...]
+
+# REQUIRED: PostgreSQL password
+# Generate with: openssl rand -base64 32
+# Encrypt with: eyaml encrypt -s 'your_db_password'
+profile::authentik::postgres_password: >
+  ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQEw
+  ... your encrypted database password ...]
+
+# Optional: Custom ports (defaults: HTTP 9000, HTTPS 9443)
+# profile::authentik::http_port: 9000
+# profile::authentik::https_port: 9443
+
+# Optional: Logging configuration
+# profile::authentik::log_level: 'info'  # debug, info, warning, error
+# profile::authentik::error_reporting_enabled: false
+
+# ---
+# ADVANCED: External PostgreSQL Configuration
+# ---
+# Use when you have an existing PostgreSQL server
+#
+# profile::authentik::enable_bundled_postgresql: false
+# profile::authentik::postgres_host: 'db.example.com'
+# profile::authentik::postgres_port: 5432
+# profile::authentik::postgres_db: 'authentik'
+# profile::authentik::postgres_user: 'authentik'
+
+# ---
+# ADVANCED: External Redis Configuration
+# ---
+# Use when you have an existing Redis server
+#
+# profile::authentik::enable_bundled_redis: false
+# profile::authentik::redis_host: 'redis.example.com'
+# profile::authentik::redis_port: 6379
+
+# ---
+# Email Configuration (Optional but recommended)
+# ---
+# Required for password reset, email verification, etc.
+#
+# profile::authentik::email_host: 'smtp.example.com'
+# profile::authentik::email_port: 587
+# profile::authentik::email_username: 'authentik@example.com'
+# profile::authentik::email_password: >
+#   ENC[PKCS7,... your encrypted SMTP password ...]
+# profile::authentik::email_from: 'authentik@example.com'
+# profile::authentik::email_use_tls: true
+# profile::authentik::email_use_ssl: false
+
+# ---
+# GeoIP Configuration (Optional)
+# ---
+# Enables location-based policies and login location tracking
+# Requires a free MaxMind account: https://www.maxmind.com/en/geolite2/signup
+#
+# profile::authentik::geoip_enabled: true
+# profile::authentik::geoip_account_id: '123456'
+# profile::authentik::geoip_license_key: >
+#   ENC[PKCS7,... your encrypted MaxMind license key ...]
+
+# ---
+# Custom Docker Images (Optional)
+# ---
+# Pin to specific versions for stability
+#
+# profile::authentik::authentik_image: 'ghcr.io/goauthentik/server:2024.12'
+# profile::authentik::postgres_image: 'docker.io/library/postgres:16-alpine'
+# profile::authentik::redis_image: 'docker.io/library/redis:alpine'
+
+# ---
+# Custom Directory (Optional)
+# ---
+# profile::authentik::authentik_dir: '/opt/authentik'
