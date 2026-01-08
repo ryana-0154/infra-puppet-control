@@ -1,0 +1,17 @@
+services:
+  actual_server:
+    image: <% image_name %>:<% image_tag %>
+    ports:
+      - '<% port %>:5006'
+    environment:
+      - ACTUAL_HTTPS_KEY=/data/selfhost.key
+      - ACTUAL_HTTPS_CERT=/data/selfhost.crt
+    volumes:
+      - ./actual-data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'node src/scripts/health-check.js']
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
