@@ -2,10 +2,31 @@
 version: 5
 
 defaults:
-  datadir: data
-  data_hash: yaml_data
+  datadir: "data"
+  data_hash: "yaml_data"
 
 hierarchy:
+  - name: "Per-node (fqdn)"
+    path: "nodes/%{trusted.certname}.yaml"
+
+  # Optional: short hostname if you use it
+  - name: "Per-node (hostname)"
+    path: "nodes/%{facts.networking.hostname}.yaml"
+
+  # --- Common patterns ---
+  - name: "Per-role"
+    path: "role/%{facts.role}.yaml"
+
+  - name: "Per-environment / site / location"
+    path: "site/%{facts.site}.yaml"
+
+  - name: "Per-OS family"
+    path: "os/%{facts.os.family}.yaml"
+
+  # --- Defaults ---
+  - name: "Common"
+    path: "common.yaml"
+
   # Encrypted data (eyaml)
   - name: "Encrypted per-node data"
     lookup_key: eyaml_lookup_key
@@ -34,15 +55,3 @@ hierarchy:
     options:
       pkcs7_private_key: /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem
       pkcs7_public_key: /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
-
-  - name: "Per-node data"
-    path: "nodes/%{facts.networking.fqdn}.yaml"
-
-  - name: "Per-OS family data"
-    path: "os/%{facts.os.family}.yaml"
-
-  - name: "Per-environment data"
-    path: "environments/%{::environment}.yaml"
-
-  - name: "Common data"
-    path: "common.yaml"
