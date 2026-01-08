@@ -3,53 +3,46 @@ version: 5
 
 defaults:
   datadir: "data"
-  data_hash: yaml_data
+  data_hash: "yaml_data"
 
 hierarchy:
-  # -------------------
-  # Secure (eyaml) first
-  # -------------------
-  - name: "Secure per-node"
+  # Encrypted data (eyaml)
+  - name: "Encrypted per-node data"
     lookup_key: eyaml_lookup_key
-    path: "secure/nodes/%{trusted.certname}.eyaml"
-    options: &eyaml_opts
+    path: "nodes/%{facts.networking.fqdn}.yaml"
+    options: &eyaml_options
       pkcs7_private_key: /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem
-      pkcs7_public_key:  /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
+      pkcs7_public_key: /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
 
-  - name: "Secure per-role"
+  - name: "Encrypted per-OS family data"
     lookup_key: eyaml_lookup_key
-    path: "secure/role/%{facts.role}.eyaml"
-    options: *eyaml_opts
+    path: "os/%{facts.os.family}.yaml"
+    options: *eyaml_options
 
-  - name: "Secure per-site"
+  - name: "Encrypted per-environment data"
     lookup_key: eyaml_lookup_key
-    path: "secure/site/%{facts.site}.eyaml"
-    options: *eyaml_opts
+    path: "environments/%{::environment}.yaml"
+    options: *eyaml_options
 
-  - name: "Secure per-environment"
+  - name: "Encrypted common data"
     lookup_key: eyaml_lookup_key
-    path: "secure/environments/%{environment}.eyaml"
-    options: *eyaml_opts
+    path: "common.yaml"
+    options: *eyaml_options
 
-  - name: "Secure common"
-    lookup_key: eyaml_lookup_key
-    path: "secure/common.eyaml"
-    options: *eyaml_opts
+  # Optional: short hostname if you use it
+  - name: "Per-node (hostname)"
+    path: "nodes/%{facts.networking.hostname}.yaml"
 
-  # -------------------
-  # Plaintext
-  # -------------------
-  - name: "Per-node"
-    path: "nodes/%{trusted.certname}.yaml"
-
+  # --- Common patterns ---
   - name: "Per-role"
     path: "role/%{facts.role}.yaml"
 
-  - name: "Per-site"
+  - name: "Per-environment / site / location"
     path: "site/%{facts.site}.yaml"
 
   - name: "Per-OS family"
     path: "os/%{facts.os.family}.yaml"
 
+  # --- Defaults ---
   - name: "Common"
     path: "common.yaml"
