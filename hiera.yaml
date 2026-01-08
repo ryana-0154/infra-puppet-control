@@ -3,55 +3,53 @@ version: 5
 
 defaults:
   datadir: "data"
-  data_hash: "yaml_data"
+  data_hash: yaml_data
 
 hierarchy:
-  - name: "Per-node (fqdn)"
+  # -------------------
+  # Secure (eyaml) first
+  # -------------------
+  - name: "Secure per-node"
+    lookup_key: eyaml_lookup_key
+    path: "secure/nodes/%{trusted.certname}.eyaml"
+    options: &eyaml_opts
+      pkcs7_private_key: /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem
+      pkcs7_public_key:  /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
+
+  - name: "Secure per-role"
+    lookup_key: eyaml_lookup_key
+    path: "secure/role/%{facts.role}.eyaml"
+    options: *eyaml_opts
+
+  - name: "Secure per-site"
+    lookup_key: eyaml_lookup_key
+    path: "secure/site/%{facts.site}.eyaml"
+    options: *eyaml_opts
+
+  - name: "Secure per-environment"
+    lookup_key: eyaml_lookup_key
+    path: "secure/environments/%{environment}.eyaml"
+    options: *eyaml_opts
+
+  - name: "Secure common"
+    lookup_key: eyaml_lookup_key
+    path: "secure/common.eyaml"
+    options: *eyaml_opts
+
+  # -------------------
+  # Plaintext
+  # -------------------
+  - name: "Per-node"
     path: "nodes/%{trusted.certname}.yaml"
 
-  # Optional: short hostname if you use it
-  - name: "Per-node (hostname)"
-    path: "nodes/%{facts.networking.hostname}.yaml"
-
-  # --- Common patterns ---
   - name: "Per-role"
     path: "role/%{facts.role}.yaml"
 
-  - name: "Per-environment / site / location"
+  - name: "Per-site"
     path: "site/%{facts.site}.yaml"
 
   - name: "Per-OS family"
     path: "os/%{facts.os.family}.yaml"
 
-  # --- Defaults ---
   - name: "Common"
     path: "common.yaml"
-
-  # Encrypted data (eyaml)
-  - name: "Encrypted per-node data"
-    lookup_key: eyaml_lookup_key
-    path: "nodes/%{facts.networking.fqdn}.yaml"
-    options:
-      pkcs7_private_key: /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem
-      pkcs7_public_key: /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
-
-  - name: "Encrypted per-OS family data"
-    lookup_key: eyaml_lookup_key
-    path: "os/%{facts.os.family}.yaml"
-    options:
-      pkcs7_private_key: /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem
-      pkcs7_public_key: /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
-
-  - name: "Encrypted per-environment data"
-    lookup_key: eyaml_lookup_key
-    path: "environments/%{::environment}.yaml"
-    options:
-      pkcs7_private_key: /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem
-      pkcs7_public_key: /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
-
-  - name: "Encrypted common data"
-    lookup_key: eyaml_lookup_key
-    path: "common.yaml"
-    options:
-      pkcs7_private_key: /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem
-      pkcs7_public_key: /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
