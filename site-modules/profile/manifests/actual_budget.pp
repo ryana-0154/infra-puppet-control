@@ -1,5 +1,5 @@
 class profile::actual_budget (
-  String $dir = '/opt/actual_budget/actual-data',
+  String $dir = '/opt/actual_budget',
   String $port = '5006',
   String $image_tag = undef,
   String $image_name = undef,
@@ -9,6 +9,14 @@ class profile::actual_budget (
     owner  => 'root',
     group  => 'root',
     mode   => '0755',
+  }
+
+  file { "${dir}/actual_data":
+    ensure  => directory,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0755',
+    require => File[$dir],
   }
 
   file { "${dir}/docker-compose.yaml":
