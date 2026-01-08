@@ -1,8 +1,8 @@
 services:
   actual_server:
-    image: <% image_name %>:<% image_tag %>
+    image: <%= @image_name %>:<%= @image_tag %>
     ports:
-      - '<% port %>:5006'
+      - '<%= @port %>:5006'
     environment:
       - ACTUAL_HTTPS_KEY=/data/selfhost.key
       - ACTUAL_HTTPS_CERT=/data/selfhost.crt
