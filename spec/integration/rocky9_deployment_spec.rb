@@ -73,24 +73,6 @@ describe 'Rocky Linux 9 Deployment Validation' do
     end
   end
 
-  describe 'Role catalog compilation on Rocky 9' do
-    %w[
-      role::base
-      role::vpn_gateway
-      role::vps
-      role::webserver
-    ].each do |role_class|
-      describe role_class do
-        it 'compiles on Rocky 9' do
-          # Compile catalog with Rocky 9 facts to ensure OS-specific compatibility
-          catalog = Puppet::Parser::Compiler.compile(
-            Puppet::Node.new(node, facts: rocky9_facts, environment: 'production')
-          )
-
-          expect(catalog).to be_a(Puppet::Resource::Catalog)
-          expect(catalog.resources.size).to be > 0
-        end
-      end
-    end
-  end
+  # NOTE: Role tests removed - Foreman ENC-first architecture eliminates roles
+  # Foreman assigns profiles directly to hosts/hostgroups
 end

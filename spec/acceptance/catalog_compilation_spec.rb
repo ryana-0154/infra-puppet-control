@@ -73,53 +73,7 @@ describe 'Catalog Compilation Acceptance Tests' do
     end
   end
 
-  # Test each role can compile a catalog
-  Dir.glob('site-modules/role/manifests/**/*.pp').each do |manifest_file|
-    next if manifest_file.end_with?('/init.pp') && File.read(manifest_file).strip.empty?
-
-    class_name = manifest_file
-                 .sub('site-modules/', '')
-                 .sub('/manifests/', '::')
-                 .sub('.pp', '')
-                 .gsub('/', '::')
-
-    context "role #{class_name}" do
-      let(:node) { 'test.example.com' }
-      let(:facts) do
-        {
-          fqdn: node,
-          hostname: 'test',
-          domain: 'example.com',
-          os: {
-            'family' => 'RedHat',
-            'name' => 'Rocky',
-            'release' => {
-              'major' => '8',
-              'minor' => '9',
-              'full' => '8.9'
-            }
-          },
-          networking: {
-            'fqdn' => node,
-            'hostname' => 'test',
-            'domain' => 'example.com',
-            'ip' => '192.168.1.100'
-          }
-        }
-      end
-
-      it 'compiles a catalog without errors' do
-        catalog = Puppet::Resource::Catalog.indirection.find(
-          node,
-          environment: Puppet::Node::Environment.create(:testing, ['site-modules', 'spec/fixtures/modules']),
-          facts: Puppet::Node::Facts.new(node, facts),
-          classes: [class_name]
-        )
-
-        expect(catalog).to be_a(Puppet::Resource::Catalog)
-        expect(catalog.resources.size).to be > 0
-      end
-    end
-  end
+  # NOTE: Role tests removed - Foreman ENC-first architecture eliminates roles
+  # Foreman assigns profiles directly to hosts/hostgroups
 end
 # rubocop:enable RSpec/BeforeAfterAll

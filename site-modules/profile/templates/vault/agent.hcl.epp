@@ -1,0 +1,67 @@
+<%- |
+  String[1] $vault_addr,
+  Enum['approle', 'cert', 'token'] $vault_auth_method,
+  String[1] $vault_role,
+  Optional[String[1]] $vault_namespace,
+  Boolean $auto_auth,
+  Boolean $cache_enable,
+  Boolean $cache_use_auto_auth_token,
+  String[1] $certname,
+| -%>
+# Vault Agent Configuration
+# Managed by Puppet - DO NOT EDIT
+
+vault {
+  address = "<%= $vault_addr %>"
+<% if $vault_namespace { -%>
+  namespace = "<%= $vault_namespace %>"
+<% } -%>
+}
+
+<% if $auto_auth { -%>
+auto_auth {
+<% if $vault_auth_method == 'approle' { -%>
+  method "approle" {
+    mount_path = "auth/approle"
+    config = {
+      role_id_file_path                   = "/etc/vault.d/role-id"
+      secret_id_file_path                 = "/etc/vault.d/secret-id"
+      remove_secret_id_file_after_reading = false
+    }
+  }
+<% } elsif $vault_auth_method == 'cert' { -%>
+  method "cert" {
+    mount_path = "auth/cert"
+    config = {
+      name       = "<%= $vault_role %>"
+      client_cert = "/etc/puppetlabs/puppet/ssl/certs/<%= $certname %>.pem"
+      client_key  = "/etc/puppetlabs/puppet/ssl/private_keys/<%= $certname %>.pem"
+    }
+  }
+<% } elsif $vault_auth_method == 'token' { -%>
+  method "token_file" {
+    config = {
+      token_file_path = "/etc/vault.d/token"
+    }
+  }
+<% } -%>
+
+  sink "file" {
+    config = {
+      path = "/etc/vault.d/vault-token"
+      mode = 0640
+    }
+  }
+}
+<% } -%>
+
+<% if $cache_enable { -%>
+cache {
+  use_auto_auth_token = <%= $cache_use_auto_auth_token %>
+}
+
+listener "unix" {
+  address     = "/var/run/vault-agent.sock"
+  tls_disable = true
+}
+<% } -%>

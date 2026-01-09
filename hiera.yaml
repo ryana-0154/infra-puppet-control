@@ -1,48 +1,28 @@
 ---
 version: 5
 
+# Foreman ENC-First Architecture
+#
+# This hierarchy is intentionally minimal. Configuration data should come from:
+# 1. Foreman Host/Hostgroup Parameters (primary)
+# 2. HashiCorp Vault (for secrets)
+# 3. Hiera common.yaml (last resort - global defaults only)
+#
+# Node-specific data belongs in Foreman, NOT in Hiera files.
+
 defaults:
   datadir: "data"
   data_hash: "yaml_data"
 
 hierarchy:
-  # Encrypted data (eyaml)
-  - name: "Encrypted per-node data"
+  # Encrypted common data (for secrets during Vault migration)
+  - name: "Encrypted common defaults"
     lookup_key: eyaml_lookup_key
-    path: "nodes/%{facts.networking.fqdn}.yaml"
-    options: &eyaml_options
+    path: "common.yaml"
+    options:
       pkcs7_private_key: /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem
       pkcs7_public_key: /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
 
-  - name: "Encrypted per-OS family data"
-    lookup_key: eyaml_lookup_key
-    path: "os/%{facts.os.family}.yaml"
-    options: *eyaml_options
-
-  - name: "Encrypted per-environment data"
-    lookup_key: eyaml_lookup_key
-    path: "environments/%{::environment}.yaml"
-    options: *eyaml_options
-
-  - name: "Encrypted common data"
-    lookup_key: eyaml_lookup_key
-    path: "common.yaml"
-    options: *eyaml_options
-
-  # Optional: short hostname if you use it
-  - name: "Per-node (hostname)"
-    path: "nodes/%{facts.networking.hostname}.yaml"
-
-  # --- Common patterns ---
-  - name: "Per-role"
-    path: "role/%{facts.role}.yaml"
-
-  - name: "Per-environment / site / location"
-    path: "site/%{facts.site}.yaml"
-
-  - name: "Per-OS family"
-    path: "os/%{facts.os.family}.yaml"
-
-  # --- Defaults ---
-  - name: "Common"
+  # Plain YAML common defaults (lowest priority)
+  - name: "Common defaults"
     path: "common.yaml"

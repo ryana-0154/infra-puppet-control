@@ -14,7 +14,7 @@
 # @param default_forward_policy
 #   Default policy for forwarded traffic
 # @param ssh_port
-#   Port for SSH access
+#   Port for SSH access (shared parameter from Foreman)
 # @param ssh_source
 #   Source networks allowed SSH access
 # @param allow_ping
@@ -26,9 +26,9 @@
 # @param wireguard_port
 #   Port for WireGuard VPN
 # @param wireguard_network
-#   WireGuard VPN network CIDR
+#   WireGuard VPN network CIDR (shared parameter from Foreman)
 # @param wireguard_interface
-#   WireGuard interface name
+#   WireGuard interface name (shared parameter from Foreman)
 # @param allow_wireguard_routing
 #   Whether to allow routing between WireGuard interfaces
 # @param custom_rules
@@ -36,20 +36,6 @@
 #
 # @example Basic usage
 #   include profile::firewall
-#
-# @example Custom SSH port via Hiera
-#   profile::firewall::ssh_port: 2222
-#
-# @example Allow additional ports via Hiera
-#   profile::firewall::custom_rules:
-#     web_http:
-#       port: 80        # Automatically mapped to dport
-#       proto: tcp
-#       jump: accept
-#     web_https:
-#       dport: 443      # Direct parameter (preferred)
-#       proto: tcp
-#       jump: accept
 #
 class profile::firewall (
   Boolean                 $manage_firewall         = true,
@@ -68,7 +54,46 @@ class profile::firewall (
   Boolean                 $allow_wireguard_routing = true,
   Hash[String[1], Hash]   $custom_rules            = {},
 ) {
-  if $manage_firewall {
+  # Foreman ENC -> Hiera (via APL) -> Default resolution
+  $_manage_firewall_enc = getvar('firewall_manage')
+  $_manage_firewall = $_manage_firewall_enc ? {
+    undef   => $manage_firewall,
+    default => $_manage_firewall_enc,
+  }
+
+  # SSH port - shared parameter used by multiple profiles
+  $_ssh_port_enc = getvar('ssh_port')
+  $_ssh_port_raw = $_ssh_port_enc ? {
+    undef   => $ssh_port,
+    default => $_ssh_port_enc,
+  }
+  $_ssh_port = $_ssh_port_raw ? {
+    String  => Integer($_ssh_port_raw),
+    default => $_ssh_port_raw,
+  }
+
+  # VPN network - shared parameter used by multiple profiles
+  $_vpn_network_enc = getvar('vpn_network')
+  $_wireguard_network = $_vpn_network_enc ? {
+    undef   => $wireguard_network,
+    default => $_vpn_network_enc,
+  }
+
+  # WireGuard interface - shared parameter
+  $_wireguard_interface_enc = getvar('wireguard_interface')
+  $_wireguard_interface = $_wireguard_interface_enc ? {
+    undef   => $wireguard_interface,
+    default => $_wireguard_interface_enc,
+  }
+
+  # WireGuard port
+  $_wireguard_port_enc = getvar('wireguard_listen_port')
+  $_wireguard_port = $_wireguard_port_enc ? {
+    undef   => $wireguard_port,
+    default => $_wireguard_port_enc,
+  }
+
+  if $_manage_firewall {
     # Ensure firewall is installed and running
     include firewall
 
@@ -130,7 +155,7 @@ class profile::firewall (
     # Allow SSH access
     $ssh_source.each |Integer $index, String $source| {
       firewall { "010 allow ssh from ${source}":
-        dport  => $ssh_port,
+        dport  => $_ssh_port,
         proto  => 'tcp',
         source => $source,
         jump   => 'accept',
@@ -157,23 +182,23 @@ class profile::firewall (
     }
 
     # WireGuard VPN rules
-    if $wireguard_port {
+    if $_wireguard_port {
       # Allow WireGuard UDP traffic from anywhere
       firewall { '040 allow wireguard':
-        dport => $wireguard_port,
+        dport => $_wireguard_port,
         proto => 'udp',
         jump  => 'accept',
       }
     }
 
-    if $wireguard_network and $wireguard_interface {
+    if $_wireguard_network and $_wireguard_interface {
       # Allow monitoring services from WireGuard network (to 10.10.10.1)
       $monitoring_ports.each |Integer $port| {
         firewall { "050 allow monitoring port ${port} from wireguard":
           dport       => $port,
           proto       => 'tcp',
           destination => '10.10.10.1',
-          iniface     => $wireguard_interface,
+          iniface     => $_wireguard_interface,
           jump        => 'accept',
         }
       }
@@ -206,8 +231,8 @@ class profile::firewall (
       firewall { '051 allow dns udp from wireguard':
         dport   => 53,
         proto   => 'udp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
@@ -215,8 +240,8 @@ class profile::firewall (
       firewall { '052 allow dns tcp from wireguard':
         dport   => 53,
         proto   => 'tcp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
@@ -224,24 +249,24 @@ class profile::firewall (
       firewall { '053 allow unbound from wireguard':
         dport   => 5353,
         proto   => 'udp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
       firewall { '054 allow http from wireguard':
         dport   => 80,
         proto   => 'tcp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
       firewall { '055 allow https from wireguard':
         dport   => 443,
         proto   => 'tcp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
@@ -249,16 +274,16 @@ class profile::firewall (
       firewall { '056 allow wg-portal from wireguard':
         dport   => 8888,
         proto   => 'tcp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
       firewall { '057 allow puppet from wireguard':
         dport   => 8140,
         proto   => 'tcp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
@@ -266,16 +291,16 @@ class profile::firewall (
       firewall { '058 allow pihole exporter from wireguard':
         dport   => 9617,
         proto   => 'tcp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
       firewall { '059 allow additional monitoring from wireguard':
         dport   => 9586,
         proto   => 'tcp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
@@ -283,8 +308,8 @@ class profile::firewall (
       firewall { '060 allow grafana from wireguard':
         dport   => 3000,
         proto   => 'tcp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
@@ -292,8 +317,8 @@ class profile::firewall (
       firewall { '061 allow loki from wireguard':
         dport   => 3100,
         proto   => 'tcp',
-        source  => $wireguard_network,
-        iniface => $wireguard_interface,
+        source  => $_wireguard_network,
+        iniface => $_wireguard_interface,
         jump    => 'accept',
       }
 
@@ -301,15 +326,15 @@ class profile::firewall (
       if $allow_wireguard_routing {
         firewall { '070 allow wireguard routing':
           chain    => 'FORWARD',
-          iniface  => $wireguard_interface,
-          outiface => $wireguard_interface,
+          iniface  => $_wireguard_interface,
+          outiface => $_wireguard_interface,
           jump     => 'accept',
         }
 
         # Allow WireGuard to internet forwarding (essential for DNS/internet access)
         firewall { '071 allow wireguard to internet':
           chain    => 'FORWARD',
-          iniface  => $wireguard_interface,
+          iniface  => $_wireguard_interface,
           outiface => '! wg0',  # Any interface except WireGuard
           jump     => 'accept',
         }
@@ -318,7 +343,7 @@ class profile::firewall (
         firewall { '072 allow internet to wireguard return':
           chain    => 'FORWARD',
           iniface  => '! wg0',  # Any interface except WireGuard
-          outiface => $wireguard_interface,
+          outiface => $_wireguard_interface,
           state    => ['RELATED', 'ESTABLISHED'],
           jump     => 'accept',
         }
@@ -371,8 +396,6 @@ class profile::firewall (
     }
 
     # Log dropped packets for debugging
-    # Note: log_level defaults to 4 (warn) and is omitted to prevent drift
-    # when iptables-save doesn't persist default values
     firewall { '990 log dropped input':
       proto      => 'all',
       jump       => 'LOG',
@@ -385,7 +408,5 @@ class profile::firewall (
       jump       => 'LOG',
       log_prefix => '[IPTABLES DROPPED FORWARD]: ',
     }
-
-    # Final drop rule removed - rely on default policy instead to avoid conflicts
   }
 }

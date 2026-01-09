@@ -1,79 +1,24 @@
-# @summary Base profile for all nodes
+# @summary Minimal base profile for all nodes
 #
-# This profile contains the baseline configuration that should be
-# applied to every node. It includes essential services and security settings.
+# This profile contains only the truly universal baseline configuration
+# that every node requires. All other functionality (NTP, firewall,
+# fail2ban, etc.) should be assigned as separate profiles via Foreman.
 #
-# @param manage_ntp
-#   Whether to manage NTP configuration
-# @param manage_firewall
-#   Whether to manage firewall configuration
-# @param manage_logrotate
-#   Whether to manage logrotate configuration
-# @param manage_otel_collector
-#   Whether to manage OpenTelemetry Collector
-# @param manage_fail2ban
-#   Whether to manage fail2ban intrusion prevention
-# @param manage_unattended_upgrades
-#   Whether to manage automatic security updates
-# @param manage_ssh_hardening
-#   Whether to manage SSH server security configuration
+# Includes:
+# - DNS resolver configuration (required for Puppet to work)
+# - Puppet agent configuration (required for Puppet to work)
+# - Basic utility packages
 #
 # @example
 #   include profile::base
 #
-class profile::base (
-  Boolean $manage_ntp                 = true,
-  Boolean $manage_firewall            = true,
-  Boolean $manage_logrotate           = true,
-  Boolean $manage_otel_collector      = false,
-  Boolean $manage_fail2ban            = false,
-  Boolean $manage_unattended_upgrades = false,
-  Boolean $manage_ssh_hardening       = false,
-) {
-  # DNS configuration - always included for internal DNS resolution
+class profile::base {
+  # DNS configuration - required for internal DNS resolution
   contain profile::dns
 
-  # Puppet agent configuration - connects to Puppet Server
-  # Disabled on nodes that ARE the Puppet Server (e.g., foreman01)
+  # Puppet agent configuration - required for Puppet Server connectivity
   contain profile::puppet_agent
 
-  # NTP configuration
-  if $manage_ntp {
-    include ntp
-  }
-
-  # Firewall configuration
-  if $manage_firewall {
-    contain profile::firewall
-  }
-  # Note: We don't purge firewall rules when manage_firewall is false
-  # because purging ALL iptables rules breaks connectivity.
-  # UFW manages its own rules and coexists with existing rules.
-
-  if $manage_logrotate {
-    include logrotate
-  }
-
-  # OpenTelemetry Collector configuration
-  if $manage_otel_collector {
-    contain profile::otel_collector
-  }
-
-  # Fail2ban intrusion prevention
-  if $manage_fail2ban {
-    contain profile::fail2ban
-  }
-
-  # Unattended upgrades for automatic security updates
-  if $manage_unattended_upgrades {
-    contain profile::unattended_upgrades
-  }
-
-  # SSH server hardening
-  if $manage_ssh_hardening {
-    contain profile::ssh_hardening
-  }
-
-  # Basic package management
+  # Basic utility packages available on all nodes
   ensure_packages(['vim', 'curl', 'wget'], { ensure => 'present' })
 }

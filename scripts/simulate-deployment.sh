@@ -132,7 +132,7 @@ fi
 TEST_DIR=$(mktemp -d)
 trap "rm -rf $TEST_DIR" EXIT
 
-print_header "Step 4: Test Catalog Compilation"
+print_header "Step 4: Test Profile Catalog Compilation"
 
 # Find all profiles
 PROFILES=$(find site-modules/profile/manifests -name '*.pp' -not -name 'init.pp' -type f)
@@ -183,111 +183,46 @@ EOF
     fi
 done
 
-# Test roles too
-print_header "Step 5: Test Roles"
-
-ROLES=$(find site-modules/role/manifests -name '*.pp' -not -name 'init.pp' -type f)
-
-for role_file in $ROLES; do
-    role_name=$(echo "$role_file" | \
-        sed 's|site-modules/role/manifests/||' | \
-        sed 's|\.pp$||' | \
-        tr '/' '::')
-
-    role_class="role::${role_name}"
-
-    print_info "Testing ${role_class}..."
-
-    cat > "$TEST_DIR/test.pp" <<EOF
-# Test manifest for ${role_class}
-node 'test.example.com' {
-  include ${role_class}
-}
-EOF
-
-    if puppet apply --noop \
-        --certname=test.example.com \
-        --modulepath=modules:site-modules \
-        --hiera_config=hiera.yaml \
-        "$TEST_DIR/test.pp" > "$TEST_DIR/output.log" 2>&1; then
-        print_success "${role_class} - catalog compiled successfully"
-        PASSED_PROFILES+=("$role_class")
-    elif grep -q "hiera-eyaml backend error decrypting" "$TEST_DIR/output.log"; then
-        # eyaml decryption errors are expected when private key is not available
-        echo -e "${YELLOW}⚠ ${role_class} - skipped (eyaml decryption requires private key)${NC}"
-        EYAML_SKIPPED+=("$role_class")
-    else
-        print_failure "${role_class} - catalog compilation failed"
-        echo "Error output:"
-        cat "$TEST_DIR/output.log" | grep -A 5 "Error:"
-        echo ""
-        FAILED_PROFILES+=("$role_class")
-    fi
-done
-
-# Test common profile combinations
-print_header "Step 6: Test Profile Combinations"
+# Test common profile combinations (Foreman ENC-style)
+print_header "Step 5: Test Profile Combinations"
 print_info "Testing common profile combinations to catch resource contention..."
+print_info "(Simulating Foreman hostgroup assignments)"
 
 FAILED_COMBINATIONS=()
 PASSED_COMBINATIONS=()
+
+# Test combination: Base + NTP + Firewall (common server)
+print_info "Testing: Base + NTP + Firewall (common server)..."
+cat > "$TEST_DIR/combo_test.pp" <<'EOF'
+node 'test-combo.example.com' {
+  include profile::base
+  include profile::ntp
+  include profile::firewall
+}
+EOF
+
+if puppet apply --noop \
+    --certname=test-combo.example.com \
+    --modulepath=modules:site-modules \
+    --hiera_config=hiera.yaml \
+    "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
+    print_success "Base + NTP + Firewall - no resource conflicts"
+    PASSED_COMBINATIONS+=("Base + NTP + Firewall")
+elif grep -q "hiera-eyaml backend error decrypting" "$TEST_DIR/combo_output.log"; then
+    echo -e "${YELLOW}⚠ Base + NTP + Firewall - skipped (eyaml)${NC}"
+else
+    print_failure "Base + NTP + Firewall - resource conflicts detected"
+    echo "Error output:"
+    cat "$TEST_DIR/combo_output.log" | grep -A 5 "Error:\|Duplicate declaration:"
+    echo ""
+    FAILED_COMBINATIONS+=("Base + NTP + Firewall")
+fi
 
 # Test combination: Base + Monitoring + OTEL
 print_info "Testing: Base + Monitoring + OTEL..."
 cat > "$TEST_DIR/combo_test.pp" <<'EOF'
 node 'test-combo.example.com' {
-  class { 'profile::base':
-    manage_otel_collector => true,
-  }
-  include profile::monitoring
-}
-EOF
-
-if puppet apply --noop \
-    --certname=test-combo.example.com \
-    --modulepath=modules:site-modules \
-    --hiera_config=hiera.yaml \
-    "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
-    print_success "Base + Monitoring + OTEL - no resource conflicts"
-    PASSED_COMBINATIONS+=("Base + Monitoring + OTEL")
-else
-    print_failure "Base + Monitoring + OTEL - resource conflicts detected"
-    echo "Error output:"
-    cat "$TEST_DIR/combo_output.log" | grep -A 5 "Error:\|Duplicate declaration:"
-    echo ""
-    FAILED_COMBINATIONS+=("Base + Monitoring + OTEL")
-fi
-
-# Test combination: Base + Monitoring (no OTEL)
-print_info "Testing: Base + Monitoring (no OTEL)..."
-cat > "$TEST_DIR/combo_test.pp" <<'EOF'
-node 'test-combo.example.com' {
-  class { 'profile::base':
-    manage_otel_collector => false,
-  }
-  include profile::monitoring
-}
-EOF
-
-if puppet apply --noop \
-    --certname=test-combo.example.com \
-    --modulepath=modules:site-modules \
-    --hiera_config=hiera.yaml \
-    "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
-    print_success "Base + Monitoring (no OTEL) - no resource conflicts"
-    PASSED_COMBINATIONS+=("Base + Monitoring (no OTEL)")
-else
-    print_failure "Base + Monitoring (no OTEL) - resource conflicts detected"
-    echo "Error output:"
-    cat "$TEST_DIR/combo_output.log" | grep -A 5 "Error:\|Duplicate declaration:"
-    echo ""
-    FAILED_COMBINATIONS+=("Base + Monitoring (no OTEL)")
-fi
-
-# Test combination: Monitoring + OTEL
-print_info "Testing: Monitoring + OTEL..."
-cat > "$TEST_DIR/combo_test.pp" <<'EOF'
-node 'test-combo.example.com' {
+  include profile::base
   include profile::monitoring
   include profile::otel_collector
 }
@@ -298,14 +233,16 @@ if puppet apply --noop \
     --modulepath=modules:site-modules \
     --hiera_config=hiera.yaml \
     "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
-    print_success "Monitoring + OTEL - no resource conflicts"
-    PASSED_COMBINATIONS+=("Monitoring + OTEL")
+    print_success "Base + Monitoring + OTEL - no resource conflicts"
+    PASSED_COMBINATIONS+=("Base + Monitoring + OTEL")
+elif grep -q "hiera-eyaml backend error decrypting" "$TEST_DIR/combo_output.log"; then
+    echo -e "${YELLOW}⚠ Base + Monitoring + OTEL - skipped (eyaml)${NC}"
 else
-    print_failure "Monitoring + OTEL - resource conflicts detected"
+    print_failure "Base + Monitoring + OTEL - resource conflicts detected"
     echo "Error output:"
     cat "$TEST_DIR/combo_output.log" | grep -A 5 "Error:\|Duplicate declaration:"
     echo ""
-    FAILED_COMBINATIONS+=("Monitoring + OTEL")
+    FAILED_COMBINATIONS+=("Base + Monitoring + OTEL")
 fi
 
 # Test combination: Base + Dotfiles
@@ -324,6 +261,8 @@ if puppet apply --noop \
     "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
     print_success "Base + Dotfiles - no resource conflicts"
     PASSED_COMBINATIONS+=("Base + Dotfiles")
+elif grep -q "hiera-eyaml backend error decrypting" "$TEST_DIR/combo_output.log"; then
+    echo -e "${YELLOW}⚠ Base + Dotfiles - skipped (eyaml)${NC}"
 else
     print_failure "Base + Dotfiles - resource conflicts detected"
     echo "Error output:"
@@ -332,11 +271,38 @@ else
     FAILED_COMBINATIONS+=("Base + Dotfiles")
 fi
 
+# Test combination: Base + SSH Hardening + Fail2ban
+print_info "Testing: Base + SSH Hardening + Fail2ban..."
+cat > "$TEST_DIR/combo_test.pp" <<'EOF'
+node 'test-combo.example.com' {
+  include profile::base
+  include profile::ssh_hardening
+  include profile::fail2ban
+}
+EOF
+
+if puppet apply --noop \
+    --certname=test-combo.example.com \
+    --modulepath=modules:site-modules \
+    --hiera_config=hiera.yaml \
+    "$TEST_DIR/combo_test.pp" > "$TEST_DIR/combo_output.log" 2>&1; then
+    print_success "Base + SSH Hardening + Fail2ban - no resource conflicts"
+    PASSED_COMBINATIONS+=("Base + SSH Hardening + Fail2ban")
+elif grep -q "hiera-eyaml backend error decrypting" "$TEST_DIR/combo_output.log"; then
+    echo -e "${YELLOW}⚠ Base + SSH Hardening + Fail2ban - skipped (eyaml)${NC}"
+else
+    print_failure "Base + SSH Hardening + Fail2ban - resource conflicts detected"
+    echo "Error output:"
+    cat "$TEST_DIR/combo_output.log" | grep -A 5 "Error:\|Duplicate declaration:"
+    echo ""
+    FAILED_COMBINATIONS+=("Base + SSH Hardening + Fail2ban")
+fi
+
 # Summary
 print_header "Deployment Simulation Summary"
 
 TOTAL_TESTED=$((${#PASSED_PROFILES[@]} + ${#FAILED_PROFILES[@]} + ${#EYAML_SKIPPED[@]}))
-echo "Individual classes tested: $TOTAL_TESTED"
+echo "Individual profiles tested: $TOTAL_TESTED"
 echo "  Passed: ${#PASSED_PROFILES[@]}"
 echo "  Failed: ${#FAILED_PROFILES[@]}"
 if [ ${#EYAML_SKIPPED[@]} -gt 0 ]; then
@@ -354,27 +320,30 @@ if [ $TOTAL_FAILED -eq 0 ]; then
     print_success "All catalogs compiled successfully!"
     if [ ${#EYAML_SKIPPED[@]} -gt 0 ]; then
         echo ""
-        echo -e "${YELLOW}Note: Some classes were skipped due to eyaml encryption.${NC}"
+        echo -e "${YELLOW}Note: Some profiles were skipped due to eyaml encryption.${NC}"
         echo "These require the private key for full validation."
-        echo "Skipped classes:"
+        echo "Skipped profiles:"
         for skipped in "${EYAML_SKIPPED[@]}"; do
             echo "  - $skipped"
         done
     fi
     echo ""
     echo "This deployment simulation verifies that:"
-    echo "  ✓ All required modules are available"
-    echo "  ✓ No missing dependencies"
-    echo "  ✓ All class parameters are valid"
-    echo "  ✓ Catalogs can be compiled without errors"
-    echo "  ✓ Common profile combinations work without resource conflicts"
+    echo "  - All required modules are available"
+    echo "  - No missing dependencies"
+    echo "  - All class parameters are valid"
+    echo "  - Catalogs can be compiled without errors"
+    echo "  - Common profile combinations work without resource conflicts"
+    echo ""
+    echo "Note: Foreman ENC assigns profiles to hosts. This test validates"
+    echo "that profiles can be combined without conflicts."
     exit 0
 else
     print_failure "Deployment simulation found issues:"
 
     if [ ${#FAILED_PROFILES[@]} -gt 0 ]; then
         echo ""
-        echo "Failed individual classes:"
+        echo "Failed individual profiles:"
         for failed in "${FAILED_PROFILES[@]}"; do
             echo "  - $failed"
         done

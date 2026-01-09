@@ -33,7 +33,8 @@ end
 def check_coverage
   missing_tests = []
 
-  %w[profile role].each do |module_name|
+  # Only check profile module (roles eliminated in Foreman ENC-first architecture)
+  %w[profile].each do |module_name|
     base_dir = "site-modules/#{module_name}"
     next unless Dir.exist?(base_dir)
 

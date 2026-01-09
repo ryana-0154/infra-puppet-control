@@ -1,29 +1,17 @@
-# site.pp - Main manifest entry point
-# This file is the main entry point for Puppet and should contain
-# node definitions or include statements for classification
+# site.pp - Foreman ENC-first architecture
+#
+# This control repository uses Foreman ENC for node classification.
+# Profiles are assigned directly to hosts/hostgroups in Foreman,
+# eliminating the need for role classes.
+#
+# Configuration flow:
+# 1. Foreman ENC assigns profiles to nodes via hostgroups
+# 2. Host/Hostgroup Parameters provide configuration values
+# 3. Hiera provides fallback defaults only
+#
+# Only profile::base is applied by default as a safety net.
+# All other profiles must be explicitly assigned in Foreman.
 
-# VPS nodes
-node 'vps.ra-home.co.uk' {
-  include role::vps
-}
-
-node 'foreman01.ra-home.co.uk' {
-  include role::foreman
-}
-
-# Default node - applies to all nodes not explicitly matched
 node default {
-  # Include the role class based on the node's role fact
-  # or assign a default role
-  include role::base
+  include profile::base
 }
-
-# Example: Define specific nodes
-# node 'web01.example.com' {
-#   include role::webserver
-# }
-
-# Example: Use regex for node matching
-# node /^db\d+\.example\.com$/ {
-#   include role::database
-# }

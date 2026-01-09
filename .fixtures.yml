@@ -2,7 +2,7 @@
 fixtures:
   symlinks:
     profile: "site-modules/profile"
-    role: "site-modules/role"
+    # Note: role module removed - Foreman ENC-first architecture
   forge_modules:
     stdlib:
       repo: "puppetlabs/stdlib"
@@ -53,3 +53,41 @@ fixtures:
       ref: "11.0.0"
     inifile:
       repo: "puppetlabs/inifile"
+    cron_core:
+      repo: "puppetlabs/cron_core"
+    acme:
+      repo: "markt/acme"
+      ref: "4.1.0"
+    marktlib:
+      repo: "markt/marktlib"
+    openssl:
+      repo: "puppet/openssl"
+    nginx:
+      repo: "puppetlabs/nginx"
+    puppetdb:
+      repo: "puppetlabs/puppetdb"
+      ref: "8.1.0"
+    puppetserver_foreman:
+      repo: "theforeman/puppetserver_foreman"
+      ref: "2.1.0"
+    dhcp:
+      repo: "theforeman/dhcp"
+      ref: "9.1.0"
+    tftp:
+      repo: "theforeman/tftp"
+      ref: "9.1.0"
+    redis:
+      repo: "puppet/redis"
+    apache:
+      repo: "puppetlabs/apache"
+      ref: "12.3.0"
+    datacat:
+      repo: "richardc/datacat"
+      ref: "0.6.2"
+    mosquitto:
+      repo: "puppet/mosquitto"
+    augeas_core:
+      repo: "puppetlabs/augeas_core"
+    selinux_core:
+      repo: "puppetlabs/selinux_core"
+    # vault_lookup module needs git-based installation - skip for fixtures

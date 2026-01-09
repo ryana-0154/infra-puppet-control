@@ -2,7 +2,7 @@
 #
 # This profile manages fail2ban for protecting services from brute-force attacks.
 # It provides default protection for SSH and optionally HTTP/HTTPS, with support
-# for custom jails, filters, and actions via Hiera.
+# for custom jails, filters, and actions.
 #
 # @param manage_fail2ban
 #   Whether to manage fail2ban. Set to false to disable completely.
@@ -29,32 +29,18 @@
 # @param enable_http_jails
 #   Whether to enable HTTP/HTTPS DoS protection jails
 # @param ssh_port
-#   SSH port to monitor (auto-detected from firewall profile if not set)
+#   SSH port to monitor (shared parameter from Foreman)
 # @param http_logpath
 #   Array of HTTP/HTTPS log file paths to monitor
 # @param custom_jails
-#   Hash of custom jail configurations from Hiera
+#   Hash of custom jail configurations
 # @param custom_filters
-#   Hash of custom filter definitions from Hiera
+#   Hash of custom filter definitions
 # @param custom_actions
-#   Hash of custom action definitions from Hiera
+#   Hash of custom action definitions
 #
 # @example Basic usage
 #   include profile::fail2ban
-#
-# @example Enable via profile::base with Hiera
-#   profile::base::manage_fail2ban: true
-#
-# @example Custom jail configuration via Hiera
-#   profile::fail2ban::custom_jails:
-#     nginx-limit-req:
-#       jail_name: 'nginx-limit-req'
-#       jail_content:
-#         nginx-limit-req:
-#           enabled: true
-#           port: 'http,https'
-#           logpath: '/var/log/nginx/error.log'
-#           maxretry: 2
 #
 class profile::fail2ban (
   Boolean $manage_fail2ban                   = true,
@@ -69,20 +55,32 @@ class profile::fail2ban (
   String[1] $action                          = 'action_',
   Boolean $enable_ssh_jail                   = true,
   Boolean $enable_http_jails                 = true,
-  Optional[Variant[Integer[1, 65535], String[1]]] $ssh_port = undef,
+  Integer[1, 65535] $ssh_port                = 22,
   Array[String[1]] $http_logpath             = ['/var/log/nginx/access.log', '/var/log/apache2/access.log'],
   Hash[String[1], Hash] $custom_jails        = {},
   Hash[String[1], Hash] $custom_filters      = {},
   Hash[String[1], Hash] $custom_actions      = {},
 ) {
-  if $manage_fail2ban {
-    # Auto-detect SSH port from firewall profile via Hiera lookup
-    # Falls back to 22 if not configured in firewall profile
-    $real_ssh_port = $ssh_port ? {
-      undef   => lookup('profile::firewall::ssh_port', Variant[Integer[1, 65535], String[1]], 'first', 22),
-      default => $ssh_port,
-    }
+  # Foreman ENC -> Hiera (via APL) -> Default resolution
+  $_manage_fail2ban_enc = getvar('fail2ban_manage')
+  $_manage_fail2ban = $_manage_fail2ban_enc ? {
+    undef   => $manage_fail2ban,
+    default => $_manage_fail2ban_enc,
+  }
 
+  # SSH port - shared parameter used by multiple profiles (wireguard, fail2ban, ssh_hardening)
+  $_ssh_port_enc = getvar('ssh_port')
+  $_ssh_port_raw = $_ssh_port_enc ? {
+    undef   => $ssh_port,
+    default => $_ssh_port_enc,
+  }
+  # Handle string conversion from Foreman
+  $_ssh_port = $_ssh_port_raw ? {
+    String  => Integer($_ssh_port_raw),
+    default => $_ssh_port_raw,
+  }
+
+  if $_manage_fail2ban {
     # Determine SSH log path based on OS family
     $ssh_logpath = $facts['os']['family'] ? {
       'Debian' => '/var/log/auth.log',
@@ -98,7 +96,7 @@ class profile::fail2ban (
       true => {
         'sshd' => {
           'enabled'  => true,
-          'port'     => $real_ssh_port,
+          'port'     => $_ssh_port,
           'logpath'  => $ssh_logpath,
           'maxretry' => $maxretry,
           'bantime'  => $bantime,
@@ -150,21 +148,21 @@ class profile::fail2ban (
       jails          => $all_jails,
     }
 
-    # Create custom jails from Hiera
+    # Create custom jails
     $custom_jails.each |String $jail_name, Hash $jail_config| {
       fail2ban::jail { $jail_name:
         * => $jail_config,
       }
     }
 
-    # Create custom filters from Hiera
+    # Create custom filters
     $custom_filters.each |String $filter_name, Hash $filter_config| {
       fail2ban::filter { $filter_name:
         * => $filter_config,
       }
     }
 
-    # Create custom actions from Hiera
+    # Create custom actions
     $custom_actions.each |String $action_name, Hash $action_config| {
       fail2ban::action { $action_name:
         * => $action_config,

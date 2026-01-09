@@ -1,86 +1,39 @@
 ---
-# DNS Configuration - Use internal Pi-hole/Unbound server
+# Foreman ENC-First Architecture - Global Defaults Only
+#
+# This file contains ONLY truly global defaults that rarely change.
+# Node-specific configuration belongs in Foreman Host/Hostgroup Parameters.
+# Secrets should be managed via HashiCorp Vault.
+#
+# Priority: Foreman ENC > Hiera > Class defaults
+
+# DNS Configuration - Default internal DNS server
 profile::dns::manage_resolv: true
 profile::dns::nameservers:
   - '10.10.10.1'
 profile::dns::search_domains:
   - 'ra-home.co.uk'
 
-# Puppet Agent Configuration - Use foreman01 as Puppet Server
+# Puppet Agent Configuration - Default Puppet Server
 profile::puppet_agent::manage_agent: true
 profile::puppet_agent::server_hostname: 'foreman01.ra-home.co.uk'
-profile::puppet_agent::ca_server: 'pi.ra-home.co.uk'
-profile::puppet_agent::runinterval: 1800  # 30 minutes
+profile::puppet_agent::ca_server: 'foreman01.ra-home.co.uk'
+profile::puppet_agent::runinterval: 1800
 profile::puppet_agent::environment: 'production'
 
-ntp::servers:
+# NTP defaults
+profile::ntp::servers:
   - 0.uk.pool.ntp.org
   - 1.uk.pool.ntp.org
   - 2.uk.pool.ntp.org
   - 3.uk.pool.ntp.org
 
-# Profile::base settings
-profile::base::manage_ntp: false
-profile::base::manage_firewall: false
-profile::base::manage_logrotate: false
-profile::base::manage_otel_collector: false
-profile::base::manage_fail2ban: false
-
-# Firewall settings (managed via profile::base::manage_firewall)
-profile::firewall::purge_unmanaged: true
-profile::firewall::ssh_port: 22
-profile::firewall::allow_ping: true
-profile::firewall::monitoring_ports:
-  - 9090  # Prometheus
-  - 9100  # Node Exporter
-  - 9115  # Blackbox Exporter
-
-# Logrotate settings
-profile::logrotate::rotate_period: 'weekly'
-profile::logrotate::rotate_count: 4
-profile::logrotate::compress: true
-profile::logrotate::delaycompress: true
-
-# Example custom logrotate rules (commented out)
-# profile::logrotate::rules:
-#   apache2:
-#     path: '/var/log/apache2/*.log'
-#     rotate: 14
-#     compress: true
-#     missingok: true
-#     notifempty: true
-#     sharedscripts: true
-#     postrotate: 'systemctl reload apache2 > /dev/null'
-
-# Fail2ban intrusion prevention settings
-profile::fail2ban::bantime: '1h'
-profile::fail2ban::findtime: '10m'
-profile::fail2ban::maxretry: 5
-profile::fail2ban::enable_ssh_jail: true
-profile::fail2ban::enable_http_jails: true
-profile::fail2ban::http_logpath:
-  - '/var/log/nginx/access.log'
-  - '/var/log/apache2/access.log'
-
-
+# Dotfiles configuration (used on all nodes)
 profile::dotfiles::manage_dotfiles: true
 profile::dotfiles::dotfiles_repo: 'https://github.com/ryana-0154/dotfiles.git'
 profile::dotfiles::dotfiles_revision: 'main'
 profile::dotfiles::auto_update: true
 profile::dotfiles::dotfiles_dir_name: 'dotfiles'
-
-# Grafana Alloy Configuration for Grafana Cloud
-# Credentials are shared across all hosts - enable per-host via Foreman parameters:
-#   alloy_enable_metrics: true/false
-#   alloy_enable_logs: true/false
-#   alloy_enable_node_exporter: true/false
-profile::alloy::grafana_cloud_metrics_url: 'ENC[PKCS7,MIIBuQYJKoZIhvcNAQcDoIIBqjCCAaYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAQwKo1BSDwPJMOIoGkkQZVnK6VZ8kSB58yvqf6p90r4GVM3uWwGhpRWO4MtT/Qny/HPYjVK01y0bpdGe9xXLXYayYTGkr6cEVG+xCqu7ipalqWDdq+Y4yvLEvlrctROW+NCTCOZr6qhtnR78fwtejGNfJB4WTdE94rrrqqV+7LkdD3Ib4YrZGqvd+pxvMOxsvnmHlfbjyIwoxfbvv0RAA66OT7ZHInUvPsp39JtBU+9GkbQXP3T/4ndcvbjF/vBhspHInwbgs/JNofNuRhjIgRPsDQAoMbeCP8FGggcsE3onmSWZq5B03WYZHJJe8nNmonG65pyiD8KYn5WcxOraO+TB8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCl1EJCetHv8LCF/95MS7UTgFChfxM396X9bjWONFpUF3OlyLZKR6v41SPekPgvbcSVCdK6znQyT5k7eQ23oQd84mZNn2N0I/PRxIefT3sfOPDAQhqC23xoyjUq3VzvEVnPzQ==]'
-profile::alloy::grafana_cloud_metrics_username: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAxX23EyvcV3mHxl9p40w2y5HvzUVlNiLCeuNsPtcJFhCIl/Qdh46X+Wq502P4dbzRsxRyZ4ETJx6L+rPBPNPh7Injj75WoEE5/QFFHSAnWGqEJXWFkNWwalJxlL1HhuTqWC00kfxPx89isRY6HLdWDO00Fo99ekr6UB4k4xaUg0Nz3bfNZ6iQYyyp4FrjL7u8vl8rZSAFUAvQirVxFmcTTGxnIJYWjBCgYbuETFsBzJDz30a7CWKFOZfp40V21kh3Qj2V8qj+ihgdMP9Ds79uK3ae4PHAQBrmrnyKFa/Ag+4sCCWtj3HaQAKMpKxHIqouxYNz7Dnas5afVYiRIyHI4DA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCN2hbNxwTIRO9vUxQu0pTsgBBgfen32cGABkNQTa/SZMk4]'
-profile::alloy::grafana_cloud_metrics_api_key: 'ENC[PKCS7,MIICCwYJKoZIhvcNAQcDoIIB/DCCAfgCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAJZuFJuWkWppUhkV7A66ccHcr0K8DGx0vgccJV2DWwzxEZzGc1haqoo6cE1/DB7honE0QBqFCrjIfEbKgl5qN9V4yRCrXBmH0rSAUBMVRoRAfiLoJKl1hWBg6I0HKvHG4m1dyw+Q3ChnpLdfVHbDpNYkevF5SlQZ5mYJ7Xq0UZui+BB0ZAije3tvc7hdaivs4CYgj0pAOV76qzrZ/aeVxoLJy9hOHlWtJR1jwMxm0YmM8eEVI/dBiS+Qq/5AQqfNM7NfDcL119luaXDYnHQbIIAF/fkEfanUetQf0peYkrySO5zC34gUG4N3K6daAs06ZM2XThv+Un5lXMk2JCJ0bCDCBzQYJKoZIhvcNAQcBMB0GCWCGSAFlAwQBKgQQPAOBjbeWJjyjUT9ZpdngxICBoFW4V85DA3qqp+8fzvkUlC7oYSEJ7m4h/unv9m3gpLcsE3DFVuhnyVY81zbytDSN80kjs5qk7Qwpgx8y2FBI810g7ST3SSid0jY5DKH7u7a6QSqBgGi8PSqPTcRW7xj5YQF4xvRAWLrdQB0Tw54EPMgTHuSVJ6SBKzDHpL0FLjOZPnccPaFk0HOgp6hH2m8k5x1STR4gcvyH66CmlrFFiKI=]'
-profile::alloy::grafana_cloud_logs_url: 'ENC[PKCS7,MIIBqQYJKoZIhvcNAQcDoIIBmjCCAZYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEA8uoCzQ5TwqGHKSQxzp3k36lObsrEHWVEy0SBfy90iIt99w73/OYwCb4qHNLeJrOOPkSoNM+oaieobN6/9EZDruTqnhalG1HJbCyz7pNIvrW6BDiRGA5ccLZs9wM2IU+WodPyEh7YbadiOD/QqZg7l1/48ynIPbXHwjdffZWVSUfsXPIfDZLCSyLSvR/kOkrrWaV7s6mcWuJpgepI5/9ffcQ6c8D3q1kAgZnnzbb1hLjjENHpKTT0VMaSmYgV6MMEcf0aBdrw+7K5ZwC3SgwYaxHPCDeqpMH1DC4PGMbystgrDCfRxAtZUH8EzrNPd2Gi8I9oMept12Kuov9oZLID+TBsBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBCJEozGvWs0hjpk90xeUHTgEDxKzw55hVW0Wknv8353dRRwt9/rGe4KzIrBWzmq5vNhM4MIHa5MH4GEY/kRi1Q+IXQ+698T4Cxf7WqS96fnVAP]'
-profile::alloy::grafana_cloud_logs_username: 'ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAWju5q1bBfnsAgPlkeoVhAEsyhjjIWdk12R1aL91SFc7f7A/MhDdhZoKlkxxugxX8Oz1grMBkpp61jntukLZEfcozmgYfu9LeL8xBdjOjjRrpnKyn0z0gy0OIMUvs0XzeWuxV/3umdxg2pHb7e46mdInDPu838x21/2uj11uZitXU3U4hZfMUTkCbqCoDA0NGA8dgBf6RqfVoVqcDVGoKFsEzZekFH7F/IJW2Pl10CAuv0bTvnVfliy+C3kEIx/IeWQoGQBAOzACd4H3wIlb3xD41cY4a+DLAtFffgHeXZeUi3Afypj6d9idcGCOmhxCn9ng40lObQeb3cGzjfnJf9DA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBZjHNkcLyWeSMV5szgs9EugBB/L8xMiaiwckleCfayvNM0]'
-profile::alloy::grafana_cloud_logs_api_key: 'ENC[PKCS7,MIICCwYJKoZIhvcNAQcDoIIB/DCCAfgCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAJZuFJuWkWppUhkV7A66ccHcr0K8DGx0vgccJV2DWwzxEZzGc1haqoo6cE1/DB7honE0QBqFCrjIfEbKgl5qN9V4yRCrXBmH0rSAUBMVRoRAfiLoJKl1hWBg6I0HKvHG4m1dyw+Q3ChnpLdfVHbDpNYkevF5SlQZ5mYJ7Xq0UZui+BB0ZAije3tvc7hdaivs4CYgj0pAOV76qzrZ/aeVxoLJy9hOHlWtJR1jwMxm0YmM8eEVI/dBiS+Qq/5AQqfNM7NfDcL119luaXDYnHQbIIAF/fkEfanUetQf0peYkrySO5zC34gUG4N3K6daAs06ZM2XThv+Un5lXMk2JCJ0bCDCBzQYJKoZIhvcNAQcBMB0GCWCGSAFlAwQBKgQQPAOBjbeWJjyjUT9ZpdngxICBoFW4V85DA3qqp+8fzvkUlC7oYSEJ7m4h/unv9m3gpLcsE3DFVuhnyVY81zbytDSN80kjs5qk7Qwpgx8y2FBI810g7ST3SSid0jY5DKH7u7a6QSqBgGi8PSqPTcRW7xj5YQF4xvRAWLrdQB0Tw54EPMgTHuSVJ6SBKzDHpL0FLjOZPnccPaFk0HOgp6hH2m8k5x1STR4gcvyH66CmlrFFiKI=]'
-
 profile::dotfiles::dotfiles_users:
   ryan:
     home_dir: /home/ryan
@@ -89,27 +42,11 @@ profile::dotfiles::dotfiles_users:
     home_dir: /root
     ensure: present
 
-
-# WireGuard Peers (VPN Clients)
-# Generate keys for each client and encrypt the preshared keys
-profile::wireguard::peers:
-  desktop:
-    public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEATBtk+7zZpXglNCjiIFi3DGag/opI7+hrorrwJAFJ7xglyncEuJhIluICsTsp+KPneFXlnrQ/ok2VSKgk9p5efgkcMpPQeym7OIOk5OeCVMQSTfUsz+12IrWMFkLUIQV/OqH1LHSQsAdZ0wqEANV/zgXpG35kp263ABXZDKfF7wXMmPK+Q0TCG9y4gBUngJh7aQvZTf0oAEx5A6z/iZey8glBI5UhYEhLawfSXWYyBHFWktEJhiYbfBtfXxg1Y/ziph2GSDrqg7h4GTparxLyQ+PWq7cUI/CJ5XSz7eDAq8aQCuFvViTE1tV17VhusTdQRftDL8J+1531ZuYVwjaTiDBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCNyYgDZbCFIcwlFEOgUZregDDug82fE1mBiDSN5VRPUJUhTFvy/xRThvZn1AHod1r9iGEfDNJR2FrhxN+AwqVvRmg=]'
-    preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAmOmkLq2MDi8cw8cEeNr8rOaoQMtrxNBI5kAkCjxPnmqhVw13s85QWpl7TwotrIL/BqGzx4L8i0Nhaa5q9uUTx/A3+vCq1Q11qXH5u4CnhdzlpvGz6WKCrgueIXdElLbbRcVbEFwIyOrnoIF550EvRRHtueTbySIgYfi8Wcm9AA/y4skG1wAqonhmivoYuxQGqP84VP8MMiCffvteH9xbjBdMQp2zyKF0bDcQGwUFwLyX4roQ+9r6ChDso5bRYtwjYFI4svNI2otF1LsRqQHbfMJWRPSiC8QHbI15luW8iep0dHXdewT1G9m/3Z5tf4CwnGfn3bBMvhV8rJJCFt3uqjBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBTBuk4NJ/ijjoTn+iAZh/HgDAitTVDLqs3KKnBjY2l8UYD0rzvK3T0QGFjPoMo11aCeFEgZ0PUPwx65OatdcoHMa0=]'
-    allowed_ips: '10.10.10.2/32'
-  mob:
-    public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEABycBFYPv8oa641TdaVLyzkP3tfBsEnSm8UeqI8sI/qde1+VK1lrjWQMhVUMr1a1DczfcA12sxxIkDiECFLSpaj4+9WzK/n64IeHzkcsitWHgVDSqGRcMaye2y0Zpho1NuiuUSpPEZtWRbWvzh1BYtof65fPGZUSDBPG+A3QBa2gjMMiWkxcvohJhTGZcO6rq8mvLXB3hlBXgayRpeHWHB9cs4phPKvHJxjpjedmLZdBQGOdVCy1fo+MP95KtlPMcdD3ZB2e4EUDbuejkuNjODb2cig1+f1HjLG8mfo7LO9RUXbeC+lsTC2a0mHOs/CfNk6lcnpVc0jVHy/eev1+M1TBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBAa5wcO0Rg2G3mbvV048ep6gDDdC+GbN4ea0gDp4rzT4HJh17PkIXPQ6gc4JKEWau/5wHwcNOGB/h4DLnsUJ8E7ZGc=]'
-    preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAH/v7E1xTITDJud05fqVle1cCy1tZ6snbi5ANLfEgyRPjK6Y9p652evnCHSNSDsasbLriDA356e0Z2z11F/45MJQconOAesCir2Mb739SuFPwXsl3VGl8x0vAAbFMYmJzdLHYqMVTEC//emiIQa8DvQeAfuIrZoNrQgtcQQw5IMqSRsqh2yGOzZAUd1SYrMTNx/tBw6WOxbmCA1pQjRQqHLmCQwh5d+8Xhi0TbG2eQ/yzJHcyEeRH0QxwTMZ/GrlFp38Dloj0+aXKEXjRiq7p/OhcsgYPY+2JnqBRxN97tK1PUys18qDdDJyFgghszdAKanfk1+0/WOMZFJxPQl69ZzBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBAWstEiQ6TGsLl9dS+UoEUCgDDFx6sMJHB00b+b6D5Rn/OFOFHZe7VvYj++gYTvv026UY1rBcYWYaB1dJ2c3PZHXas=]'
-    allowed_ips: '10.10.10.3/32'
-  udr:
-    public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAHkEtk1L8CFHtBg7LuJQD6nKoNNB9Oq15/laPfblva5uzcHxe9rn0xyUwHMJP9HT42GKYnXksaoSCAhy5BHawMoUsKmApTB0yFROnIESaSwe0hU38MnJUL395db11UbrLGruM+JdOLI/0xY0F959yuoYfpXhfz5yVLrs5ZbyEKPueQjZrg+pB8d/xc4vc6auE2KvF+IyLIq8xJrHQ9IPRHVNoNCBeWPvXWCntS5+h1nuTPvYLXI70OrULbTUZkIlHpphKM9gtrjro2RU6fO9sFZ1942jbK1SzvU8Q3JqQJZmvZcGyiB+iD5pu6y7C2bvN/BecY6XXLs2x+ZsENPC0jTBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBAxDQ9UbVPAXLCBAasUAU0cgDBAg3XZWqCggsU4grpb9mVTcw4WOjtvJ4FcPAbO7lEv6m8yryYsq9Vd4pWgIFliEf0=]'
-    preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEA9arnkCr0n8DD8t1a/oakZEIHfSDds7VVtzClvBL8BPVgaFIyMtHif3ppsauKHNKIJYokSgMqFDtewX6rZSDCZ2adCuVmovw/nR4Q/HXP+RwseVMyN1twXjZfNh5q/Twdmt2udS/L3vpwnypKK6Hd9eSfXAPYAJYpDj7sjH6Bj1PMAv+5j1aGQv4JhIJ7yuO0HkbrQTOjOhGE1re/+Ypu/TdqtIrcQX2RdsTFO30ayd+ausJ8q7SJbMDyBYtk3Z9E5FiAE4YUAbOd32M9bWIKmp8qDmZZ7qjJxPO6v2rPEakD/92eBKlNRo0IxvVYP/7w0ebG18juYAzj+WrgKwpM3zBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBWkjgmsQYaVA9DVKAqWP+EgDACSyVMnq4vaXh/l80BWRoKSdEZ84SnzfwqJEPHc0lJbLg/NtqdQa6pmrigUvVC9d0=]'
-    allowed_ips: '10.10.10.4/32'
-  pi:
-    public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEALiZag6hLXh085lgQ3DgHrezkRkKiSMJHVadxKP9elkkTz78OPDgIntIxEuPOJUrEM4AogtMU0izG3xcaIAj95j0vZIMDW8fGyoFBMCYaMz8iXVpPnx0+0OAsCoRkqCOIw2/MPlw7FJJLzba+OUykfAO4UeGVF3NV/ULQ2B9AMzXKKsNXBobZBz775oPR7Qf1LGcS9kohpkhae1Hj2i2lIfZpCUn+4RHlBMBv94TYBJXCVaOtIOk8mNf6IVd6+LNLbB9RIG005Q/DeG5RTStBibd06UfBhvyij83EphHhd27E1SeAdCLjd8uJvUz8w3jivKyXZDk7EcxSsUfWM67pajBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBACr3dLvGWe3dfOtWxyOG56gDDk9ZLAffvcQ6oHfe1WqJDudiC9lYume0cDTil9xbRgeTOc3AZXdq4ljwpZPoRu9sM=]'
-    preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAcn47yR7vF4rQhDPMB8y4D9xHNxbFv7/6pvhMfzFcUrGfFAFTzzzHC0U6INUUhCFpJb10YRjHmGG53y9fESK1OQTHwxfgrSFikK5SjqLrx/jAUehot+lmPFrOd6ByaByf1idkiAdJrFM8zizu5ioToci6kt7Cpk/qKCF+6F/N26/zSEPu5VUgIHrs7pfDb3dlKexkzaStOaTHFS9/vb5wfm66O3Y4qz/rjGR0GHQ8hGbMftvZLdCasB/L2XkLwijf+iXorRcN1VQjyKdV4Rl3J+NvQ8oVrIVuH0XY/k+ePWRmQiYlWE9ZpGblN0xtUmejJfq3U5rcAaCj3xXSX4/ETjBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBNpwZuoUBJyUcfHgiNlju4gDBvTO0XhJVrySxBd1zNHA8TBxsQXXTFovCkb9qE0P7TgB5zZfN4AR0uMdH4DE/B6SQ=]'
-    allowed_ips: '10.10.10.5/32'
-  foreman:
-    public_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAeawHFQ0xlEa0n14JRGLbTLE2HAwaoKrC2LRLo/4pWuEaqUD+BfhZmmyWZ78kJU/kUFOJTgqJjB4BpDIYjRBjq1EVlXU7TmmHGx0M9FwFK3wwV8fsYP2Pqm971tmEhpUIZ6ejZQ+7piv5t20YARSvkE3x7unqB1kzfGqZYWLjfWRYTwLUW4Y1puH91EWNp83NJXz41+1DcpBW45qycUS0q46i8IUFG0dM8NcDL467oIfb9A4mpFoQatZhhHYI0Ndt0S2zZT7CMUwZj0nooA84pA6Tgl0MN9497MF8KnGifMQc/TOGRW4PkUDl8ZIAOznWfn6iM4PYla2xQpu50jS3cTBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDBpcsm8uie1Oxs1JCcgPZHgDCAzzgw35ZOR3BGNzOrlTr/Q3JiIpWBy/OX9JsdnCZLY1751zuYItrgNxQGXobwrKA=]'
-    preshared_key: 'ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQAwDQYJKoZIhvcNAQEBBQAEggEAcn4UDH1TqZmKloa+2XJGT80Zig/hXcLbis65eRhfI6zdow2Zx7zc9OV6kqIoy7q1EgbsEjQofrYsFS+DdqkAccj+caO/BvDi06YXbZA4N+2iouNZNUjIhHYBTdQGvcW8mZxEZeMi1ER79UNJTQpj4a9zoHfd/+z9CZn6I/hbC85z1zS62+7Zn0pCiwZQHc5QYRRYsdHz4fYm6ZzEQzjub6csgf8EPJh+jH89Csg259/BR5oRmggDl3D7rJl27PVkmRQYnSgm005IGUC+/LDMnAdUzgnuLagQpflC0n4oMQutqswL+aDQcfVkKazvduIwNSnraGLkOf/pZOxHmdUQszBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBBBUNxeY/eOGyqM9ycgMlwFgDCjcKodl4EjOGoh+8hftZjYtyN062BihwhABQlI1Nc+RZjbSlGpPSCaAvqKSnsmePU=]'
-    allowed_ips: '10.10.10.6/32'
+# NOTE: All other configuration belongs in Foreman:
+# - WireGuard peers and server config
+# - Grafana Cloud credentials
+# - Monitoring settings
+# - Firewall rules
+# - SSH port
+# - Service enable flags
+# - Node-specific overrides

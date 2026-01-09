@@ -3,8 +3,8 @@
 
 [Interface]
 PrivateKey = <%= @server_private_key %>
-Address = <%= @vpn_server_ip %>/<%= @vpn_network.split('/')[1] %>
-ListenPort = <%= @listen_port %>
+Address = <%= @_vpn_server_ip %>/<%= @_vpn_network.split('/')[1] %>
+ListenPort = <%= @_listen_port %>
 # SaveConfig must be false when using Puppet to avoid config drift
 # Puppet is the source of truth for configuration, not WireGuard runtime state
 SaveConfig = false
@@ -16,10 +16,10 @@ PreUp = sysctl -w net.ipv4.ip_forward=1
 
 <% if @enable_nat -%>
 # UFW route rules and NAT configuration for VPN traffic
-PostUp = ufw route allow in on <%= @interface_name %> out on <%= @external_interface %>
-PostUp = iptables -t nat -A POSTROUTING -o <%= @external_interface %> -j MASQUERADE -m comment --comment "wireguard-<%= @interface_name %>"
-PreDown = ufw route delete allow in on <%= @interface_name %> out on <%= @external_interface %> || true
-PreDown = iptables -t nat -D POSTROUTING -o <%= @external_interface %> -j MASQUERADE -m comment --comment "wireguard-<%= @interface_name %>" || true
+PostUp = ufw route allow in on <%= @_interface_name %> out on <%= @_external_interface %>
+PostUp = iptables -t nat -A POSTROUTING -o <%= @_external_interface %> -j MASQUERADE -m comment --comment "wireguard-<%= @_interface_name %>"
+PreDown = ufw route delete allow in on <%= @_interface_name %> out on <%= @_external_interface %> || true
+PreDown = iptables -t nat -D POSTROUTING -o <%= @_external_interface %> -j MASQUERADE -m comment --comment "wireguard-<%= @_interface_name %>" || true
 <% end -%>
 
 <% @peers.each do |peer_name, peer_config| -%>
