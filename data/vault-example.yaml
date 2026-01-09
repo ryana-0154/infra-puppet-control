@@ -1,0 +1,98 @@
+# Hiera Example Configuration for HashiCorp Vault
+# Copy relevant sections to your node/environment/common YAML files
+
+---
+# =============================================================================
+# Development Configuration (no TLS, for local testing only)
+# =============================================================================
+# profile::vault::manage_vault: true
+# profile::vault::tls_enabled: false
+# profile::vault::ui_enabled: true
+# profile::vault::log_level: debug
+
+# =============================================================================
+# Production Configuration (with TLS)
+# =============================================================================
+profile::vault::manage_vault: true
+profile::vault::vault_dir: '/opt/vault'
+profile::vault::vault_image: 'hashicorp/vault:1.18'
+
+# Network configuration
+profile::vault::api_port: 8200
+profile::vault::cluster_port: 8201
+
+# TLS configuration (use ACME certificates)
+profile::vault::tls_enabled: true
+profile::vault::tls_cert_source: '/etc/letsencrypt/live/vault.example.com/fullchain.pem'
+profile::vault::tls_key_source: '/etc/letsencrypt/live/vault.example.com/privkey.pem'
+
+# API address for client redirects (must match TLS certificate)
+profile::vault::api_addr: 'https://vault.example.com:8200'
+profile::vault::cluster_addr: 'https://vault.example.com:8201'
+
+# UI and logging
+profile::vault::ui_enabled: true
+profile::vault::log_level: info
+
+# Storage backend (file for single-node, raft for HA)
+profile::vault::storage_backend: file
+
+# Telemetry (optional, for Prometheus monitoring)
+profile::vault::telemetry_enabled: false
+
+# =============================================================================
+# High-Availability Configuration (Raft storage backend)
+# =============================================================================
+# For HA deployments, use this configuration on each Vault node:
+#
+# Node 1:
+#   profile::vault::storage_backend: raft
+#   profile::vault::raft_node_id: 'vault-1'
+#   profile::vault::raft_cluster_members:
+#     - 'https://vault-2.example.com:8201'
+#     - 'https://vault-3.example.com:8201'
+#
+# Node 2:
+#   profile::vault::storage_backend: raft
+#   profile::vault::raft_node_id: 'vault-2'
+#   profile::vault::raft_cluster_members:
+#     - 'https://vault-1.example.com:8201'
+#     - 'https://vault-3.example.com:8201'
+#
+# Node 3:
+#   profile::vault::storage_backend: raft
+#   profile::vault::raft_node_id: 'vault-3'
+#   profile::vault::raft_cluster_members:
+#     - 'https://vault-1.example.com:8201'
+#     - 'https://vault-2.example.com:8201'
+
+# =============================================================================
+# Post-Installation Steps for Foreman Integration
+# =============================================================================
+# After deploying Vault, run these commands to initialize and configure:
+#
+# 1. Initialize Vault (first time only):
+#    docker exec vault vault operator init
+#    Save the unseal keys and root token securely!
+#
+# 2. Unseal Vault (required after every restart):
+#    docker exec vault vault operator unseal <key1>
+#    docker exec vault vault operator unseal <key2>
+#    docker exec vault vault operator unseal <key3>
+#
+# 3. Set up Foreman integration:
+#    export VAULT_TOKEN='<root-token>'
+#    /opt/vault/foreman-setup.sh
+#
+# 4. Install foreman_vault plugin on Foreman server:
+#    foreman-installer --enable-foreman-plugin-vault
+#
+# 5. Configure Vault connection in Foreman UI:
+#    - Go to Infrastructure > Vault Connections
+#    - Add new connection with URL, role_id, and secret_id
+#
+# 6. Store secrets in Vault:
+#    /opt/vault/vault-cli.sh kv put secret/foreman/database password=mysecret
+#
+# 7. Reference secrets in Foreman Smart Class Parameters:
+#    vault(foreman, secret/foreman/database, password)

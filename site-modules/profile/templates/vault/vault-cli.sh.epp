@@ -1,0 +1,38 @@
+<%- |
+  Stdlib::Absolutepath $vault_dir,
+  String[1]            $api_addr,
+  Boolean              $tls_enabled,
+| -%>
+#!/bin/bash
+# Vault CLI Helper Script
+# Managed by Puppet - DO NOT EDIT MANUALLY
+#
+# Usage: <%= $vault_dir %>/vault-cli.sh <command> [args...]
+# Example: <%= $vault_dir %>/vault-cli.sh status
+#          <%= $vault_dir %>/vault-cli.sh secrets list
+
+set -e
+
+export VAULT_ADDR="<%= $api_addr %>"
+<%- unless $tls_enabled { -%>
+export VAULT_SKIP_VERIFY=true
+<%- } -%>
+
+# Check if VAULT_TOKEN is set
+if [[ -z "${VAULT_TOKEN}" ]]; then
+    # Try to read from token file
+    if [[ -f "<%= $vault_dir %>/root-token" ]]; then
+        export VAULT_TOKEN=$(cat "<%= $vault_dir %>/root-token")
+    else
+        echo "Warning: VAULT_TOKEN not set and no root-token file found"
+        echo "Set VAULT_TOKEN environment variable or run: vault login"
+    fi
+fi
+
+# Execute vault command in the container
+docker exec -e VAULT_ADDR="${VAULT_ADDR}" \
+<%- unless $tls_enabled { -%>
+    -e VAULT_SKIP_VERIFY=true \
+<%- } -%>
+    -e VAULT_TOKEN="${VAULT_TOKEN}" \
+    vault vault "$@"
