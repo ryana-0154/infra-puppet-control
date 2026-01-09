@@ -1,0 +1,130 @@
+<%- |
+  Stdlib::Absolutepath $vault_dir,
+  String[1]            $api_addr,
+  Boolean              $tls_enabled,
+| -%>
+#!/bin/bash
+# Foreman Vault Integration Setup Script
+# Managed by Puppet - DO NOT EDIT MANUALLY
+#
+# This script sets up Vault for Foreman integration:
+# 1. Enables the AppRole auth method
+# 2. Creates a policy for Foreman with appropriate permissions
+# 3. Creates an AppRole with role_id and secret_id
+#
+# Prerequisites:
+# - Vault must be initialized and unsealed
+# - VAULT_TOKEN must be set (root token or equivalent)
+#
+# Usage: <%= $vault_dir %>/foreman-setup.sh
+#
+# After running this script:
+# 1. Install foreman_vault plugin on Foreman server
+# 2. Configure Vault connection in Foreman UI (Infrastructure > Vault Connections)
+# 3. Use the role_id and secret_id output by this script
+
+set -e
+
+export VAULT_ADDR="<%= $api_addr %>"
+<%- unless $tls_enabled { -%>
+export VAULT_SKIP_VERIFY=true
+<%- } -%>
+
+VAULT_CLI="<%= $vault_dir %>/vault-cli.sh"
+
+# Check if VAULT_TOKEN is set
+if [[ -z "${VAULT_TOKEN}" ]]; then
+    if [[ -f "<%= $vault_dir %>/root-token" ]]; then
+        export VAULT_TOKEN=$(cat "<%= $vault_dir %>/root-token")
+    else
+        echo "Error: VAULT_TOKEN not set"
+        echo "Set VAULT_TOKEN environment variable or run: vault login"
+        exit 1
+    fi
+fi
+
+echo "=== Setting up Vault for Foreman Integration ==="
+echo ""
+
+# Check Vault status
+echo "Checking Vault status..."
+${VAULT_CLI} status || {
+    echo "Error: Vault is not accessible or sealed"
+    exit 1
+}
+
+# Enable KV secrets engine v2 (if not already enabled)
+echo ""
+echo "Enabling KV v2 secrets engine at 'secret/'..."
+${VAULT_CLI} secrets enable -path=secret kv-v2 2>/dev/null || echo "KV v2 already enabled at 'secret/'"
+
+# Enable AppRole auth method (if not already enabled)
+echo ""
+echo "Enabling AppRole auth method..."
+${VAULT_CLI} auth enable approle 2>/dev/null || echo "AppRole already enabled"
+
+# Create Foreman policy
+echo ""
+echo "Creating Foreman policy..."
+cat <<'POLICY' | docker exec -i vault vault policy write foreman -
+# Foreman Vault Policy
+# Allows Foreman to read secrets from the 'secret' path
+
+# Read secrets (KV v2)
+path "secret/data/*" {
+  capabilities = ["read", "list"]
+}
+
+path "secret/metadata/*" {
+  capabilities = ["list"]
+}
+
+# Allow token renewal
+path "auth/token/renew-self" {
+  capabilities = ["update"]
+}
+
+# Allow checking own token
+path "auth/token/lookup-self" {
+  capabilities = ["read"]
+}
+POLICY
+
+# Create AppRole for Foreman
+echo ""
+echo "Creating Foreman AppRole..."
+${VAULT_CLI} write auth/approle/role/foreman \
+    token_policies="foreman" \
+    token_ttl=1h \
+    token_max_ttl=4h \
+    secret_id_ttl=0
+
+# Get role_id
+echo ""
+echo "Retrieving role_id..."
+ROLE_ID=$(${VAULT_CLI} read -field=role_id auth/approle/role/foreman/role-id)
+
+# Generate secret_id
+echo ""
+echo "Generating secret_id..."
+SECRET_ID=$(${VAULT_CLI} write -field=secret_id -f auth/approle/role/foreman/secret-id)
+
+echo ""
+echo "=== Foreman Vault Setup Complete ==="
+echo ""
+echo "Configure Foreman with these credentials:"
+echo ""
+echo "  Vault URL:  <%= $api_addr %>"
+echo "  Role ID:    ${ROLE_ID}"
+echo "  Secret ID:  ${SECRET_ID}"
+echo ""
+echo "In Foreman:"
+echo "  1. Install foreman_vault plugin"
+echo "  2. Go to Infrastructure > Vault Connections"
+echo "  3. Add a new connection with the above credentials"
+echo ""
+echo "To store a secret for Foreman to use:"
+echo "  ${VAULT_CLI} kv put secret/foreman/myapp password=secret123"
+echo ""
+echo "Then reference it in Foreman Smart Class Parameters as:"
+echo "  vault(foreman, secret/foreman/myapp, password)"

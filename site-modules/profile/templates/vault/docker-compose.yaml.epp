@@ -1,0 +1,55 @@
+<%- |
+  Stdlib::Absolutepath $vault_dir,
+  String[1]            $vault_image,
+  Integer[1,65535]     $api_port,
+  Integer[1,65535]     $cluster_port,
+  Enum['file', 'raft'] $storage_backend,
+  Boolean              $tls_enabled,
+  Boolean              $disable_mlock,
+| -%>
+# HashiCorp Vault Docker Compose Configuration
+# Managed by Puppet - DO NOT EDIT MANUALLY
+
+services:
+  vault:
+    image: <%= $vault_image %>
+    container_name: vault
+    restart: unless-stopped
+    ports:
+      - "<%= $api_port %>:8200"
+      - "<%= $cluster_port %>:8201"
+    volumes:
+      - <%= $vault_dir %>/config:/vault/config:ro
+      - <%= $vault_dir %>/data:/vault/data
+      - <%= $vault_dir %>/logs:/vault/logs
+      - <%= $vault_dir %>/plugins:/vault/plugins
+<%- if $tls_enabled { -%>
+      - <%= $vault_dir %>/certs:/vault/certs:ro
+<%- } -%>
+<%- if $storage_backend == 'raft' { -%>
+      - <%= $vault_dir %>/raft:/vault/raft
+<%- } -%>
+    environment:
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_API_ADDR=${VAULT_API_ADDR}
+      - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL}
+<%- if !$tls_enabled { -%>
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+<%- } -%>
+<%- if $disable_mlock { -%>
+    cap_add:
+      - IPC_LOCK
+<%- } -%>
+    command: ["vault", "server", "-config=/vault/config/vault.hcl"]
+    healthcheck:
+      test: ["CMD", "vault", "status", "-address=${VAULT_ADDR}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - vault-network
+
+networks:
+  vault-network:
+    driver: bridge
