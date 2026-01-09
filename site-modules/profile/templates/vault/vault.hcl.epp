@@ -1,0 +1,79 @@
+<%- |
+  Stdlib::Absolutepath $vault_dir,
+  Integer[1,65535]     $api_port,
+  Integer[1,65535]     $cluster_port,
+  Enum['file', 'raft'] $storage_backend,
+  Optional[String[1]]  $raft_node_id,
+  Array[String[1]]     $raft_cluster_members,
+  Boolean              $tls_enabled,
+  String[1]            $tls_cert_file,
+  String[1]            $tls_key_file,
+  Boolean              $ui_enabled,
+  String[1]            $api_addr,
+  String[1]            $cluster_addr,
+  Enum['trace', 'debug', 'info', 'warn', 'error'] $log_level,
+  Boolean              $disable_mlock,
+  String[1]            $max_lease_ttl,
+  String[1]            $default_lease_ttl,
+  Boolean              $telemetry_enabled,
+  Integer[1,65535]     $telemetry_port,
+| -%>
+# HashiCorp Vault Server Configuration
+# Managed by Puppet - DO NOT EDIT MANUALLY
+
+# UI configuration
+ui = <%= $ui_enabled %>
+
+# Logging
+log_level = "<%= $log_level %>"
+
+# Disable memory lock (required for Docker containers without privileged mode)
+disable_mlock = <%= $disable_mlock %>
+
+# Lease TTL configuration
+max_lease_ttl = "<%= $max_lease_ttl %>"
+default_lease_ttl = "<%= $default_lease_ttl %>"
+
+# API address (used for client redirects)
+api_addr = "<%= $api_addr %>"
+cluster_addr = "<%= $cluster_addr %>"
+
+# Listener configuration
+listener "tcp" {
+  address         = "0.0.0.0:8200"
+  cluster_address = "0.0.0.0:8201"
+<%- if $tls_enabled { -%>
+  tls_cert_file   = "<%= $tls_cert_file %>"
+  tls_key_file    = "<%= $tls_key_file %>"
+  tls_disable     = false
+<%- } else { -%>
+  tls_disable     = true
+<%- } -%>
+}
+
+<%- if $storage_backend == 'file' { -%>
+# File storage backend
+storage "file" {
+  path = "/vault/data"
+}
+<%- } elsif $storage_backend == 'raft' { -%>
+# Raft storage backend (for HA deployments)
+storage "raft" {
+  path    = "/vault/raft"
+  node_id = "<%= $raft_node_id %>"
+<%- $raft_cluster_members.each |$member| { -%>
+
+  retry_join {
+    leader_api_addr = "<%= $member %>"
+  }
+<%- } -%>
+}
+<%- } -%>
+
+<%- if $telemetry_enabled { -%>
+# Telemetry configuration (Prometheus metrics)
+telemetry {
+  prometheus_retention_time = "30s"
+  disable_hostname          = true
+}
+<%- } -%>
