@@ -69,4 +69,4 @@ mod 'southalc-vault_lookup', '1.1.0'
 # Homelab custom modules
 mod 'homelab',
   :git => 'https://github.com/ryana-0154/homelab-puppet.git',
-  :tag => 'v0.7.3'
+  :tag => 'v0.7.4'
