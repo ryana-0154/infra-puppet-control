@@ -11,7 +11,3 @@
 #
 # Only profile::base is applied by default as a safety net.
 # All other profiles must be explicitly assigned in Foreman.
-
-node default {
-  include profile::base
-}
