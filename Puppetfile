@@ -58,9 +58,6 @@ mod 'puppetlabs-apache', '12.3.0'
 mod 'richardc-datacat', '0.6.2'
 mod 'puppet-mosquitto', '2.0.0'
 
-# HashiCorp Vault integration for secret management
-mod 'southalc-vault_lookup', '1.1.0'
-
 # Git-based modules (examples)
 # mod 'custom_module',
 #   :git => 'https://github.com/org/custom_module.git',
