@@ -66,4 +66,4 @@ mod 'puppet-mosquitto', '2.0.0'
 # Homelab custom modules
 mod 'homelab',
   :git => 'https://github.com/ryana-0154/homelab-puppet.git',
-  :tag => 'v0.8.0'
+  :tag => 'v0.9.0'
